@@ -1,9 +1,14 @@
 from fastapi import FastAPI
 
+from app.core.config import get_settings
+
+settings = get_settings()
+
 app = FastAPI(
-    title="AgentHire OS API",
+    title=settings.app_name,
     description="Backend API for AgentHire OS.",
-    version="0.1.0",
+    version=settings.app_version,
+    debug=settings.debug,
 )
 
 
@@ -12,5 +17,5 @@ async def health_check() -> dict[str, str]:
     return {
         "status": "ok",
         "service": "agenthire-api",
-        "version": "0.1.0",
+        "version": settings.app_version,
     }
