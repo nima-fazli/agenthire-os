@@ -1,0 +1,31 @@
+services:
+  postgres:
+    image: pgvector/pgvector:0.8.6-pg18-bookworm
+
+    environment:
+      POSTGRES_DB: ${AGENTHIRE_POSTGRES_DB}
+      POSTGRES_USER: ${AGENTHIRE_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${AGENTHIRE_POSTGRES_PASSWORD}
+
+    ports:
+      - "${AGENTHIRE_POSTGRES_PORT}:5432"
+
+    volumes:
+      - agenthire_postgres_data:/var/lib/postgresql
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${AGENTHIRE_POSTGRES_USER} -d ${AGENTHIRE_POSTGRES_DB}",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+    restart: unless-stopped
+
+
+volumes:
+  agenthire_postgres_data:
