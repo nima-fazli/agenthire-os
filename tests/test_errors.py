@@ -20,10 +20,21 @@ def create_test_app() -> FastAPI:
             },
         )
 
+    @app.get("/raise-unexpected-error")
+    async def raise_unexpected_error() -> None:
+        raise RuntimeError("Sensitive internal error message.")
+
     return app
 
 
-client = TestClient(create_test_app())
+app = create_test_app()
+
+client = TestClient(app)
+
+safe_client = TestClient(
+    app,
+    raise_server_exceptions=False,
+)
 
 
 def test_app_error_returns_structured_response() -> None:
@@ -54,3 +65,20 @@ def test_unknown_route_returns_structured_not_found_error() -> None:
             },
         }
     }
+
+
+def test_unexpected_error_returns_safe_internal_error() -> None:
+    response = safe_client.get("/raise-unexpected-error")
+
+    assert response.status_code == 500
+    assert response.json() == {
+        "error": {
+            "code": "INTERNAL_SERVER_ERROR",
+            "message": "An unexpected internal error occurred.",
+            "details": {
+                "path": "/raise-unexpected-error",
+            },
+        }
+    }
+
+    assert "Sensitive internal error message." not in response.text
