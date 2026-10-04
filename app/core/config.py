@@ -1,5 +1,6 @@
 from typing import Literal
 
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,6 +17,12 @@ class Settings(BaseSettings):
     environment: Literal["local", "test", "staging", "production"] = "local"
     debug: bool = False
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+
+    postgres_host: str = "127.0.0.1"
+    postgres_port: int = 5435
+    postgres_db: str = "agenthire"
+    postgres_user: str = "agenthire"
+    postgres_password: SecretStr = SecretStr("change-me")
 
 
 def get_settings() -> Settings:
