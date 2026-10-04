@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 
-
 app = FastAPI(
     title="AgentHire OS API",
     description="Backend API for AgentHire OS.",
