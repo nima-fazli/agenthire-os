@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from app.core.config import get_settings
 from app.db.base import Base
 from app.db.session import build_database_url
+from app.models import Organization  # noqa: F401
 
 target_metadata = Base.metadata
 
