@@ -1,3 +1,4 @@
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import ConflictError
@@ -25,23 +26,44 @@ class OrganizationService:
         )
 
         if existing is not None:
-            raise ConflictError(
-                code="ORGANIZATION_SLUG_ALREADY_EXISTS",
-                message="Organization slug already exists.",
-                details={
-                    "slug": data.slug,
-                },
+            raise self._duplicate_slug_error(
+                data.slug
             )
 
-        organization = await self._repository.create(
-            name=data.name,
-            slug=data.slug,
-        )
+        try:
+            organization = await self._repository.create(
+                name=data.name,
+                slug=data.slug,
+            )
 
-        await self._session.commit()
+            await self._session.commit()
+        except IntegrityError as error:
+            await self._session.rollback()
 
-        await self._session.refresh(
-            organization
-        )
+            existing = await self._repository.get_by_slug(
+                data.slug
+            )
+
+            if existing is not None:
+                raise self._duplicate_slug_error(
+                    data.slug
+                ) from error
+
+            raise
+        except Exception:
+            await self._session.rollback()
+            raise
 
         return organization
+
+    @staticmethod
+    def _duplicate_slug_error(
+        slug: str,
+    ) -> ConflictError:
+        return ConflictError(
+            code="ORGANIZATION_SLUG_ALREADY_EXISTS",
+            message="Organization slug already exists.",
+            details={
+                "slug": slug,
+            },
+        )
