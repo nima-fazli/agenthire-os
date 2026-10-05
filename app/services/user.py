@@ -3,8 +3,11 @@ import asyncio
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import ConflictError
-from app.core.security import hash_password
+from app.core.errors import ConflictError, UnauthorizedError
+from app.core.security import (
+    hash_password,
+    verify_password_with_dummy,
+)
 from app.models.user import User
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate
@@ -64,6 +67,37 @@ class UserService:
 
         return user
 
+    async def authenticate(
+        self,
+        *,
+        email: str,
+        password: str,
+    ) -> User:
+        user = await self._repository.get_by_email(
+            email
+        )
+
+        password_hash = (
+            user.password_hash
+            if user is not None
+            else None
+        )
+
+        password_is_valid = await asyncio.to_thread(
+            verify_password_with_dummy,
+            password,
+            password_hash,
+        )
+
+        if (
+            user is None
+            or not password_is_valid
+            or not user.is_active
+        ):
+            raise self._invalid_credentials_error()
+
+        return user
+
     @staticmethod
     def _duplicate_email_error(
         email: str,
@@ -74,4 +108,11 @@ class UserService:
             details={
                 "email": email,
             },
+        )
+
+    @staticmethod
+    def _invalid_credentials_error() -> UnauthorizedError:
+        return UnauthorizedError(
+            code="INVALID_CREDENTIALS",
+            message="Invalid email or password.",
         )

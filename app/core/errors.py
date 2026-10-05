@@ -57,6 +57,22 @@ class NotFoundError(AppError):
         )
 
 
+class UnauthorizedError(AppError):
+    def __init__(
+        self,
+        *,
+        code: str,
+        message: str,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(
+            code=code,
+            message=message,
+            status_code=401,
+            details=details,
+        )
+
+
 async def app_error_handler(
     _request: Request,
     exc: AppError,
@@ -128,7 +144,10 @@ async def unexpected_exception_handler(
 
 
 def register_exception_handlers(app: FastAPI) -> None:
-    app.add_exception_handler(AppError, app_error_handler)
+    app.add_exception_handler(
+        AppError,
+        app_error_handler,
+    )
     app.add_exception_handler(
         StarletteHTTPException,
         http_exception_handler,

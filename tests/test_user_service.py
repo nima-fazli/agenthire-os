@@ -5,7 +5,8 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import ConflictError
+from app.core.errors import ConflictError, UnauthorizedError
+from app.core.security import hash_password
 from app.models.user import User
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate
@@ -82,9 +83,12 @@ def test_create_user_rejects_duplicate_email() -> None:
     service = UserService(session)
     service._repository = repository
 
-    with patch(
-        "app.services.user.hash_password"
-    ) as password_hasher, pytest.raises(ConflictError) as error:
+    with (
+        patch(
+            "app.services.user.hash_password"
+        ) as password_hasher,
+        pytest.raises(ConflictError) as error,
+    ):
         asyncio.run(
             service.create(
                 UserCreate(
@@ -135,10 +139,13 @@ def test_create_user_handles_concurrent_duplicate_email() -> None:
     service = UserService(session)
     service._repository = repository
 
-    with patch(
-        "app.services.user.hash_password",
-        return_value="hashed-secret",
-    ), pytest.raises(ConflictError) as error:
+    with (
+        patch(
+            "app.services.user.hash_password",
+            return_value="hashed-secret",
+        ),
+        pytest.raises(ConflictError) as error,
+    ):
         asyncio.run(
             service.create(
                 UserCreate(
@@ -183,10 +190,13 @@ def test_create_user_reraises_unrelated_integrity_error() -> None:
     service = UserService(session)
     service._repository = repository
 
-    with patch(
-        "app.services.user.hash_password",
-        return_value="hashed-secret",
-    ), pytest.raises(IntegrityError) as error:
+    with (
+        patch(
+            "app.services.user.hash_password",
+            return_value="hashed-secret",
+        ),
+        pytest.raises(IntegrityError) as error,
+    ):
         asyncio.run(
             service.create(
                 UserCreate(
@@ -200,3 +210,132 @@ def test_create_user_reraises_unrelated_integrity_error() -> None:
 
     session.rollback.assert_awaited_once()
     session.commit.assert_not_awaited()
+
+
+def test_authenticate_user_with_valid_credentials() -> None:
+    session = MagicMock(spec=AsyncSession)
+
+    password = "a-very-secure-password"
+
+    user = User(
+        email="nima@example.com",
+        password_hash=hash_password(
+            password
+        ),
+        is_active=True,
+    )
+
+    repository = MagicMock(
+        spec=UserRepository
+    )
+    repository.get_by_email.return_value = user
+
+    service = UserService(session)
+    service._repository = repository
+
+    result = asyncio.run(
+        service.authenticate(
+            email="nima@example.com",
+            password=password,
+        )
+    )
+
+    assert result is user
+
+    repository.get_by_email.assert_called_once_with(
+        "nima@example.com"
+    )
+
+
+def test_authenticate_user_rejects_wrong_password() -> None:
+    session = MagicMock(spec=AsyncSession)
+
+    user = User(
+        email="nima@example.com",
+        password_hash=hash_password(
+            "a-very-secure-password"
+        ),
+        is_active=True,
+    )
+
+    repository = MagicMock(
+        spec=UserRepository
+    )
+    repository.get_by_email.return_value = user
+
+    service = UserService(session)
+    service._repository = repository
+
+    with pytest.raises(
+        UnauthorizedError
+    ) as error:
+        asyncio.run(
+            service.authenticate(
+                email="nima@example.com",
+                password="wrong-password",
+            )
+        )
+
+    assert error.value.status_code == 401
+    assert error.value.code == "INVALID_CREDENTIALS"
+    assert error.value.details == {}
+
+
+def test_authenticate_user_rejects_unknown_email() -> None:
+    session = MagicMock(spec=AsyncSession)
+
+    repository = MagicMock(
+        spec=UserRepository
+    )
+    repository.get_by_email.return_value = None
+
+    service = UserService(session)
+    service._repository = repository
+
+    with pytest.raises(
+        UnauthorizedError
+    ) as error:
+        asyncio.run(
+            service.authenticate(
+                email="missing@example.com",
+                password="a-very-secure-password",
+            )
+        )
+
+    assert error.value.status_code == 401
+    assert error.value.code == "INVALID_CREDENTIALS"
+
+
+def test_authenticate_user_rejects_inactive_user() -> None:
+    session = MagicMock(spec=AsyncSession)
+
+    password = "a-very-secure-password"
+
+    user = User(
+        email="nima@example.com",
+        password_hash=hash_password(
+            password
+        ),
+        is_active=False,
+    )
+
+    repository = MagicMock(
+        spec=UserRepository
+    )
+    repository.get_by_email.return_value = user
+
+    service = UserService(session)
+    service._repository = repository
+
+    with pytest.raises(
+        UnauthorizedError
+    ) as error:
+        asyncio.run(
+            service.authenticate(
+                email="nima@example.com",
+                password=password,
+            )
+        )
+
+    assert error.value.status_code == 401
+    assert error.value.code == "INVALID_CREDENTIALS"
