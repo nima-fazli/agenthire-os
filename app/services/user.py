@@ -1,4 +1,5 @@
 import asyncio
+from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,6 +67,14 @@ class UserService:
             raise
 
         return user
+
+    async def get_by_id(
+        self,
+        user_id: UUID,
+    ) -> User | None:
+        return await self._repository.get_by_id(
+            user_id
+        )
 
     async def authenticate(
         self,
