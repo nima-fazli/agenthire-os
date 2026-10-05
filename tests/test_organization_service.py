@@ -1,11 +1,12 @@
 import asyncio
 from unittest.mock import AsyncMock, MagicMock
+from uuid import uuid4
 
 import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import ConflictError
+from app.core.errors import ConflictError, NotFoundError
 from app.models.organization import Organization
 from app.repositories.organization import OrganizationRepository
 from app.schemas.organization import OrganizationCreate
@@ -183,3 +184,70 @@ def test_create_organization_reraises_unrelated_integrity_error() -> None:
     assert error.value is integrity_error
     session.rollback.assert_awaited_once()
     session.commit.assert_not_awaited()
+
+
+def test_get_organization_by_id_returns_organization() -> None:
+    session = MagicMock(spec=AsyncSession)
+
+    repository = MagicMock(
+        spec=OrganizationRepository
+    )
+
+    organization_id = uuid4()
+
+    organization = Organization(
+        id=organization_id,
+        name="Acme Corporation",
+        slug="acme",
+    )
+
+    repository.get_by_id.return_value = organization
+
+    service = OrganizationService(session)
+    service._repository = repository
+
+    result = asyncio.run(
+        service.get_by_id(
+            organization_id
+        )
+    )
+
+    assert result is organization
+
+    repository.get_by_id.assert_called_once_with(
+        organization_id
+    )
+
+
+def test_get_organization_by_id_raises_not_found() -> None:
+    session = MagicMock(spec=AsyncSession)
+
+    repository = MagicMock(
+        spec=OrganizationRepository
+    )
+
+    organization_id = uuid4()
+
+    repository.get_by_id.return_value = None
+
+    service = OrganizationService(session)
+    service._repository = repository
+
+    with pytest.raises(NotFoundError) as error:
+        asyncio.run(
+            service.get_by_id(
+                organization_id
+            )
+        )
+
+    assert error.value.status_code == 404
+    assert error.value.code == "ORGANIZATION_NOT_FOUND"
+    assert error.value.details == {
+        "organization_id": str(
+            organization_id
+        ),
+    }
+
+    repository.get_by_id.assert_called_once_with(
+        organization_id
+    )

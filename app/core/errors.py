@@ -41,6 +41,22 @@ class ConflictError(AppError):
         )
 
 
+class NotFoundError(AppError):
+    def __init__(
+        self,
+        *,
+        code: str,
+        message: str,
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(
+            code=code,
+            message=message,
+            status_code=404,
+            details=details,
+        )
+
+
 async def app_error_handler(
     _request: Request,
     exc: AppError,

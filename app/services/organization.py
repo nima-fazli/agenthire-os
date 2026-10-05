@@ -1,7 +1,9 @@
+from uuid import UUID
+
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.errors import ConflictError
+from app.core.errors import ConflictError, NotFoundError
 from app.models.organization import Organization
 from app.repositories.organization import OrganizationRepository
 from app.schemas.organization import OrganizationCreate
@@ -53,6 +55,27 @@ class OrganizationService:
         except Exception:
             await self._session.rollback()
             raise
+
+        return organization
+
+    async def get_by_id(
+        self,
+        organization_id: UUID,
+    ) -> Organization:
+        organization = await self._repository.get_by_id(
+            organization_id
+        )
+
+        if organization is None:
+            raise NotFoundError(
+                code="ORGANIZATION_NOT_FOUND",
+                message="Organization was not found.",
+                details={
+                    "organization_id": str(
+                        organization_id
+                    ),
+                },
+            )
 
         return organization
 
