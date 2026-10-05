@@ -6,8 +6,11 @@ from uuid import uuid4
 import pytest
 from fastapi.testclient import TestClient
 
-from app.api.dependencies import get_user_service
-from app.core.errors import ConflictError
+from app.api.dependencies import (
+    get_current_user,
+    get_user_service,
+)
+from app.core.errors import ConflictError, UnauthorizedError
 from app.main import app
 from app.models.user import User
 from app.services.user import UserService
@@ -124,3 +127,73 @@ def test_register_user_api_rejects_short_password(
     assert response.status_code == 422
 
     user_service.create.assert_not_awaited()
+
+
+def test_get_me_returns_current_user() -> None:
+    user_id = uuid4()
+    now = datetime.now(UTC)
+
+    user = User(
+        id=user_id,
+        email="nima@example.com",
+        password_hash="hashed-secret",
+        is_active=True,
+        created_at=now,
+        updated_at=now,
+    )
+
+    app.dependency_overrides[
+        get_current_user
+    ] = lambda: user
+
+    try:
+        response = client.get(
+            "/users/me"
+        )
+    finally:
+        app.dependency_overrides.pop(
+            get_current_user,
+            None,
+        )
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert body["id"] == str(user_id)
+    assert body["email"] == "nima@example.com"
+    assert body["is_active"] is True
+
+    assert "password" not in body
+    assert "password_hash" not in body
+
+
+def test_get_me_rejects_invalid_access_token() -> None:
+    def reject_current_user() -> None:
+        raise UnauthorizedError(
+            code="INVALID_ACCESS_TOKEN",
+            message="Access token is invalid or missing.",
+        )
+
+    app.dependency_overrides[
+        get_current_user
+    ] = reject_current_user
+
+    try:
+        response = client.get(
+            "/users/me"
+        )
+    finally:
+        app.dependency_overrides.pop(
+            get_current_user,
+            None,
+        )
+
+    assert response.status_code == 401
+    assert response.json() == {
+        "error": {
+            "code": "INVALID_ACCESS_TOKEN",
+            "message": "Access token is invalid or missing.",
+            "details": {},
+        }
+    }
