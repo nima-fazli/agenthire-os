@@ -2,9 +2,11 @@ from datetime import datetime
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
+    CheckConstraint,
     DateTime,
     ForeignKey,
     Index,
+    String,
     UniqueConstraint,
     Uuid,
     func,
@@ -22,6 +24,19 @@ class Application(Base):
             "job_id",
             "candidate_id",
             name="uq_applications_job_id_candidate_id",
+        ),
+        CheckConstraint(
+            (
+                "status IN ("
+                "'applied', "
+                "'screening', "
+                "'interview', "
+                "'offer', "
+                "'hired', "
+                "'rejected'"
+                ")"
+            ),
+            name="status",
         ),
         Index(
             "ix_applications_organization_id",
@@ -65,6 +80,13 @@ class Application(Base):
             "candidates.id",
         ),
         nullable=False,
+    )
+
+    status: Mapped[str] = mapped_column(
+        String(32),
+        nullable=False,
+        default="applied",
+        server_default="applied",
     )
 
     created_at: Mapped[datetime] = mapped_column(

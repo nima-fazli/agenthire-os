@@ -1,4 +1,4 @@
-from sqlalchemy import UniqueConstraint
+from sqlalchemy import CheckConstraint, UniqueConstraint
 
 from app.models.application import Application
 
@@ -15,6 +15,7 @@ def test_application_has_expected_columns() -> None:
         "organization_id",
         "job_id",
         "candidate_id",
+        "status",
         "created_at",
         "updated_at",
     }
@@ -57,6 +58,60 @@ def test_application_tenant_fields_are_required() -> None:
         Application.__table__.c.candidate_id.nullable
         is False
     )
+
+
+def test_application_status_defaults_to_applied() -> None:
+    status_column = (
+        Application.__table__.c.status
+    )
+
+    assert status_column.nullable is False
+    assert status_column.default is not None
+    assert (
+        status_column.default.arg
+        == "applied"
+    )
+
+    assert (
+        status_column.server_default
+        is not None
+    )
+    assert (
+        status_column.server_default.arg
+        == "applied"
+    )
+
+
+def test_application_status_has_database_check_constraint() -> None:
+    check_constraints = [
+        constraint
+        for constraint in Application.__table__.constraints
+        if isinstance(
+            constraint,
+            CheckConstraint,
+        )
+    ]
+
+    constraint = next(
+        constraint
+        for constraint in check_constraints
+        if constraint.name
+        == "ck_applications_status"
+    )
+
+    expression = str(
+        constraint.sqltext
+    )
+
+    for status in (
+        "applied",
+        "screening",
+        "interview",
+        "offer",
+        "hired",
+        "rejected",
+    ):
+        assert status in expression
 
 
 def test_application_candidate_job_pair_is_unique() -> None:

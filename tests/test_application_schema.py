@@ -8,7 +8,22 @@ from pydantic import ValidationError
 from app.schemas.application import (
     ApplicationCreate,
     ApplicationRead,
+    ApplicationStatus,
 )
+
+
+def test_application_status_values_are_explicit() -> None:
+    assert [
+        status.value
+        for status in ApplicationStatus
+    ] == [
+        "applied",
+        "screening",
+        "interview",
+        "offer",
+        "hired",
+        "rejected",
+    ]
 
 
 def test_application_create_accepts_candidate_and_job_ids() -> None:
