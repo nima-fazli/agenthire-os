@@ -6,6 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import ConflictError, NotFoundError
 from app.models.organization import Organization
 from app.repositories.organization import OrganizationRepository
+from app.repositories.organization_membership import (
+    OrganizationMembershipRepository,
+)
 from app.schemas.organization import OrganizationCreate
 
 
@@ -18,10 +21,17 @@ class OrganizationService:
         self._repository = OrganizationRepository(
             session
         )
+        self._membership_repository = (
+            OrganizationMembershipRepository(
+                session
+            )
+        )
 
     async def create(
         self,
         data: OrganizationCreate,
+        *,
+        owner_user_id: UUID,
     ) -> Organization:
         existing = await self._repository.get_by_slug(
             data.slug
@@ -36,6 +46,11 @@ class OrganizationService:
             organization = await self._repository.create(
                 name=data.name,
                 slug=data.slug,
+            )
+
+            await self._membership_repository.create(
+                organization_id=organization.id,
+                user_id=owner_user_id,
             )
 
             await self._session.commit()

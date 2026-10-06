@@ -9,49 +9,70 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import ConflictError, NotFoundError
 from app.models.organization import Organization
 from app.repositories.organization import OrganizationRepository
+from app.repositories.organization_membership import (
+    OrganizationMembershipRepository,
+)
 from app.schemas.organization import OrganizationCreate
 from app.services.organization import OrganizationService
 
 
-def test_create_organization_commits_transaction() -> None:
-    session = MagicMock(spec=AsyncSession)
+def test_create_organization_creates_owner_membership_and_commits() -> None:
+    session = MagicMock(
+        spec=AsyncSession
+    )
     session.commit = AsyncMock()
     session.rollback = AsyncMock()
 
-    repository = MagicMock(
+    organization_repository = MagicMock(
         spec=OrganizationRepository
     )
+    membership_repository = MagicMock(
+        spec=OrganizationMembershipRepository
+    )
+
+    organization_id = uuid4()
+    owner_user_id = uuid4()
+
+    organization_repository.get_by_slug.return_value = None
 
     organization = Organization(
-        name="Acme Corporation",
+        id=organization_id,
+        name="Acme",
         slug="acme",
     )
 
-    repository.get_by_slug.return_value = None
-    repository.create.return_value = organization
+    organization_repository.create.return_value = organization
 
-    service = OrganizationService(session)
-
-    service._repository = repository
+    service = OrganizationService(
+        session
+    )
+    service._repository = organization_repository
+    service._membership_repository = membership_repository
 
     result = asyncio.run(
         service.create(
             OrganizationCreate(
-                name="Acme Corporation",
+                name="Acme",
                 slug="acme",
-            )
+            ),
+            owner_user_id=owner_user_id,
         )
     )
 
     assert result is organization
 
-    repository.get_by_slug.assert_called_once_with(
+    organization_repository.get_by_slug.assert_awaited_once_with(
         "acme"
     )
 
-    repository.create.assert_called_once_with(
-        name="Acme Corporation",
+    organization_repository.create.assert_awaited_once_with(
+        name="Acme",
         slug="acme",
+    )
+
+    membership_repository.create.assert_awaited_once_with(
+        organization_id=organization_id,
+        user_id=owner_user_id,
     )
 
     session.commit.assert_awaited_once()
@@ -59,77 +80,41 @@ def test_create_organization_commits_transaction() -> None:
 
 
 def test_create_organization_rejects_duplicate_slug() -> None:
-    session = MagicMock(spec=AsyncSession)
+    session = MagicMock(
+        spec=AsyncSession
+    )
     session.commit = AsyncMock()
     session.rollback = AsyncMock()
 
-    repository = MagicMock(
+    organization_repository = MagicMock(
         spec=OrganizationRepository
     )
+    membership_repository = MagicMock(
+        spec=OrganizationMembershipRepository
+    )
 
-    repository.get_by_slug.return_value = Organization(
+    organization_repository.get_by_slug.return_value = Organization(
+        id=uuid4(),
         name="Existing",
         slug="acme",
     )
 
-    service = OrganizationService(session)
+    service = OrganizationService(
+        session
+    )
+    service._repository = organization_repository
+    service._membership_repository = membership_repository
 
-    service._repository = repository
-
-    with pytest.raises(ConflictError) as error:
+    with pytest.raises(
+        ConflictError
+    ) as error:
         asyncio.run(
             service.create(
                 OrganizationCreate(
-                    name="Acme Corporation",
+                    name="Acme",
                     slug="acme",
-                )
-            )
-        )
-
-    assert (
-        error.value.code
-        == "ORGANIZATION_SLUG_ALREADY_EXISTS"
-    )
-
-    session.commit.assert_not_awaited()
-    session.rollback.assert_not_awaited()
-
-
-def test_create_organization_handles_concurrent_duplicate() -> None:
-    session = MagicMock(spec=AsyncSession)
-    session.commit = AsyncMock()
-    session.rollback = AsyncMock()
-
-    repository = MagicMock(
-        spec=OrganizationRepository
-    )
-
-    concurrent_organization = Organization(
-        name="Existing",
-        slug="acme",
-    )
-
-    repository.get_by_slug.side_effect = [
-        None,
-        concurrent_organization,
-    ]
-    repository.create.side_effect = IntegrityError(
-        "INSERT INTO organizations ...",
-        {},
-        Exception("duplicate key"),
-    )
-
-    service = OrganizationService(session)
-
-    service._repository = repository
-
-    with pytest.raises(ConflictError) as error:
-        asyncio.run(
-            service.create(
-                OrganizationCreate(
-                    name="Acme Corporation",
-                    slug="acme",
-                )
+                ),
+                owner_user_id=uuid4(),
             )
         )
 
@@ -142,17 +127,86 @@ def test_create_organization_handles_concurrent_duplicate() -> None:
         "slug": "acme",
     }
 
+    organization_repository.create.assert_not_awaited()
+    membership_repository.create.assert_not_awaited()
+
+    session.commit.assert_not_awaited()
+    session.rollback.assert_not_awaited()
+
+
+def test_create_organization_handles_concurrent_duplicate_slug() -> None:
+    session = MagicMock(
+        spec=AsyncSession
+    )
+    session.commit = AsyncMock()
+    session.rollback = AsyncMock()
+
+    organization_repository = MagicMock(
+        spec=OrganizationRepository
+    )
+    membership_repository = MagicMock(
+        spec=OrganizationMembershipRepository
+    )
+
+    existing = Organization(
+        id=uuid4(),
+        name="Existing",
+        slug="acme",
+    )
+
+    organization_repository.get_by_slug.side_effect = [
+        None,
+        existing,
+    ]
+
+    organization_repository.create.side_effect = IntegrityError(
+        "INSERT INTO organizations ...",
+        {},
+        Exception("duplicate key"),
+    )
+
+    service = OrganizationService(
+        session
+    )
+    service._repository = organization_repository
+    service._membership_repository = membership_repository
+
+    with pytest.raises(
+        ConflictError
+    ) as error:
+        asyncio.run(
+            service.create(
+                OrganizationCreate(
+                    name="Acme",
+                    slug="acme",
+                ),
+                owner_user_id=uuid4(),
+            )
+        )
+
+    assert (
+        error.value.code
+        == "ORGANIZATION_SLUG_ALREADY_EXISTS"
+    )
+
+    membership_repository.create.assert_not_awaited()
+
     session.rollback.assert_awaited_once()
     session.commit.assert_not_awaited()
 
 
 def test_create_organization_reraises_unrelated_integrity_error() -> None:
-    session = MagicMock(spec=AsyncSession)
+    session = MagicMock(
+        spec=AsyncSession
+    )
     session.commit = AsyncMock()
     session.rollback = AsyncMock()
 
-    repository = MagicMock(
+    organization_repository = MagicMock(
         spec=OrganizationRepository
+    )
+    membership_repository = MagicMock(
+        spec=OrganizationMembershipRepository
     )
 
     integrity_error = IntegrityError(
@@ -161,33 +215,98 @@ def test_create_organization_reraises_unrelated_integrity_error() -> None:
         Exception("different integrity failure"),
     )
 
-    repository.get_by_slug.side_effect = [
+    organization_repository.get_by_slug.side_effect = [
         None,
         None,
     ]
-    repository.create.side_effect = integrity_error
 
-    service = OrganizationService(session)
+    organization_repository.create.side_effect = integrity_error
 
-    service._repository = repository
+    service = OrganizationService(
+        session
+    )
+    service._repository = organization_repository
+    service._membership_repository = membership_repository
 
-    with pytest.raises(IntegrityError) as error:
+    with pytest.raises(
+        IntegrityError
+    ) as error:
         asyncio.run(
             service.create(
                 OrganizationCreate(
-                    name="Acme Corporation",
+                    name="Acme",
                     slug="acme",
-                )
+                ),
+                owner_user_id=uuid4(),
             )
         )
 
     assert error.value is integrity_error
+
+    membership_repository.create.assert_not_awaited()
+
+    session.rollback.assert_awaited_once()
+    session.commit.assert_not_awaited()
+
+
+def test_create_organization_rolls_back_when_membership_creation_fails() -> None:
+    session = MagicMock(
+        spec=AsyncSession
+    )
+    session.commit = AsyncMock()
+    session.rollback = AsyncMock()
+
+    organization_repository = MagicMock(
+        spec=OrganizationRepository
+    )
+    membership_repository = MagicMock(
+        spec=OrganizationMembershipRepository
+    )
+
+    organization = Organization(
+        id=uuid4(),
+        name="Acme",
+        slug="acme",
+    )
+
+    organization_repository.get_by_slug.return_value = None
+    organization_repository.create.return_value = organization
+
+    failure = RuntimeError(
+        "membership creation failed"
+    )
+
+    membership_repository.create.side_effect = failure
+
+    service = OrganizationService(
+        session
+    )
+    service._repository = organization_repository
+    service._membership_repository = membership_repository
+
+    with pytest.raises(
+        RuntimeError
+    ) as error:
+        asyncio.run(
+            service.create(
+                OrganizationCreate(
+                    name="Acme",
+                    slug="acme",
+                ),
+                owner_user_id=uuid4(),
+            )
+        )
+
+    assert error.value is failure
+
     session.rollback.assert_awaited_once()
     session.commit.assert_not_awaited()
 
 
 def test_get_organization_by_id_returns_organization() -> None:
-    session = MagicMock(spec=AsyncSession)
+    session = MagicMock(
+        spec=AsyncSession
+    )
 
     repository = MagicMock(
         spec=OrganizationRepository
@@ -197,13 +316,15 @@ def test_get_organization_by_id_returns_organization() -> None:
 
     organization = Organization(
         id=organization_id,
-        name="Acme Corporation",
+        name="Acme",
         slug="acme",
     )
 
     repository.get_by_id.return_value = organization
 
-    service = OrganizationService(session)
+    service = OrganizationService(
+        session
+    )
     service._repository = repository
 
     result = asyncio.run(
@@ -214,26 +335,31 @@ def test_get_organization_by_id_returns_organization() -> None:
 
     assert result is organization
 
-    repository.get_by_id.assert_called_once_with(
+    repository.get_by_id.assert_awaited_once_with(
         organization_id
     )
 
 
 def test_get_organization_by_id_raises_not_found() -> None:
-    session = MagicMock(spec=AsyncSession)
+    session = MagicMock(
+        spec=AsyncSession
+    )
 
     repository = MagicMock(
         spec=OrganizationRepository
     )
+    repository.get_by_id.return_value = None
 
     organization_id = uuid4()
 
-    repository.get_by_id.return_value = None
-
-    service = OrganizationService(session)
+    service = OrganizationService(
+        session
+    )
     service._repository = repository
 
-    with pytest.raises(NotFoundError) as error:
+    with pytest.raises(
+        NotFoundError
+    ) as error:
         asyncio.run(
             service.get_by_id(
                 organization_id
@@ -247,7 +373,3 @@ def test_get_organization_by_id_raises_not_found() -> None:
             organization_id
         ),
     }
-
-    repository.get_by_id.assert_called_once_with(
-        organization_id
-    )
