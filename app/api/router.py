@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.api.routes.applications import router as applications_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.candidates import router as candidates_router
 from app.api.routes.health import router as health_router
@@ -31,4 +32,8 @@ api_router.include_router(
 
 api_router.include_router(
     candidates_router
+)
+
+api_router.include_router(
+    applications_router
 )
