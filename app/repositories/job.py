@@ -35,6 +35,28 @@ class JobRepository:
 
         return job
 
+    async def update(
+        self,
+        job: Job,
+        *,
+        title: str | None = None,
+        description: str | None = None,
+        status: str | None = None,
+    ) -> Job:
+        if title is not None:
+            job.title = title
+
+        if description is not None:
+            job.description = description
+
+        if status is not None:
+            job.status = status
+
+        await self._session.flush()
+        await self._session.refresh(job)
+
+        return job
+
     async def list_for_organization(
         self,
         organization_id: UUID,

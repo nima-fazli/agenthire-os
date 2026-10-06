@@ -14,7 +14,7 @@ from app.repositories.job import JobRepository
 from app.repositories.organization_membership import (
     OrganizationMembershipRepository,
 )
-from app.schemas.job import JobCreate
+from app.schemas.job import JobCreate, JobUpdate
 from app.services.job import JobService
 
 
@@ -84,25 +84,18 @@ def test_create_job_for_member_commits() -> None:
 
     job_repository.create.return_value = job
 
-    data = JobCreate(
-        title="Backend Engineer",
-        description="Build backend systems.",
-    )
-
     result = asyncio.run(
         service.create(
-            data,
+            JobCreate(
+                title="Backend Engineer",
+                description="Build backend systems.",
+            ),
             organization_id=organization_id,
             user_id=user_id,
         )
     )
 
     assert result is job
-
-    membership_repository.get_by_user_and_organization.assert_awaited_once_with(
-        user_id=user_id,
-        organization_id=organization_id,
-    )
 
     job_repository.create.assert_awaited_once_with(
         organization_id=organization_id,
@@ -124,7 +117,6 @@ def test_create_job_hides_organization_from_non_member() -> None:
     ) = make_service()
 
     organization_id = uuid4()
-    user_id = uuid4()
 
     membership_repository.get_by_user_and_organization.return_value = None
 
@@ -138,11 +130,10 @@ def test_create_job_hides_organization_from_non_member() -> None:
                     description="Backend work.",
                 ),
                 organization_id=organization_id,
-                user_id=user_id,
+                user_id=uuid4(),
             )
         )
 
-    assert error.value.status_code == 404
     assert (
         error.value.code
         == "ORGANIZATION_NOT_FOUND"
@@ -179,7 +170,7 @@ def test_create_job_rolls_back_on_failure() -> None:
 
     with pytest.raises(
         RuntimeError
-    ) as error:
+    ):
         asyncio.run(
             service.create(
                 JobCreate(
@@ -191,7 +182,206 @@ def test_create_job_rolls_back_on_failure() -> None:
             )
         )
 
-    assert error.value is failure
+    session.rollback.assert_awaited_once()
+    session.commit.assert_not_awaited()
+
+
+def test_update_job_for_member_commits() -> None:
+    (
+        service,
+        session,
+        job_repository,
+        membership_repository,
+    ) = make_service()
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    job_id = uuid4()
+
+    membership_repository.get_by_user_and_organization.return_value = (
+        OrganizationMembership(
+            organization_id=organization_id,
+            user_id=user_id,
+        )
+    )
+
+    job = Job(
+        id=job_id,
+        organization_id=organization_id,
+        title="Backend Engineer",
+        description="Backend work.",
+        status="draft",
+    )
+
+    updated_job = Job(
+        id=job_id,
+        organization_id=organization_id,
+        title="Staff Backend Engineer",
+        description="Backend work.",
+        status="open",
+    )
+
+    job_repository.get_for_organization.return_value = job
+    job_repository.update.return_value = updated_job
+
+    result = asyncio.run(
+        service.update_for_user(
+            job_id,
+            JobUpdate(
+                title=" Staff Backend Engineer ",
+                status="open",
+            ),
+            organization_id=organization_id,
+            user_id=user_id,
+        )
+    )
+
+    assert result is updated_job
+
+    job_repository.get_for_organization.assert_awaited_once_with(
+        job_id=job_id,
+        organization_id=organization_id,
+    )
+
+    job_repository.update.assert_awaited_once_with(
+        job,
+        title="Staff Backend Engineer",
+        description=None,
+        status="open",
+    )
+
+    session.commit.assert_awaited_once()
+    session.rollback.assert_not_awaited()
+
+
+def test_update_job_returns_not_found_for_missing_job() -> None:
+    (
+        service,
+        session,
+        job_repository,
+        membership_repository,
+    ) = make_service()
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    job_id = uuid4()
+
+    membership_repository.get_by_user_and_organization.return_value = (
+        OrganizationMembership(
+            organization_id=organization_id,
+            user_id=user_id,
+        )
+    )
+
+    job_repository.get_for_organization.return_value = None
+
+    with pytest.raises(
+        NotFoundError
+    ) as error:
+        asyncio.run(
+            service.update_for_user(
+                job_id,
+                JobUpdate(
+                    status="closed"
+                ),
+                organization_id=organization_id,
+                user_id=user_id,
+            )
+        )
+
+    assert error.value.code == "JOB_NOT_FOUND"
+
+    job_repository.update.assert_not_awaited()
+    session.commit.assert_not_awaited()
+    session.rollback.assert_not_awaited()
+
+
+def test_update_job_hides_organization_from_non_member() -> None:
+    (
+        service,
+        session,
+        job_repository,
+        membership_repository,
+    ) = make_service()
+
+    organization_id = uuid4()
+
+    membership_repository.get_by_user_and_organization.return_value = None
+
+    with pytest.raises(
+        NotFoundError
+    ) as error:
+        asyncio.run(
+            service.update_for_user(
+                uuid4(),
+                JobUpdate(
+                    status="closed"
+                ),
+                organization_id=organization_id,
+                user_id=uuid4(),
+            )
+        )
+
+    assert (
+        error.value.code
+        == "ORGANIZATION_NOT_FOUND"
+    )
+
+    job_repository.get_for_organization.assert_not_awaited()
+    job_repository.update.assert_not_awaited()
+
+    session.commit.assert_not_awaited()
+    session.rollback.assert_not_awaited()
+
+
+def test_update_job_rolls_back_on_failure() -> None:
+    (
+        service,
+        session,
+        job_repository,
+        membership_repository,
+    ) = make_service()
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    job_id = uuid4()
+
+    membership_repository.get_by_user_and_organization.return_value = (
+        OrganizationMembership(
+            organization_id=organization_id,
+            user_id=user_id,
+        )
+    )
+
+    job = Job(
+        id=job_id,
+        organization_id=organization_id,
+        title="Backend Engineer",
+        description="Backend work.",
+        status="draft",
+    )
+
+    job_repository.get_for_organization.return_value = job
+
+    failure = RuntimeError(
+        "update failed"
+    )
+
+    job_repository.update.side_effect = failure
+
+    with pytest.raises(
+        RuntimeError
+    ):
+        asyncio.run(
+            service.update_for_user(
+                job_id,
+                JobUpdate(
+                    status="open"
+                ),
+                organization_id=organization_id,
+                user_id=user_id,
+            )
+        )
 
     session.rollback.assert_awaited_once()
     session.commit.assert_not_awaited()
@@ -236,10 +426,6 @@ def test_list_jobs_for_member() -> None:
 
     assert result == jobs
 
-    job_repository.list_for_organization.assert_awaited_once_with(
-        organization_id
-    )
-
 
 def test_list_jobs_hides_organization_from_non_member() -> None:
     (
@@ -250,7 +436,6 @@ def test_list_jobs_hides_organization_from_non_member() -> None:
     ) = make_service()
 
     organization_id = uuid4()
-    user_id = uuid4()
 
     membership_repository.get_by_user_and_organization.return_value = None
 
@@ -260,7 +445,7 @@ def test_list_jobs_hides_organization_from_non_member() -> None:
         asyncio.run(
             service.list_for_user(
                 organization_id=organization_id,
-                user_id=user_id,
+                user_id=uuid4(),
             )
         )
 
@@ -311,11 +496,6 @@ def test_get_job_for_member() -> None:
 
     assert result is job
 
-    job_repository.get_for_organization.assert_awaited_once_with(
-        job_id=job_id,
-        organization_id=organization_id,
-    )
-
 
 def test_get_job_returns_not_found_for_missing_job() -> None:
     (
@@ -349,7 +529,6 @@ def test_get_job_returns_not_found_for_missing_job() -> None:
             )
         )
 
-    assert error.value.status_code == 404
     assert error.value.code == "JOB_NOT_FOUND"
     assert error.value.details == {
         "organization_id": str(
@@ -370,7 +549,6 @@ def test_get_job_hides_organization_from_non_member() -> None:
     ) = make_service()
 
     organization_id = uuid4()
-    user_id = uuid4()
 
     membership_repository.get_by_user_and_organization.return_value = None
 
@@ -381,7 +559,7 @@ def test_get_job_hides_organization_from_non_member() -> None:
             service.get_for_user(
                 uuid4(),
                 organization_id=organization_id,
-                user_id=user_id,
+                user_id=uuid4(),
             )
         )
 

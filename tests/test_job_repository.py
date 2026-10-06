@@ -48,6 +48,48 @@ def test_create_job_flushes_and_refreshes_without_commit() -> None:
     session.commit.assert_not_awaited()
 
 
+def test_update_job_flushes_and_refreshes_without_commit() -> None:
+    session = MagicMock(
+        spec=AsyncSession
+    )
+
+    session.flush = AsyncMock()
+    session.refresh = AsyncMock()
+    session.commit = AsyncMock()
+
+    job = Job(
+        id=uuid4(),
+        organization_id=uuid4(),
+        title="Backend Engineer",
+        description="Original description.",
+        status="draft",
+    )
+
+    repository = JobRepository(
+        session
+    )
+
+    result = asyncio.run(
+        repository.update(
+            job,
+            title="Staff Backend Engineer",
+            status="open",
+        )
+    )
+
+    assert result is job
+    assert job.title == "Staff Backend Engineer"
+    assert job.description == "Original description."
+    assert job.status == "open"
+
+    session.flush.assert_awaited_once()
+    session.refresh.assert_awaited_once_with(
+        job
+    )
+
+    session.commit.assert_not_awaited()
+
+
 def test_list_jobs_is_scoped_to_organization() -> None:
     session = MagicMock(
         spec=AsyncSession

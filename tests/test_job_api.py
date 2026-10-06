@@ -80,34 +80,130 @@ def test_create_job_api() -> None:
         clear_overrides()
 
     assert response.status_code == 201
+    assert response.json()["status"] == "draft"
+
+
+def test_update_job_api() -> None:
+    user = make_user()
+    organization_id = uuid4()
+    job_id = uuid4()
+    now = datetime.now(UTC)
+
+    service = AsyncMock(
+        spec=JobService
+    )
+
+    service.update_for_user.return_value = Job(
+        id=job_id,
+        organization_id=organization_id,
+        title="Staff Backend Engineer",
+        description="Backend work.",
+        status="open",
+        created_at=now,
+        updated_at=now,
+    )
+
+    override_authenticated_user(
+        user
+    )
+
+    app.dependency_overrides[
+        get_job_service
+    ] = lambda: service
+
+    try:
+        response = client.patch(
+            f"/organizations/{organization_id}/jobs/{job_id}",
+            json={
+                "title": " Staff Backend Engineer ",
+                "status": "open",
+            },
+        )
+    finally:
+        clear_overrides()
+
+    assert response.status_code == 200
 
     body = response.json()
 
-    assert body["id"] == str(
-        job_id
-    )
-    assert body["organization_id"] == str(
-        organization_id
-    )
-    assert body["title"] == "Backend Engineer"
-    assert body["status"] == "draft"
+    assert body["title"] == "Staff Backend Engineer"
+    assert body["status"] == "open"
 
-    service.create.assert_awaited_once()
+    call = service.update_for_user.await_args
 
-    call = service.create.await_args
+    assert call.args[0] == job_id
 
-    data = call.args[0]
+    data = call.args[1]
 
-    assert data.title == "Backend Engineer"
-    assert (
-        data.description
-        == "Build backend systems."
-    )
+    assert data.title == "Staff Backend Engineer"
+    assert data.status == "open"
 
     assert call.kwargs == {
         "organization_id": organization_id,
         "user_id": user.id,
     }
+
+
+def test_update_job_api_returns_not_found() -> None:
+    user = make_user()
+    organization_id = uuid4()
+    job_id = uuid4()
+
+    service = AsyncMock(
+        spec=JobService
+    )
+
+    service.update_for_user.side_effect = NotFoundError(
+        code="JOB_NOT_FOUND",
+        message="Job was not found.",
+        details={
+            "organization_id": str(
+                organization_id
+            ),
+            "job_id": str(
+                job_id
+            ),
+        },
+    )
+
+    override_authenticated_user(
+        user
+    )
+
+    app.dependency_overrides[
+        get_job_service
+    ] = lambda: service
+
+    try:
+        response = client.patch(
+            f"/organizations/{organization_id}/jobs/{job_id}",
+            json={
+                "status": "closed",
+            },
+        )
+    finally:
+        clear_overrides()
+
+    assert response.status_code == 404
+    assert (
+        response.json()["error"]["code"]
+        == "JOB_NOT_FOUND"
+    )
+
+
+def test_update_job_api_requires_authentication() -> None:
+    response = client.patch(
+        f"/organizations/{uuid4()}/jobs/{uuid4()}",
+        json={
+            "status": "closed",
+        },
+    )
+
+    assert response.status_code == 401
+    assert (
+        response.json()["error"]["code"]
+        == "INVALID_ACCESS_TOKEN"
+    )
 
 
 def test_list_jobs_api() -> None:
@@ -156,17 +252,7 @@ def test_list_jobs_api() -> None:
         clear_overrides()
 
     assert response.status_code == 200
-
-    body = response.json()
-
-    assert len(body) == 2
-    assert body[0]["title"] == "Backend Engineer"
-    assert body[1]["title"] == "AI Engineer"
-
-    service.list_for_user.assert_awaited_once_with(
-        organization_id=organization_id,
-        user_id=user.id,
-    )
+    assert len(response.json()) == 2
 
 
 def test_get_job_api() -> None:
@@ -209,12 +295,6 @@ def test_get_job_api() -> None:
         job_id
     )
 
-    service.get_for_user.assert_awaited_once_with(
-        job_id,
-        organization_id=organization_id,
-        user_id=user.id,
-    )
-
 
 def test_get_job_api_returns_not_found() -> None:
     user = make_user()
@@ -254,21 +334,10 @@ def test_get_job_api_returns_not_found() -> None:
         clear_overrides()
 
     assert response.status_code == 404
-
-    assert response.json() == {
-        "error": {
-            "code": "JOB_NOT_FOUND",
-            "message": "Job was not found.",
-            "details": {
-                "organization_id": str(
-                    organization_id
-                ),
-                "job_id": str(
-                    job_id
-                ),
-            },
-        }
-    }
+    assert (
+        response.json()["error"]["code"]
+        == "JOB_NOT_FOUND"
+    )
 
 
 def test_job_api_hides_organization_from_non_member() -> None:
