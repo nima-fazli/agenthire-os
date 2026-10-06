@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import ConflictError, NotFoundError
 from app.models.organization import Organization
+from app.models.organization_membership import OrganizationMembership
 from app.repositories.organization import OrganizationRepository
 from app.repositories.organization_membership import (
     OrganizationMembershipRepository,
@@ -303,16 +304,25 @@ def test_create_organization_rolls_back_when_membership_creation_fails() -> None
     session.commit.assert_not_awaited()
 
 
-def test_get_organization_by_id_returns_organization() -> None:
+def test_get_organization_for_member_returns_organization() -> None:
     session = MagicMock(
         spec=AsyncSession
     )
 
-    repository = MagicMock(
+    organization_repository = MagicMock(
         spec=OrganizationRepository
+    )
+    membership_repository = MagicMock(
+        spec=OrganizationMembershipRepository
     )
 
     organization_id = uuid4()
+    user_id = uuid4()
+
+    membership = OrganizationMembership(
+        organization_id=organization_id,
+        user_id=user_id,
+    )
 
     organization = Organization(
         id=organization_id,
@@ -320,49 +330,117 @@ def test_get_organization_by_id_returns_organization() -> None:
         slug="acme",
     )
 
-    repository.get_by_id.return_value = organization
+    membership_repository.get_by_user_and_organization.return_value = (
+        membership
+    )
+    organization_repository.get_by_id.return_value = organization
 
     service = OrganizationService(
         session
     )
-    service._repository = repository
+    service._repository = organization_repository
+    service._membership_repository = membership_repository
 
     result = asyncio.run(
-        service.get_by_id(
-            organization_id
+        service.get_for_user(
+            organization_id,
+            user_id=user_id,
         )
     )
 
     assert result is organization
 
-    repository.get_by_id.assert_awaited_once_with(
+    membership_repository.get_by_user_and_organization.assert_awaited_once_with(
+        user_id=user_id,
+        organization_id=organization_id,
+    )
+
+    organization_repository.get_by_id.assert_awaited_once_with(
         organization_id
     )
 
 
-def test_get_organization_by_id_raises_not_found() -> None:
+def test_get_organization_hides_organization_from_non_member() -> None:
     session = MagicMock(
         spec=AsyncSession
     )
 
-    repository = MagicMock(
+    organization_repository = MagicMock(
         spec=OrganizationRepository
     )
-    repository.get_by_id.return_value = None
+    membership_repository = MagicMock(
+        spec=OrganizationMembershipRepository
+    )
 
     organization_id = uuid4()
+    user_id = uuid4()
+
+    membership_repository.get_by_user_and_organization.return_value = None
 
     service = OrganizationService(
         session
     )
-    service._repository = repository
+    service._repository = organization_repository
+    service._membership_repository = membership_repository
 
     with pytest.raises(
         NotFoundError
     ) as error:
         asyncio.run(
-            service.get_by_id(
-                organization_id
+            service.get_for_user(
+                organization_id,
+                user_id=user_id,
+            )
+        )
+
+    assert error.value.status_code == 404
+    assert error.value.code == "ORGANIZATION_NOT_FOUND"
+    assert error.value.details == {
+        "organization_id": str(
+            organization_id
+        ),
+    }
+
+    organization_repository.get_by_id.assert_not_awaited()
+
+
+def test_get_organization_returns_not_found_when_member_target_is_missing() -> None:
+    session = MagicMock(
+        spec=AsyncSession
+    )
+
+    organization_repository = MagicMock(
+        spec=OrganizationRepository
+    )
+    membership_repository = MagicMock(
+        spec=OrganizationMembershipRepository
+    )
+
+    organization_id = uuid4()
+    user_id = uuid4()
+
+    membership_repository.get_by_user_and_organization.return_value = (
+        OrganizationMembership(
+            organization_id=organization_id,
+            user_id=user_id,
+        )
+    )
+
+    organization_repository.get_by_id.return_value = None
+
+    service = OrganizationService(
+        session
+    )
+    service._repository = organization_repository
+    service._membership_repository = membership_repository
+
+    with pytest.raises(
+        NotFoundError
+    ) as error:
+        asyncio.run(
+            service.get_for_user(
+                organization_id,
+                user_id=user_id,
             )
         )
 

@@ -73,23 +73,31 @@ class OrganizationService:
 
         return organization
 
-    async def get_by_id(
+    async def get_for_user(
         self,
         organization_id: UUID,
+        *,
+        user_id: UUID,
     ) -> Organization:
+        membership = (
+            await self._membership_repository.get_by_user_and_organization(
+                user_id=user_id,
+                organization_id=organization_id,
+            )
+        )
+
+        if membership is None:
+            raise self._organization_not_found_error(
+                organization_id
+            )
+
         organization = await self._repository.get_by_id(
             organization_id
         )
 
         if organization is None:
-            raise NotFoundError(
-                code="ORGANIZATION_NOT_FOUND",
-                message="Organization was not found.",
-                details={
-                    "organization_id": str(
-                        organization_id
-                    ),
-                },
+            raise self._organization_not_found_error(
+                organization_id
             )
 
         return organization
@@ -103,5 +111,19 @@ class OrganizationService:
             message="Organization slug already exists.",
             details={
                 "slug": slug,
+            },
+        )
+
+    @staticmethod
+    def _organization_not_found_error(
+        organization_id: UUID,
+    ) -> NotFoundError:
+        return NotFoundError(
+            code="ORGANIZATION_NOT_FOUND",
+            message="Organization was not found.",
+            details={
+                "organization_id": str(
+                    organization_id
+                ),
             },
         )

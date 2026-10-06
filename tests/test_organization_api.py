@@ -192,11 +192,12 @@ def test_create_organization_api_returns_conflict(
 
 def test_get_organization_api(
     organization_service: AsyncMock,
+    authenticated_user: User,
 ) -> None:
     organization_id = uuid4()
     now = datetime.now(UTC)
 
-    organization_service.get_by_id.return_value = Organization(
+    organization_service.get_for_user.return_value = Organization(
         id=organization_id,
         name="Acme",
         slug="acme",
@@ -226,17 +227,57 @@ def test_get_organization_api(
         ),
     }
 
-    organization_service.get_by_id.assert_awaited_once_with(
-        organization_id
+    organization_service.get_for_user.assert_awaited_once_with(
+        organization_id,
+        user_id=authenticated_user.id,
     )
 
 
-def test_get_organization_api_returns_not_found(
+def test_get_organization_api_requires_authentication(
     organization_service: AsyncMock,
 ) -> None:
     organization_id = uuid4()
 
-    organization_service.get_by_id.side_effect = NotFoundError(
+    def reject_current_user() -> None:
+        raise UnauthorizedError(
+            code="INVALID_ACCESS_TOKEN",
+            message="Access token is invalid or missing.",
+        )
+
+    app.dependency_overrides[
+        get_current_user
+    ] = reject_current_user
+
+    try:
+        response = client.get(
+            f"/organizations/{organization_id}"
+        )
+    finally:
+        app.dependency_overrides.pop(
+            get_current_user,
+            None,
+        )
+
+    assert response.status_code == 401
+
+    assert response.json() == {
+        "error": {
+            "code": "INVALID_ACCESS_TOKEN",
+            "message": "Access token is invalid or missing.",
+            "details": {},
+        }
+    }
+
+    organization_service.get_for_user.assert_not_awaited()
+
+
+def test_get_organization_api_returns_not_found(
+    organization_service: AsyncMock,
+    authenticated_user: User,
+) -> None:
+    organization_id = uuid4()
+
+    organization_service.get_for_user.side_effect = NotFoundError(
         code="ORGANIZATION_NOT_FOUND",
         message="Organization was not found.",
         details={
@@ -262,3 +303,8 @@ def test_get_organization_api_returns_not_found(
             },
         }
     }
+
+    organization_service.get_for_user.assert_awaited_once_with(
+        organization_id,
+        user_id=authenticated_user.id,
+    )

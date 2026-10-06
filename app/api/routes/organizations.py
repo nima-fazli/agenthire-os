@@ -49,12 +49,16 @@ async def create_organization(
 )
 async def get_organization(
     organization_id: UUID,
+    current_user: User = Depends(
+        get_current_user,
+    ),
     service: OrganizationService = Depends(
         get_organization_service,
     ),
 ) -> OrganizationRead:
-    organization = await service.get_by_id(
-        organization_id
+    organization = await service.get_for_user(
+        organization_id,
+        user_id=current_user.id,
     )
 
     return OrganizationRead.model_validate(
