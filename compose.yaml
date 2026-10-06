@@ -26,6 +26,73 @@ services:
 
     restart: unless-stopped
 
+  migrate:
+    build:
+      context: .
+      target: runtime
+
+    env_file:
+      - .env
+
+    environment:
+      AGENTHIRE_POSTGRES_HOST: postgres
+      AGENTHIRE_POSTGRES_PORT: "5432"
+
+    command:
+      - alembic
+      - upgrade
+      - head
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      target: runtime
+
+    env_file:
+      - .env
+
+    environment:
+      AGENTHIRE_POSTGRES_HOST: postgres
+      AGENTHIRE_POSTGRES_PORT: "5432"
+
+    ports:
+      - "${AGENTHIRE_API_PORT:-8000}:8000"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+    restart: unless-stopped
+
+  test:
+    profiles:
+      - test
+
+    build:
+      context: .
+      target: test
+
 
 volumes:
   agenthire_postgres_data:
