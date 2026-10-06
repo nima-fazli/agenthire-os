@@ -246,6 +246,62 @@ def run_candidate_smoke(
         "tenant-scoped candidate retrieval"
     )
 
+    updated_candidate = request_json(
+        "PATCH",
+        (
+            f"/organizations/"
+            f"{organization_id}/candidates/"
+            f"{candidate_id}"
+        ),
+        token=owner_token,
+        payload={
+            "full_name": " Ada Byron ",
+            "email": " ADA.BYRON@EXAMPLE.COM ",
+            "headline": " Principal AI Engineer ",
+        },
+    )
+
+    expect_status(
+        updated_candidate,
+        200,
+        step="candidate update",
+    )
+
+    if (
+        updated_candidate.body.get(
+            "full_name"
+        )
+        != "Ada Byron"
+    ):
+        raise SmokeFailure(
+            "candidate update: "
+            "full_name was not persisted"
+        )
+
+    if (
+        updated_candidate.body.get("email")
+        != "ada.byron@example.com"
+    ):
+        raise SmokeFailure(
+            "candidate update: "
+            "email normalization was not persisted"
+        )
+
+    if (
+        updated_candidate.body.get(
+            "headline"
+        )
+        != "Principal AI Engineer"
+    ):
+        raise SmokeFailure(
+            "candidate update: "
+            "headline was not persisted"
+        )
+
+    log_ok(
+        "tenant-scoped candidate update"
+    )
+
     outsider_registration = request_json(
         "POST",
         "/users/register",
@@ -339,6 +395,35 @@ def run_candidate_smoke(
 
     log_ok(
         "candidate is hidden from non-member"
+    )
+
+    hidden_update = request_json(
+        "PATCH",
+        (
+            f"/organizations/"
+            f"{organization_id}/candidates/"
+            f"{candidate_id}"
+        ),
+        token=outsider_token,
+        payload={
+            "headline": "Unauthorized Update",
+        },
+    )
+
+    expect_status(
+        hidden_update,
+        404,
+        step="candidate update tenant isolation",
+    )
+
+    expect_error_code(
+        hidden_update,
+        "ORGANIZATION_NOT_FOUND",
+        step="candidate update tenant isolation",
+    )
+
+    log_ok(
+        "candidate update is hidden from non-member"
     )
 
 

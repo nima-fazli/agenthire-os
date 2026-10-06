@@ -51,6 +51,65 @@ def test_create_candidate_flushes_and_refreshes_without_commit() -> None:
     session.commit.assert_not_awaited()
 
 
+def test_update_candidate_flushes_and_refreshes_without_commit() -> None:
+    session = MagicMock(
+        spec=AsyncSession
+    )
+
+    session.flush = AsyncMock()
+    session.refresh = AsyncMock()
+    session.commit = AsyncMock()
+
+    candidate = Candidate(
+        id=uuid4(),
+        organization_id=uuid4(),
+        full_name="Ada Lovelace",
+        email="ada@example.com",
+        phone="+31 20 123 4567",
+        location="Amsterdam",
+        headline="AI Engineer",
+        summary="Original summary.",
+    )
+
+    repository = CandidateRepository(
+        session
+    )
+
+    result = asyncio.run(
+        repository.update(
+            candidate,
+            full_name="Ada Byron",
+            email="ada.byron@example.com",
+            headline="Principal AI Engineer",
+        )
+    )
+
+    assert result is candidate
+    assert candidate.full_name == "Ada Byron"
+    assert (
+        candidate.email
+        == "ada.byron@example.com"
+    )
+    assert (
+        candidate.headline
+        == "Principal AI Engineer"
+    )
+
+    assert (
+        candidate.phone
+        == "+31 20 123 4567"
+    )
+    assert candidate.location == "Amsterdam"
+    assert candidate.summary == "Original summary."
+
+    session.flush.assert_awaited_once()
+    session.refresh.assert_awaited_once_with(
+        candidate
+    )
+
+    session.commit.assert_not_awaited()
+
+
 def test_list_candidates_is_scoped_to_organization() -> None:
     session = MagicMock(
         spec=AsyncSession

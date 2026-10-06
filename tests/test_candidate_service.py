@@ -14,7 +14,7 @@ from app.repositories.candidate import CandidateRepository
 from app.repositories.organization_membership import (
     OrganizationMembershipRepository,
 )
-from app.schemas.candidate import CandidateCreate
+from app.schemas.candidate import CandidateCreate, CandidateUpdate
 from app.services.candidate import CandidateService
 
 
@@ -192,6 +192,221 @@ def test_create_candidate_rolls_back_on_failure() -> None:
 
     session.commit.assert_not_awaited()
     session.rollback.assert_awaited_once()
+
+
+def test_update_candidate_for_member_commits() -> None:
+    (
+        service,
+        session,
+        candidate_repository,
+        membership_repository,
+    ) = make_service()
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    candidate_id = uuid4()
+
+    membership_repository.get_by_user_and_organization.return_value = (
+        OrganizationMembership(
+            organization_id=organization_id,
+            user_id=user_id,
+        )
+    )
+
+    candidate = Candidate(
+        id=candidate_id,
+        organization_id=organization_id,
+        full_name="Ada Lovelace",
+        email="ada@example.com",
+        headline="AI Engineer",
+    )
+
+    updated_candidate = Candidate(
+        id=candidate_id,
+        organization_id=organization_id,
+        full_name="Ada Byron",
+        email="ada.byron@example.com",
+        headline="Principal AI Engineer",
+    )
+
+    candidate_repository.get_for_organization.return_value = (
+        candidate
+    )
+
+    candidate_repository.update.return_value = (
+        updated_candidate
+    )
+
+    result = asyncio.run(
+        service.update_for_user(
+            candidate_id,
+            CandidateUpdate(
+                full_name=" Ada Byron ",
+                email=" ADA.BYRON@EXAMPLE.COM ",
+                headline=" Principal AI Engineer ",
+            ),
+            organization_id=organization_id,
+            user_id=user_id,
+        )
+    )
+
+    assert result is updated_candidate
+
+    candidate_repository.get_for_organization.assert_awaited_once_with(
+        candidate_id=candidate_id,
+        organization_id=organization_id,
+    )
+
+    candidate_repository.update.assert_awaited_once_with(
+        candidate,
+        full_name="Ada Byron",
+        email="ada.byron@example.com",
+        phone=None,
+        location=None,
+        headline="Principal AI Engineer",
+        summary=None,
+    )
+
+    session.commit.assert_awaited_once()
+    session.rollback.assert_not_awaited()
+
+
+def test_update_candidate_returns_not_found() -> None:
+    (
+        service,
+        session,
+        candidate_repository,
+        membership_repository,
+    ) = make_service()
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    candidate_id = uuid4()
+
+    membership_repository.get_by_user_and_organization.return_value = (
+        OrganizationMembership(
+            organization_id=organization_id,
+            user_id=user_id,
+        )
+    )
+
+    candidate_repository.get_for_organization.return_value = (
+        None
+    )
+
+    with pytest.raises(
+        NotFoundError
+    ) as error:
+        asyncio.run(
+            service.update_for_user(
+                candidate_id,
+                CandidateUpdate(
+                    headline="Principal AI Engineer",
+                ),
+                organization_id=organization_id,
+                user_id=user_id,
+            )
+        )
+
+    assert (
+        error.value.code
+        == "CANDIDATE_NOT_FOUND"
+    )
+
+    candidate_repository.update.assert_not_awaited()
+    session.commit.assert_not_awaited()
+    session.rollback.assert_not_awaited()
+
+
+def test_update_candidate_hides_organization_from_non_member() -> None:
+    (
+        service,
+        session,
+        candidate_repository,
+        membership_repository,
+    ) = make_service()
+
+    organization_id = uuid4()
+
+    membership_repository.get_by_user_and_organization.return_value = (
+        None
+    )
+
+    with pytest.raises(
+        NotFoundError
+    ) as error:
+        asyncio.run(
+            service.update_for_user(
+                uuid4(),
+                CandidateUpdate(
+                    headline="Principal AI Engineer",
+                ),
+                organization_id=organization_id,
+                user_id=uuid4(),
+            )
+        )
+
+    assert (
+        error.value.code
+        == "ORGANIZATION_NOT_FOUND"
+    )
+
+    candidate_repository.get_for_organization.assert_not_awaited()
+    candidate_repository.update.assert_not_awaited()
+
+    session.commit.assert_not_awaited()
+    session.rollback.assert_not_awaited()
+
+
+def test_update_candidate_rolls_back_on_failure() -> None:
+    (
+        service,
+        session,
+        candidate_repository,
+        membership_repository,
+    ) = make_service()
+
+    organization_id = uuid4()
+    user_id = uuid4()
+    candidate_id = uuid4()
+
+    membership_repository.get_by_user_and_organization.return_value = (
+        OrganizationMembership(
+            organization_id=organization_id,
+            user_id=user_id,
+        )
+    )
+
+    candidate = Candidate(
+        id=candidate_id,
+        organization_id=organization_id,
+        full_name="Ada Lovelace",
+    )
+
+    candidate_repository.get_for_organization.return_value = (
+        candidate
+    )
+
+    candidate_repository.update.side_effect = RuntimeError(
+        "update failed"
+    )
+
+    with pytest.raises(
+        RuntimeError
+    ):
+        asyncio.run(
+            service.update_for_user(
+                candidate_id,
+                CandidateUpdate(
+                    headline="Principal AI Engineer",
+                ),
+                organization_id=organization_id,
+                user_id=user_id,
+            )
+        )
+
+    session.rollback.assert_awaited_once()
+    session.commit.assert_not_awaited()
 
 
 def test_list_candidates_for_member() -> None:

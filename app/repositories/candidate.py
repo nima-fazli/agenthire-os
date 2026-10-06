@@ -45,6 +45,42 @@ class CandidateRepository:
 
         return candidate
 
+    async def update(
+        self,
+        candidate: Candidate,
+        *,
+        full_name: str | None = None,
+        email: str | None = None,
+        phone: str | None = None,
+        location: str | None = None,
+        headline: str | None = None,
+        summary: str | None = None,
+    ) -> Candidate:
+        if full_name is not None:
+            candidate.full_name = full_name
+
+        if email is not None:
+            candidate.email = email
+
+        if phone is not None:
+            candidate.phone = phone
+
+        if location is not None:
+            candidate.location = location
+
+        if headline is not None:
+            candidate.headline = headline
+
+        if summary is not None:
+            candidate.summary = summary
+
+        await self._session.flush()
+        await self._session.refresh(
+            candidate
+        )
+
+        return candidate
+
     async def list_for_organization(
         self,
         organization_id: UUID,

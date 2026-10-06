@@ -6,7 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.api.dependencies import get_current_user
 from app.db.session import get_db_session
 from app.models.user import User
-from app.schemas.candidate import CandidateCreate, CandidateRead
+from app.schemas.candidate import (
+    CandidateCreate,
+    CandidateRead,
+    CandidateUpdate,
+)
 from app.services.candidate import CandidateService
 
 router = APIRouter(
@@ -93,6 +97,33 @@ async def get_candidate(
 ) -> CandidateRead:
     candidate = await service.get_for_user(
         candidate_id,
+        organization_id=organization_id,
+        user_id=current_user.id,
+    )
+
+    return CandidateRead.model_validate(
+        candidate
+    )
+
+
+@router.patch(
+    "/{candidate_id}",
+    response_model=CandidateRead,
+)
+async def update_candidate(
+    organization_id: UUID,
+    candidate_id: UUID,
+    data: CandidateUpdate,
+    current_user: User = Depends(
+        get_current_user
+    ),
+    service: CandidateService = Depends(
+        get_candidate_service
+    ),
+) -> CandidateRead:
+    candidate = await service.update_for_user(
+        candidate_id,
+        data,
         organization_id=organization_id,
         user_id=current_user.id,
     )

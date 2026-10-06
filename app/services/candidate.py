@@ -8,7 +8,7 @@ from app.repositories.candidate import CandidateRepository
 from app.repositories.organization_membership import (
     OrganizationMembershipRepository,
 )
-from app.schemas.candidate import CandidateCreate
+from app.schemas.candidate import CandidateCreate, CandidateUpdate
 
 
 class CandidateService:
@@ -58,6 +58,56 @@ class CandidateService:
 
         return candidate
 
+    async def update_for_user(
+        self,
+        candidate_id: UUID,
+        data: CandidateUpdate,
+        *,
+        organization_id: UUID,
+        user_id: UUID,
+    ) -> Candidate:
+        candidate = await self._get_candidate_for_user(
+            candidate_id=candidate_id,
+            organization_id=organization_id,
+            user_id=user_id,
+        )
+
+        changes = data.model_dump(
+            exclude_unset=True
+        )
+
+        try:
+            updated_candidate = (
+                await self._repository.update(
+                    candidate,
+                    full_name=changes.get(
+                        "full_name"
+                    ),
+                    email=changes.get(
+                        "email"
+                    ),
+                    phone=changes.get(
+                        "phone"
+                    ),
+                    location=changes.get(
+                        "location"
+                    ),
+                    headline=changes.get(
+                        "headline"
+                    ),
+                    summary=changes.get(
+                        "summary"
+                    ),
+                )
+            )
+
+            await self._session.commit()
+        except Exception:
+            await self._session.rollback()
+            raise
+
+        return updated_candidate
+
     async def list_for_user(
         self,
         *,
@@ -77,6 +127,19 @@ class CandidateService:
         self,
         candidate_id: UUID,
         *,
+        organization_id: UUID,
+        user_id: UUID,
+    ) -> Candidate:
+        return await self._get_candidate_for_user(
+            candidate_id=candidate_id,
+            organization_id=organization_id,
+            user_id=user_id,
+        )
+
+    async def _get_candidate_for_user(
+        self,
+        *,
+        candidate_id: UUID,
         organization_id: UUID,
         user_id: UUID,
     ) -> Candidate:
