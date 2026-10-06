@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
+from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.api.dependencies import get_user_service
@@ -17,7 +18,7 @@ client = TestClient(app)
 @pytest.fixture
 def user_service() -> Iterator[AsyncMock]:
     service = AsyncMock(
-        spec=UserService
+        spec=UserService,
     )
 
     app.dependency_overrides[
@@ -57,7 +58,7 @@ def test_login_returns_access_token(
             },
         )
 
-    assert response.status_code == 200
+    assert response.status_code == status.HTTP_200_OK
     assert response.json() == {
         "access_token": "test-access-token",
         "token_type": "bearer",
@@ -84,7 +85,7 @@ def test_login_rejects_invalid_credentials(
     )
 
     with patch(
-        "app.api.routes.auth.create_access_token"
+        "app.api.routes.auth.create_access_token",
     ) as token_creator:
         response = client.post(
             "/auth/login",
@@ -94,7 +95,9 @@ def test_login_rejects_invalid_credentials(
             },
         )
 
-    assert response.status_code == 401
+    assert response.status_code == (
+        status.HTTP_401_UNAUTHORIZED
+    )
     assert response.json() == {
         "error": {
             "code": "INVALID_CREDENTIALS",
@@ -117,6 +120,23 @@ def test_login_rejects_empty_password(
         },
     )
 
-    assert response.status_code == 422
+    assert response.status_code == (
+        status.HTTP_422_UNPROCESSABLE_CONTENT
+    )
+
+    body = response.json()
+
+    assert body["error"]["code"] == "VALIDATION_ERROR"
+    assert body["error"]["message"] == (
+        "Request validation failed."
+    )
+
+    errors = body["error"]["details"]["errors"]
+
+    assert len(errors) == 1
+    assert errors[0]["location"] == [
+        "body",
+        "password",
+    ]
 
     user_service.authenticate.assert_not_awaited()

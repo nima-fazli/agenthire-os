@@ -1,7 +1,8 @@
 import logging
 from typing import Any
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -36,7 +37,7 @@ class ConflictError(AppError):
         super().__init__(
             code=code,
             message=message,
-            status_code=409,
+            status_code=status.HTTP_409_CONFLICT,
             details=details,
         )
 
@@ -52,7 +53,7 @@ class NotFoundError(AppError):
         super().__init__(
             code=code,
             message=message,
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             details=details,
         )
 
@@ -68,7 +69,7 @@ class UnauthorizedError(AppError):
         super().__init__(
             code=code,
             message=message,
-            status_code=401,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             details=details,
         )
 
@@ -89,13 +90,40 @@ async def app_error_handler(
     )
 
 
+async def request_validation_error_handler(
+    _request: Request,
+    exc: RequestValidationError,
+) -> JSONResponse:
+    errors = [
+        {
+            "type": error["type"],
+            "location": list(error["loc"]),
+            "message": error["msg"],
+        }
+        for error in exc.errors()
+    ]
+
+    return JSONResponse(
+        status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+        content={
+            "error": {
+                "code": "VALIDATION_ERROR",
+                "message": "Request validation failed.",
+                "details": {
+                    "errors": errors,
+                },
+            }
+        },
+    )
+
+
 async def http_exception_handler(
     request: Request,
     exc: StarletteHTTPException,
 ) -> JSONResponse:
-    if exc.status_code == 404:
+    if exc.status_code == status.HTTP_404_NOT_FOUND:
         return JSONResponse(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             content={
                 "error": {
                     "code": "ROUTE_NOT_FOUND",
@@ -130,7 +158,7 @@ async def unexpected_exception_handler(
     )
 
     return JSONResponse(
-        status_code=500,
+        status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
         content={
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
@@ -143,15 +171,24 @@ async def unexpected_exception_handler(
     )
 
 
-def register_exception_handlers(app: FastAPI) -> None:
+def register_exception_handlers(
+    app: FastAPI,
+) -> None:
     app.add_exception_handler(
         AppError,
         app_error_handler,
     )
+
+    app.add_exception_handler(
+        RequestValidationError,
+        request_validation_error_handler,
+    )
+
     app.add_exception_handler(
         StarletteHTTPException,
         http_exception_handler,
     )
+
     app.add_exception_handler(
         Exception,
         unexpected_exception_handler,

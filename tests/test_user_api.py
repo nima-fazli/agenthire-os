@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
+from fastapi import status
 from fastapi.testclient import TestClient
 
 from app.api.dependencies import (
@@ -21,7 +22,7 @@ client = TestClient(app)
 @pytest.fixture
 def user_service() -> Iterator[AsyncMock]:
     service = AsyncMock(
-        spec=UserService
+        spec=UserService,
     )
 
     app.dependency_overrides[
@@ -60,7 +61,9 @@ def test_register_user_api(
         },
     )
 
-    assert response.status_code == 201
+    assert response.status_code == (
+        status.HTTP_201_CREATED
+    )
 
     body = response.json()
 
@@ -101,7 +104,9 @@ def test_register_user_api_returns_conflict(
         },
     )
 
-    assert response.status_code == 409
+    assert response.status_code == (
+        status.HTTP_409_CONFLICT
+    )
     assert response.json() == {
         "error": {
             "code": "USER_EMAIL_ALREADY_EXISTS",
@@ -116,15 +121,37 @@ def test_register_user_api_returns_conflict(
 def test_register_user_api_rejects_short_password(
     user_service: AsyncMock,
 ) -> None:
+    secret_input = "S3cr3t!9x"
+
     response = client.post(
         "/users/register",
         json={
             "email": "nima@example.com",
-            "password": "short",
+            "password": secret_input,
         },
     )
 
-    assert response.status_code == 422
+    assert response.status_code == (
+        status.HTTP_422_UNPROCESSABLE_CONTENT
+    )
+
+    body = response.json()
+
+    assert body["error"]["code"] == "VALIDATION_ERROR"
+    assert body["error"]["message"] == (
+        "Request validation failed."
+    )
+
+    errors = body["error"]["details"]["errors"]
+
+    assert len(errors) == 1
+    assert errors[0]["location"] == [
+        "body",
+        "password",
+    ]
+
+    assert "input" not in errors[0]
+    assert secret_input not in response.text
 
     user_service.create.assert_not_awaited()
 
@@ -148,7 +175,7 @@ def test_get_me_returns_current_user() -> None:
 
     try:
         response = client.get(
-            "/users/me"
+            "/users/me",
         )
     finally:
         app.dependency_overrides.pop(
@@ -156,7 +183,9 @@ def test_get_me_returns_current_user() -> None:
             None,
         )
 
-    assert response.status_code == 200
+    assert response.status_code == (
+        status.HTTP_200_OK
+    )
 
     body = response.json()
 
@@ -181,7 +210,7 @@ def test_get_me_rejects_invalid_access_token() -> None:
 
     try:
         response = client.get(
-            "/users/me"
+            "/users/me",
         )
     finally:
         app.dependency_overrides.pop(
@@ -189,7 +218,9 @@ def test_get_me_rejects_invalid_access_token() -> None:
             None,
         )
 
-    assert response.status_code == 401
+    assert response.status_code == (
+        status.HTTP_401_UNAUTHORIZED
+    )
     assert response.json() == {
         "error": {
             "code": "INVALID_ACCESS_TOKEN",
