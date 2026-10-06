@@ -24,15 +24,14 @@ RUN --mount=type=cache,target=/root/.cache/uv \
         --no-dev \
         --no-install-project
 
-COPY app ./app
-COPY migrations ./migrations
-COPY alembic.ini ./
+COPY --chown=agenthire:agenthire app ./app
+COPY --chown=agenthire:agenthire migrations ./migrations
+COPY --chown=agenthire:agenthire alembic.ini ./
 
 RUN find app migrations \
         -type f \
         -name "*.py" \
-        -exec chmod 0644 {} + \
-    && chown -R agenthire:agenthire /app
+        -exec chmod 0644 {} +
 
 USER agenthire
 
@@ -41,23 +40,38 @@ EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 
+FROM runtime AS smoke
+
+COPY --chown=agenthire:agenthire scripts ./scripts
+
+RUN find scripts \
+        -type f \
+        -name "*.py" \
+        -exec chmod 0644 {} +
+
+CMD ["python", "-m", "scripts.docker_smoke"]
+
+
 FROM foundation AS test
+
+ENV PYTEST_ADDOPTS="-p no:cacheprovider" \
+    RUFF_NO_CACHE=true
 
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync \
         --locked \
         --no-install-project
 
-COPY app ./app
-COPY migrations ./migrations
-COPY tests ./tests
-COPY alembic.ini ./
+COPY --chown=agenthire:agenthire app ./app
+COPY --chown=agenthire:agenthire migrations ./migrations
+COPY --chown=agenthire:agenthire tests ./tests
+COPY --chown=agenthire:agenthire scripts ./scripts
+COPY --chown=agenthire:agenthire alembic.ini ./
 
-RUN find app migrations tests \
+RUN find app migrations tests scripts \
         -type f \
         -name "*.py" \
-        -exec chmod 0644 {} + \
-    && chown -R agenthire:agenthire /app
+        -exec chmod 0644 {} +
 
 USER agenthire
 

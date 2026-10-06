@@ -85,6 +85,30 @@ services:
 
     restart: unless-stopped
 
+  smoke:
+    profiles:
+      - smoke
+
+    build:
+      context: .
+      target: smoke
+
+    env_file:
+      - .env
+
+    environment:
+      AGENTHIRE_API_BASE_URL: http://api:8000
+      AGENTHIRE_POSTGRES_HOST: postgres
+      AGENTHIRE_POSTGRES_PORT: "5432"
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+
+    restart: "no"
+
   test:
     profiles:
       - test
