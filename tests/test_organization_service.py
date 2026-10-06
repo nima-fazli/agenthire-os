@@ -304,6 +304,50 @@ def test_create_organization_rolls_back_when_membership_creation_fails() -> None
     session.commit.assert_not_awaited()
 
 
+def test_list_organizations_for_user_returns_repository_result() -> None:
+    session = MagicMock(
+        spec=AsyncSession
+    )
+
+    organization_repository = MagicMock(
+        spec=OrganizationRepository
+    )
+
+    user_id = uuid4()
+
+    organizations = [
+        Organization(
+            id=uuid4(),
+            name="Acme",
+            slug="acme",
+        ),
+        Organization(
+            id=uuid4(),
+            name="Example",
+            slug="example",
+        ),
+    ]
+
+    organization_repository.list_for_user.return_value = organizations
+
+    service = OrganizationService(
+        session
+    )
+    service._repository = organization_repository
+
+    result = asyncio.run(
+        service.list_for_user(
+            user_id=user_id,
+        )
+    )
+
+    assert result == organizations
+
+    organization_repository.list_for_user.assert_awaited_once_with(
+        user_id
+    )
+
+
 def test_get_organization_for_member_returns_organization() -> None:
     session = MagicMock(
         spec=AsyncSession

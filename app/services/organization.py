@@ -73,6 +73,15 @@ class OrganizationService:
 
         return organization
 
+    async def list_for_user(
+        self,
+        *,
+        user_id: UUID,
+    ) -> list[Organization]:
+        return await self._repository.list_for_user(
+            user_id
+        )
+
     async def get_for_user(
         self,
         organization_id: UUID,

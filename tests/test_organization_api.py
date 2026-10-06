@@ -190,6 +190,93 @@ def test_create_organization_api_returns_conflict(
     }
 
 
+def test_list_organizations_api(
+    organization_service: AsyncMock,
+    authenticated_user: User,
+) -> None:
+    now = datetime.now(UTC)
+
+    first_id = uuid4()
+    second_id = uuid4()
+
+    organization_service.list_for_user.return_value = [
+        Organization(
+            id=first_id,
+            name="Acme",
+            slug="acme",
+            created_at=now,
+            updated_at=now,
+        ),
+        Organization(
+            id=second_id,
+            name="Example",
+            slug="example",
+            created_at=now,
+            updated_at=now,
+        ),
+    ]
+
+    response = client.get(
+        "/organizations"
+    )
+
+    assert response.status_code == 200
+
+    body = response.json()
+
+    assert len(body) == 2
+
+    assert body[0]["id"] == str(
+        first_id
+    )
+    assert body[0]["slug"] == "acme"
+
+    assert body[1]["id"] == str(
+        second_id
+    )
+    assert body[1]["slug"] == "example"
+
+    organization_service.list_for_user.assert_awaited_once_with(
+        user_id=authenticated_user.id,
+    )
+
+
+def test_list_organizations_api_requires_authentication(
+    organization_service: AsyncMock,
+) -> None:
+    def reject_current_user() -> None:
+        raise UnauthorizedError(
+            code="INVALID_ACCESS_TOKEN",
+            message="Access token is invalid or missing.",
+        )
+
+    app.dependency_overrides[
+        get_current_user
+    ] = reject_current_user
+
+    try:
+        response = client.get(
+            "/organizations"
+        )
+    finally:
+        app.dependency_overrides.pop(
+            get_current_user,
+            None,
+        )
+
+    assert response.status_code == 401
+
+    assert response.json() == {
+        "error": {
+            "code": "INVALID_ACCESS_TOKEN",
+            "message": "Access token is invalid or missing.",
+            "details": {},
+        }
+    }
+
+    organization_service.list_for_user.assert_not_awaited()
+
+
 def test_get_organization_api(
     organization_service: AsyncMock,
     authenticated_user: User,

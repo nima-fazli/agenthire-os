@@ -44,6 +44,30 @@ async def create_organization(
 
 
 @router.get(
+    "",
+    response_model=list[OrganizationRead],
+)
+async def list_organizations(
+    current_user: User = Depends(
+        get_current_user,
+    ),
+    service: OrganizationService = Depends(
+        get_organization_service,
+    ),
+) -> list[OrganizationRead]:
+    organizations = await service.list_for_user(
+        user_id=current_user.id,
+    )
+
+    return [
+        OrganizationRead.model_validate(
+            organization
+        )
+        for organization in organizations
+    ]
+
+
+@router.get(
     "/{organization_id}",
     response_model=OrganizationRead,
 )

@@ -4,10 +4,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.organization import Organization
+from app.models.organization_membership import OrganizationMembership
 
 
 class OrganizationRepository:
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(
+        self,
+        session: AsyncSession,
+    ) -> None:
         self._session = session
 
     async def create(
@@ -21,10 +25,14 @@ class OrganizationRepository:
             slug=slug,
         )
 
-        self._session.add(organization)
+        self._session.add(
+            organization
+        )
 
         await self._session.flush()
-        await self._session.refresh(organization)
+        await self._session.refresh(
+            organization
+        )
 
         return organization
 
@@ -41,10 +49,44 @@ class OrganizationRepository:
         self,
         slug: str,
     ) -> Organization | None:
-        statement = select(Organization).where(
+        statement = select(
+            Organization
+        ).where(
             Organization.slug == slug
         )
 
-        result = await self._session.execute(statement)
+        result = await self._session.execute(
+            statement
+        )
 
         return result.scalar_one_or_none()
+
+    async def list_for_user(
+        self,
+        user_id: UUID,
+    ) -> list[Organization]:
+        statement = (
+            select(
+                Organization
+            )
+            .join(
+                OrganizationMembership,
+                OrganizationMembership.organization_id
+                == Organization.id,
+            )
+            .where(
+                OrganizationMembership.user_id == user_id
+            )
+            .order_by(
+                Organization.created_at,
+                Organization.id,
+            )
+        )
+
+        result = await self._session.execute(
+            statement
+        )
+
+        return list(
+            result.scalars().all()
+        )
