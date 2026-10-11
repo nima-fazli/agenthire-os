@@ -1,24 +1,14 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    SecretStr,
-    field_validator,
-)
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, SecretStr, field_validator
 
 
 class UserCreate(BaseModel):
-    email: str = Field(
-        min_length=3,
-        max_length=320,
-    )
-    password: SecretStr = Field(
-        min_length=15,
-        max_length=128,
-    )
+    model_config = ConfigDict(extra="forbid")
+
+    email: EmailStr = Field(min_length=3, max_length=320)
+    password: SecretStr = Field(min_length=15, max_length=128)
 
     @field_validator("email", mode="before")
     @classmethod
@@ -30,9 +20,7 @@ class UserCreate(BaseModel):
 
 
 class UserRead(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True,
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: UUID
     email: str

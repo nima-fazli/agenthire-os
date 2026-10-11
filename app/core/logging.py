@@ -1,6 +1,7 @@
 import json
 import logging
 import sys
+import traceback
 from datetime import UTC, datetime
 
 
@@ -14,12 +15,17 @@ class JsonFormatter(logging.Formatter):
         }
 
         if record.exc_info is not None:
-            log_data["exception"] = self.formatException(record.exc_info)
+            _, exception, exception_traceback = record.exc_info
+            # Keep useful locations without exception messages, SQL, or values.
+            log_data["exception"] = {
+                "type": type(exception).__name__,
+                "frames": [
+                    {"file": frame.filename, "line": frame.lineno, "function": frame.name}
+                    for frame in traceback.extract_tb(exception_traceback)
+                ],
+            }
 
-        return json.dumps(
-            log_data,
-            ensure_ascii=False,
-        )
+        return json.dumps(log_data, ensure_ascii=False)
 
 
 def configure_logging(*, level: str) -> None:

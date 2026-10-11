@@ -9,27 +9,18 @@ from app.schemas.user import UserCreate, UserRead
 
 
 def test_user_create_normalizes_email() -> None:
-    user = UserCreate(
-        email="  NIMA@EXAMPLE.COM  ",
-        password="a-very-secure-password",
-    )
+    user = UserCreate(email="  NIMA@EXAMPLE.COM  ", password="a-very-secure-password")
 
     assert user.email == "nima@example.com"
 
 
 def test_user_create_rejects_short_password() -> None:
     with pytest.raises(ValidationError):
-        UserCreate(
-            email="nima@example.com",
-            password="short",
-        )
+        UserCreate(email="nima@example.com", password="short")
 
 
 def test_user_create_hides_password_value() -> None:
-    user = UserCreate(
-        email="nima@example.com",
-        password="a-very-secure-password",
-    )
+    user = UserCreate(email="nima@example.com", password="a-very-secure-password")
 
     assert "a-very-secure-password" not in repr(user)
 
@@ -47,8 +38,20 @@ def test_user_read_does_not_expose_password_hash() -> None:
     )
 
     user = UserRead.model_validate(source)
-
     body = user.model_dump()
 
     assert body["email"] == "nima@example.com"
     assert "password_hash" not in body
+
+
+@pytest.mark.parametrize("email", ["not-an-email", "user@", "@example.com"])
+def test_user_create_rejects_invalid_email(email: str) -> None:
+    with pytest.raises(ValidationError):
+        UserCreate(email=email, password="a-very-secure-password")
+
+
+def test_user_create_rejects_global_role() -> None:
+    with pytest.raises(ValidationError):
+        UserCreate.model_validate(
+            {"email": "nima@example.com", "password": "a-very-secure-password", "role": "admin"}
+        )

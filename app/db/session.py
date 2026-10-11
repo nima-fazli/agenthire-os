@@ -26,16 +26,9 @@ settings = get_settings()
 
 database_url = build_database_url(settings)
 
-engine: AsyncEngine = create_async_engine(
-    database_url,
-    pool_pre_ping=True,
-)
+engine: AsyncEngine = create_async_engine(database_url, pool_pre_ping=True, hide_parameters=True)
 
-async_session_factory = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+async_session_factory = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
 
 async def get_db_session() -> AsyncIterator[AsyncSession]:
@@ -45,9 +38,7 @@ async def get_db_session() -> AsyncIterator[AsyncSession]:
 
 async def check_database_connection() -> str:
     async with engine.connect() as connection:
-        result = await connection.execute(
-            text("SELECT current_database()")
-        )
+        result = await connection.execute(text("SELECT current_database()"))
 
         database_name = result.scalar_one()
 

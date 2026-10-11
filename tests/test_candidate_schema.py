@@ -5,10 +5,7 @@ from uuid import uuid4
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.candidate import (
-    CandidateCreate,
-    CandidateRead,
-)
+from app.schemas.candidate import CandidateCreate, CandidateRead, CandidateUpdate
 
 
 def test_candidate_create_normalizes_text() -> None:
@@ -29,10 +26,28 @@ def test_candidate_create_normalizes_text() -> None:
     assert candidate.summary == "Builds intelligent systems."
 
 
+@pytest.mark.parametrize("schema", [CandidateCreate, CandidateUpdate])
+@pytest.mark.parametrize("email", ["not-an-email", "user@", "@example.com"])
+def test_candidate_write_rejects_invalid_email(schema, email: str) -> None:
+    with pytest.raises(ValidationError):
+        schema(full_name="Ada Lovelace", email=email)
+
+
+def test_candidate_update_normalizes_email() -> None:
+    candidate = CandidateUpdate(email="  ADA@EXAMPLE.COM  ")
+
+    assert candidate.email == "ada@example.com"
+    assert candidate.model_dump(exclude_unset=True) == {"email": "ada@example.com"}
+
+
+@pytest.mark.parametrize("schema", [CandidateCreate, CandidateUpdate])
+def test_candidate_write_rejects_extra_tenant_fields(schema) -> None:
+    with pytest.raises(ValidationError):
+        schema(full_name="Ada Lovelace", organization_id=str(uuid4()))
+
+
 def test_candidate_create_allows_optional_fields() -> None:
-    candidate = CandidateCreate(
-        full_name="Ada Lovelace",
-    )
+    candidate = CandidateCreate(full_name="Ada Lovelace")
 
     assert candidate.email is None
     assert candidate.phone is None
@@ -42,22 +57,13 @@ def test_candidate_create_allows_optional_fields() -> None:
 
 
 def test_candidate_create_rejects_blank_name() -> None:
-    with pytest.raises(
-        ValidationError
-    ):
-        CandidateCreate(
-            full_name="   ",
-        )
+    with pytest.raises(ValidationError):
+        CandidateCreate(full_name="   ")
 
 
 def test_candidate_create_rejects_blank_optional_text() -> None:
-    with pytest.raises(
-        ValidationError
-    ):
-        CandidateCreate(
-            full_name="Ada Lovelace",
-            headline="   ",
-        )
+    with pytest.raises(ValidationError):
+        CandidateCreate(full_name="Ada Lovelace", headline="   ")
 
 
 def test_candidate_read_supports_attribute_objects() -> None:
@@ -78,9 +84,7 @@ def test_candidate_read_supports_attribute_objects() -> None:
         updated_at=now,
     )
 
-    candidate = CandidateRead.model_validate(
-        source
-    )
+    candidate = CandidateRead.model_validate(source)
 
     assert candidate.id == candidate_id
     assert candidate.organization_id == organization_id
