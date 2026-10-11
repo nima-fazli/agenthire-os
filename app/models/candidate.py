@@ -7,6 +7,7 @@ from sqlalchemy import (
     Index,
     String,
     Text,
+    UniqueConstraint,
     Uuid,
     func,
 )
@@ -19,6 +20,9 @@ class Candidate(Base):
     __tablename__ = "candidates"
 
     __table_args__ = (
+        UniqueConstraint(
+            "organization_id", "id", name="uq_candidates_organization_id_id"
+        ),
         Index(
             "ix_candidates_organization_id",
             "organization_id",

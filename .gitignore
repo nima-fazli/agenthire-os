@@ -37,3 +37,6 @@ Thumbs.db
 build/
 dist/
 *.egg-info/
+
+# Private candidate documents
+/storage/

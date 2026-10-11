@@ -31,7 +31,10 @@ COPY --chown=agenthire:agenthire alembic.ini ./
 RUN find app migrations \
         -type f \
         -name "*.py" \
-        -exec chmod 0644 {} +
+        -exec chmod 0644 {} + \
+    && mkdir -p /app/storage/candidate_documents \
+    && chown -R agenthire:agenthire /app/storage \
+    && chmod 0700 /app/storage/candidate_documents
 
 USER agenthire
 
