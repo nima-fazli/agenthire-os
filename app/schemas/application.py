@@ -15,18 +15,25 @@ class ApplicationStatus(StrEnum):
 
 
 class ApplicationCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     job_id: UUID
     candidate_id: UUID
 
 
+class ApplicationStatusTransition(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    status: ApplicationStatus
+
+
 class ApplicationRead(BaseModel):
-    model_config = ConfigDict(
-        from_attributes=True
-    )
+    model_config = ConfigDict(from_attributes=True)
 
     id: UUID
     organization_id: UUID
     job_id: UUID
     candidate_id: UUID
+    status: ApplicationStatus
     created_at: datetime
     updated_at: datetime

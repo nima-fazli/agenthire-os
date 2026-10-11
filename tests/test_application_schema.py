@@ -9,14 +9,12 @@ from app.schemas.application import (
     ApplicationCreate,
     ApplicationRead,
     ApplicationStatus,
+    ApplicationStatusTransition,
 )
 
 
 def test_application_status_values_are_explicit() -> None:
-    assert [
-        status.value
-        for status in ApplicationStatus
-    ] == [
+    assert [status.value for status in ApplicationStatus] == [
         "applied",
         "screening",
         "interview",
@@ -30,26 +28,15 @@ def test_application_create_accepts_candidate_and_job_ids() -> None:
     job_id = uuid4()
     candidate_id = uuid4()
 
-    application = ApplicationCreate(
-        job_id=job_id,
-        candidate_id=candidate_id,
-    )
+    application = ApplicationCreate(job_id=job_id, candidate_id=candidate_id)
 
     assert application.job_id == job_id
-    assert (
-        application.candidate_id
-        == candidate_id
-    )
+    assert application.candidate_id == candidate_id
 
 
 def test_application_create_rejects_invalid_ids() -> None:
-    with pytest.raises(
-        ValidationError
-    ):
-        ApplicationCreate(
-            job_id="not-a-uuid",
-            candidate_id="also-not-a-uuid",
-        )
+    with pytest.raises(ValidationError):
+        ApplicationCreate(job_id="not-a-uuid", candidate_id="also-not-a-uuid")
 
 
 def test_application_read_supports_attribute_objects() -> None:
@@ -66,19 +53,36 @@ def test_application_read_supports_attribute_objects() -> None:
         candidate_id=candidate_id,
         created_at=now,
         updated_at=now,
+        status="applied",
     )
 
-    application = ApplicationRead.model_validate(
-        source
-    )
+    application = ApplicationRead.model_validate(source)
 
     assert application.id == application_id
-    assert (
-        application.organization_id
-        == organization_id
-    )
+    assert application.organization_id == organization_id
     assert application.job_id == job_id
-    assert (
-        application.candidate_id
-        == candidate_id
-    )
+    assert application.candidate_id == candidate_id
+    assert application.status is ApplicationStatus.APPLIED
+
+
+@pytest.mark.parametrize("status", list(ApplicationStatus))
+def test_application_transition_accepts_explicit_status(status: ApplicationStatus) -> None:
+    transition = ApplicationStatusTransition(status=status.value)
+
+    assert transition.status is status
+
+
+@pytest.mark.parametrize("payload", [{}, {"status": "unknown"}, {"status": None}])
+def test_application_transition_rejects_missing_or_invalid_status(payload: dict) -> None:
+    with pytest.raises(ValidationError):
+        ApplicationStatusTransition.model_validate(payload)
+
+
+def test_application_transition_rejects_extra_fields() -> None:
+    with pytest.raises(ValidationError):
+        ApplicationStatusTransition(status="screening", organization_id=str(uuid4()))
+
+
+def test_application_create_cannot_inject_initial_status() -> None:
+    with pytest.raises(ValidationError):
+        ApplicationCreate(job_id=uuid4(), candidate_id=uuid4(), status="hired")
