@@ -43,6 +43,19 @@ EXPOSE 8000
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 
+FROM runtime AS extraction-worker
+
+USER root
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends poppler-utils util-linux \
+    && rm -rf /var/lib/apt/lists/*
+
+USER agenthire
+
+CMD ["python", "-m", "app.workers.document_extraction"]
+
+
 FROM runtime AS smoke
 
 COPY --chown=agenthire:agenthire scripts ./scripts
@@ -56,6 +69,10 @@ CMD ["python", "-m", "scripts.docker_smoke"]
 
 
 FROM foundation AS test
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends poppler-utils util-linux \
+    && rm -rf /var/lib/apt/lists/*
 
 ENV PYTEST_ADDOPTS="-p no:cacheprovider" \
     RUFF_NO_CACHE=true

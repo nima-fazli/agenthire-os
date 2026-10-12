@@ -1,6 +1,7 @@
 from app.models.application import Application
 from app.models.candidate import Candidate
 from app.models.candidate_document import CandidateDocument
+from app.models.document_extraction import DocumentExtraction
 from app.models.job import Job
 from app.models.organization import Organization
 from app.models.organization_membership import OrganizationMembership
@@ -10,6 +11,7 @@ __all__ = [
     "Application",
     "Candidate",
     "CandidateDocument",
+    "DocumentExtraction",
     "Job",
     "Organization",
     "OrganizationMembership",

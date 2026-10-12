@@ -16,7 +16,13 @@ from app.db.session import get_db_session
 from app.models.candidate_document import CandidateDocument
 from app.models.user import User
 from app.schemas.candidate_document import CandidateDocumentRead, DocumentUpload
+from app.schemas.document_extraction import (
+    ExtractionRead,
+    ExtractionRequest,
+    ExtractionTextRead,
+)
 from app.services.candidate_document import CandidateDocumentService
+from app.services.document_extraction import DocumentExtractionService
 
 router = APIRouter(
     prefix="/organizations/{organization_id}/candidates/{candidate_id}/documents",
@@ -58,6 +64,15 @@ def get_candidate_document_service(
         LocalDocumentStorage(settings.document_storage_path),
         max_bytes=settings.document_max_bytes,
         upload_timeout_seconds=settings.document_upload_timeout_seconds,
+    )
+
+
+def get_document_extraction_service(
+    session: AsyncSession = Depends(get_db_session),
+    documents: CandidateDocumentService = Depends(get_candidate_document_service),
+) -> DocumentExtractionService:
+    return DocumentExtractionService(
+        session, documents, max_attempts=get_settings().extraction_max_attempts
     )
 
 
@@ -163,3 +178,69 @@ async def delete_document(
         user_id=current_user.id,
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    "/{document_id}/extraction",
+    response_model=ExtractionRead,
+    status_code=status.HTTP_202_ACCEPTED,
+    responses={200: {"model": ExtractionRead}},
+)
+async def request_extraction(
+    organization_id: UUID,
+    candidate_id: UUID,
+    document_id: UUID,
+    data: ExtractionRequest,
+    response: Response,
+    current_user: User = Depends(get_current_user),
+    service: DocumentExtractionService = Depends(get_document_extraction_service),
+) -> ExtractionRead:
+    response.headers["Cache-Control"] = "private, no-store"
+    extraction = await service.request_for_user(
+        document_id,
+        data,
+        organization_id=organization_id,
+        candidate_id=candidate_id,
+        user_id=current_user.id,
+    )
+    if extraction.status in {"succeeded", "failed"}:
+        response.status_code = status.HTTP_200_OK
+    return ExtractionRead.model_validate(extraction)
+
+
+@router.get("/{document_id}/extraction", response_model=ExtractionRead)
+async def get_extraction(
+    organization_id: UUID,
+    candidate_id: UUID,
+    document_id: UUID,
+    response: Response,
+    current_user: User = Depends(get_current_user),
+    service: DocumentExtractionService = Depends(get_document_extraction_service),
+) -> ExtractionRead:
+    response.headers["Cache-Control"] = "private, no-store"
+    extraction = await service.get_for_user(
+        document_id,
+        organization_id=organization_id,
+        candidate_id=candidate_id,
+        user_id=current_user.id,
+    )
+    return ExtractionRead.model_validate(extraction)
+
+
+@router.get("/{document_id}/extraction/text", response_model=ExtractionTextRead)
+async def get_extracted_text(
+    organization_id: UUID,
+    candidate_id: UUID,
+    document_id: UUID,
+    response: Response,
+    current_user: User = Depends(get_current_user),
+    service: DocumentExtractionService = Depends(get_document_extraction_service),
+) -> ExtractionTextRead:
+    response.headers["Cache-Control"] = "private, no-store"
+    extraction = await service.text_for_user(
+        document_id,
+        organization_id=organization_id,
+        candidate_id=candidate_id,
+        user_id=current_user.id,
+    )
+    return ExtractionTextRead.model_validate(extraction)

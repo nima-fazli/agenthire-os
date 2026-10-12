@@ -38,6 +38,22 @@ class Settings(BaseSettings):
     )
     document_upload_timeout_seconds: int = Field(default=60, ge=1, le=300)
 
+    extraction_max_pages: int = Field(default=100, ge=1, le=500)
+    extraction_max_text_bytes: int = Field(default=1_000_000, ge=1024, le=5_000_000)
+    extraction_timeout_seconds: int = Field(default=20, ge=1, le=120)
+    extraction_process_memory_mb: int = Field(default=256, ge=64, le=1024)
+    extraction_lease_seconds: int = Field(default=60, ge=10, le=600)
+    extraction_max_attempts: int = Field(default=3, ge=1, le=10)
+    extraction_poll_seconds: float = Field(default=1, ge=0.1, le=30)
+
+    @model_validator(mode="after")
+    def require_extraction_lease_margin(self) -> Self:
+        if self.extraction_lease_seconds < self.extraction_timeout_seconds + 10:
+            raise ValueError(
+                "Extraction lease must exceed the parser timeout by at least 10 seconds."
+            )
+        return self
+
     @field_validator("document_storage_path", mode="before")
     @classmethod
     def require_dedicated_storage_directory(cls, value: str | Path) -> Path:

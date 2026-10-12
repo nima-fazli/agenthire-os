@@ -86,6 +86,42 @@ services:
 
     restart: unless-stopped
 
+  extraction-worker:
+    build:
+      context: .
+      target: extraction-worker
+    env_file:
+      - .env
+    environment:
+      AGENTHIRE_POSTGRES_HOST: postgres
+      AGENTHIRE_POSTGRES_PORT: "5432"
+      AGENTHIRE_DOCUMENT_STORAGE_PATH: /app/storage/candidate_documents
+    volumes:
+      - agenthire_document_data:/app/storage:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 768m
+    cpus: 1.0
+    pids_limit: 64
+    stop_grace_period: 150s
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.workers.document_extraction", "--healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
   smoke:
     profiles:
       - smoke
