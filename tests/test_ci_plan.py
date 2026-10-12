@@ -91,7 +91,8 @@ def test_commands_keep_spaces_as_single_arguments(tmp_path):
     env_file = tmp_path / "temporary directory" / "ci.env"
     prefix = compose_prefix(root, PROJECT, env_file)
     steps = verification_plan(prefix)
-    assert len(steps) == 20
+    assert len(steps) == 10 + len(SMOKE_MODULES)
+    assert SMOKE_MODULES[-1] == "storage_integrity_smoke"
     for step in (*steps, cleanup_step(prefix)):
         assert step.command[: len(prefix)] == prefix
         assert step.command[step.command.index("--project-name") + 1] == PROJECT

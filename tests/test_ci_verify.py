@@ -165,7 +165,7 @@ def test_full_cli_preserves_isolation_failure_and_temporary_cleanup(
     if failure == "docker-pytest":
         assert not any("up" in command for command in calls)
     if failure is None:
-        assert sum(command[-1].startswith("scripts.") for command in calls) == 10
+        assert sum(command[-1].startswith("scripts.") for command in calls) == len(SMOKE_MODULES)
 
 
 def test_unavailable_docker_returns_safe_setup_failure(monkeypatch, capsys):
