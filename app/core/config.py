@@ -46,6 +46,16 @@ class Settings(BaseSettings):
     extraction_max_attempts: int = Field(default=3, ge=1, le=10)
     extraction_poll_seconds: float = Field(default=1, ge=0.1, le=30)
 
+    chunk_max_chars: int = Field(default=1200, ge=256, le=4000)
+    chunk_overlap_chars: int = Field(default=150, ge=0, le=1000)
+    chunk_max_count: int = Field(default=1000, ge=1, le=5000)
+
+    @model_validator(mode="after")
+    def require_chunk_progress(self) -> Self:
+        if self.chunk_overlap_chars >= self.chunk_max_chars:
+            raise ValueError("Chunk overlap must be smaller than the chunk size.")
+        return self
+
     @model_validator(mode="after")
     def require_extraction_lease_margin(self) -> Self:
         if self.extraction_lease_seconds < self.extraction_timeout_seconds + 10:
