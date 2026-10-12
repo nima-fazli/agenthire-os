@@ -1,0 +1,30 @@
+services:
+  migrate:
+    image: ${AGENTHIRE_CI_PROJECT:?CI project required}-migrate
+    env_file: !override
+      - ${AGENTHIRE_CI_ENV_FILE:?CI environment required}
+
+  api:
+    image: ${AGENTHIRE_CI_PROJECT:?CI project required}-api
+    env_file: !override
+      - ${AGENTHIRE_CI_ENV_FILE:?CI environment required}
+    ports: !reset []
+
+  extraction-worker:
+    image: ${AGENTHIRE_CI_PROJECT:?CI project required}-extraction-worker
+    env_file: !override
+      - ${AGENTHIRE_CI_ENV_FILE:?CI environment required}
+
+  smoke:
+    image: ${AGENTHIRE_CI_PROJECT:?CI project required}-smoke
+    env_file: !override
+      - ${AGENTHIRE_CI_ENV_FILE:?CI environment required}
+
+  test:
+    image: ${AGENTHIRE_CI_PROJECT:?CI project required}-test
+
+volumes:
+  agenthire_postgres_data:
+    name: ${AGENTHIRE_CI_PROJECT:?CI project required}_postgres
+  agenthire_document_data:
+    name: ${AGENTHIRE_CI_PROJECT:?CI project required}_documents
