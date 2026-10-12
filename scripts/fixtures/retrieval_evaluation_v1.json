@@ -1,0 +1,50 @@
+{
+  "protocol_version": "retrieval-quality-v1",
+  "suite_id": "synthetic-candidates-v1",
+  "corpus_sha256": "a1f628ee47ca434ce46e4c926fd9effbd667e7639ca6d755b49bcc41433a36a4",
+  "label_kind": "synthetic_reference",
+  "criteria": [
+    {"key": "python", "label": "Python", "q": "Python", "importance": "required"},
+    {"key": "sql", "label": "SQL", "q": "SQL", "importance": "required"},
+    {"key": "go", "label": "Go", "q": "Go", "importance": "preferred"},
+    {"key": "persian", "label": "Persian terms", "q": "کیان مهندس نرم افزار", "importance": "preferred"},
+    {"key": "together", "label": "Python and SQL in one chunk", "q": "Python SQL", "importance": "preferred"}
+  ],
+  "ranking": [
+    {
+      "key": "rank-python", "q": "Python", "k": 3,
+      "judgments": {"ada": 1, "grace": 1, "linus": 0, "bruno": 1, "kian": 0, "empty": 0, "pending": 0, "other-tenant": 0},
+      "forbidden": ["other-tenant"]
+    },
+    {
+      "key": "rank-sql", "q": "SQL", "k": 3,
+      "judgments": {"ada": 1, "grace": 0, "linus": 1, "bruno": 1, "kian": 0, "empty": 0, "pending": 0, "other-tenant": 0},
+      "forbidden": ["other-tenant"]
+    },
+    {
+      "key": "rank-combined", "q": "Python SQL", "k": 2,
+      "judgments": {"ada": 1, "grace": 0, "linus": 0, "bruno": 1, "kian": 0, "empty": 0, "pending": 0, "other-tenant": 0},
+      "forbidden": ["other-tenant"]
+    },
+    {
+      "key": "rank-persian", "q": "کیان مهندس نرم افزار", "k": 1,
+      "judgments": {"ada": 0, "grace": 0, "linus": 0, "bruno": 0, "kian": 1, "empty": 0, "pending": 0, "other-tenant": 0},
+      "forbidden": ["other-tenant"]
+    },
+    {
+      "key": "rank-empty", "q": "Rust", "k": 3,
+      "judgments": {"ada": 0, "grace": 0, "linus": 0, "bruno": 0, "kian": 0, "empty": 0, "pending": 0, "other-tenant": 0},
+      "forbidden": ["other-tenant"]
+    }
+  ],
+  "evidence": [
+    {"key": "evidence-ada", "item_id": "ada", "expected": {"python": true, "sql": true, "go": false, "persian": false, "together": true}, "source_status": "partial", "profile_revision": 1},
+    {"key": "evidence-grace", "item_id": "grace", "expected": {"python": true, "sql": false, "go": false, "persian": false, "together": false}, "source_status": "indexed", "profile_revision": 1},
+    {"key": "evidence-linus", "item_id": "linus", "expected": {"python": false, "sql": true, "go": false, "persian": false, "together": false}, "source_status": "indexed", "profile_revision": 1},
+    {"key": "evidence-bruno", "item_id": "bruno", "expected": {"python": true, "sql": true, "go": false, "persian": false, "together": false}, "source_status": "indexed", "profile_revision": 1},
+    {"key": "evidence-kian", "item_id": "kian", "expected": {"python": false, "sql": false, "go": false, "persian": true, "together": false}, "source_status": "indexed", "profile_revision": 1},
+    {"key": "evidence-empty", "item_id": "empty", "expected": {"python": false, "sql": false, "go": false, "persian": false, "together": false}, "source_status": "no_documents", "profile_revision": 1},
+    {"key": "evidence-pending", "item_id": "pending", "expected": {"python": false, "sql": false, "go": false, "persian": false, "together": false}, "source_status": "not_indexed", "profile_revision": 1}
+  ],
+  "thresholds": {"mean_precision_at_k": 0.8, "mean_recall_at_k": 0.8, "mean_ndcg_at_k": 0.85, "mean_reciprocal_rank_at_k": 0.95, "evidence_precision": 1.0, "evidence_recall": 1.0}
+}

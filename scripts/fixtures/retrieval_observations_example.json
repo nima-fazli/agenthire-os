@@ -1,0 +1,87 @@
+{
+  "suite_sha256": "b0d70e887a7966719dbb8c1d02f13d27af6e236b8cb15abbdd7018a3c9cfeb79",
+  "source_kind": "example",
+  "search_version": "simple-fold-v1",
+  "retrieval_version": "best-chunk-v1",
+  "matching_version": "criterion-evidence-v1",
+  "chunk_policies": [{"chunker_version": "char-window-v1", "max_chars": 1200, "overlap_chars": 150}],
+  "ranking": [
+    {"key": "rank-python", "ranked_ids": ["grace", "ada", "bruno"], "provenance_failures": 0},
+    {"key": "rank-sql", "ranked_ids": ["linus", "ada", "bruno"], "provenance_failures": 0},
+    {"key": "rank-combined", "ranked_ids": ["ada"], "provenance_failures": 0},
+    {"key": "rank-persian", "ranked_ids": ["kian"], "provenance_failures": 0},
+    {"key": "rank-empty", "ranked_ids": [], "provenance_failures": 0}
+  ],
+  "evidence": [
+    {
+      "key": "evidence-ada", "profile_revision": 1, "source_status": "partial",
+      "criteria": [
+        {"key": "python", "found": true, "provenance_valid": true},
+        {"key": "sql", "found": true, "provenance_valid": true},
+        {"key": "go", "found": false, "provenance_valid": null},
+        {"key": "persian", "found": false, "provenance_valid": null},
+        {"key": "together", "found": true, "provenance_valid": true}
+      ]
+    },
+    {
+      "key": "evidence-grace", "profile_revision": 1, "source_status": "indexed",
+      "criteria": [
+        {"key": "python", "found": true, "provenance_valid": true},
+        {"key": "sql", "found": false, "provenance_valid": null},
+        {"key": "go", "found": false, "provenance_valid": null},
+        {"key": "persian", "found": false, "provenance_valid": null},
+        {"key": "together", "found": false, "provenance_valid": null}
+      ]
+    },
+    {
+      "key": "evidence-linus", "profile_revision": 1, "source_status": "indexed",
+      "criteria": [
+        {"key": "python", "found": false, "provenance_valid": null},
+        {"key": "sql", "found": true, "provenance_valid": true},
+        {"key": "go", "found": false, "provenance_valid": null},
+        {"key": "persian", "found": false, "provenance_valid": null},
+        {"key": "together", "found": false, "provenance_valid": null}
+      ]
+    },
+    {
+      "key": "evidence-bruno", "profile_revision": 1, "source_status": "indexed",
+      "criteria": [
+        {"key": "python", "found": true, "provenance_valid": true},
+        {"key": "sql", "found": true, "provenance_valid": true},
+        {"key": "go", "found": false, "provenance_valid": null},
+        {"key": "persian", "found": false, "provenance_valid": null},
+        {"key": "together", "found": false, "provenance_valid": null}
+      ]
+    },
+    {
+      "key": "evidence-kian", "profile_revision": 1, "source_status": "indexed",
+      "criteria": [
+        {"key": "python", "found": false, "provenance_valid": null},
+        {"key": "sql", "found": false, "provenance_valid": null},
+        {"key": "go", "found": false, "provenance_valid": null},
+        {"key": "persian", "found": true, "provenance_valid": true},
+        {"key": "together", "found": false, "provenance_valid": null}
+      ]
+    },
+    {
+      "key": "evidence-empty", "profile_revision": 1, "source_status": "no_documents",
+      "criteria": [
+        {"key": "python", "found": false, "provenance_valid": null},
+        {"key": "sql", "found": false, "provenance_valid": null},
+        {"key": "go", "found": false, "provenance_valid": null},
+        {"key": "persian", "found": false, "provenance_valid": null},
+        {"key": "together", "found": false, "provenance_valid": null}
+      ]
+    },
+    {
+      "key": "evidence-pending", "profile_revision": 1, "source_status": "not_indexed",
+      "criteria": [
+        {"key": "python", "found": false, "provenance_valid": null},
+        {"key": "sql", "found": false, "provenance_valid": null},
+        {"key": "go", "found": false, "provenance_valid": null},
+        {"key": "persian", "found": false, "provenance_valid": null},
+        {"key": "together", "found": false, "provenance_valid": null}
+      ]
+    }
+  ]
+}
