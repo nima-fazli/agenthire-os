@@ -12,10 +12,12 @@ def test_settings_defaults() -> None:
     assert settings.environment == "local"
     assert settings.debug is False
     assert settings.log_level == "INFO"
+
     assert settings.postgres_host == "127.0.0.1"
     assert settings.postgres_port == 5435
     assert settings.postgres_db == "agenthire"
     assert settings.postgres_user == "agenthire"
+
     assert settings.jwt_algorithm == "HS256"
     assert settings.access_token_expire_minutes == 30
 
@@ -32,6 +34,7 @@ def test_settings_read_environment_variables(monkeypatch: pytest.MonkeyPatch) ->
     assert settings.app_name == "Test API"
     assert settings.environment == "test"
     assert settings.postgres_port == 6543
+
     assert settings.jwt_secret.get_secret_value() == "test-jwt-secret"
     assert settings.access_token_expire_minutes == 45
 
@@ -114,3 +117,34 @@ def test_settings_validation_message_does_not_echo_secret_values() -> None:
 
     assert secret not in str(error.value)
     assert "synthetic-database-password" not in str(error.value)
+
+
+@pytest.mark.parametrize(
+    "values",
+    [
+        {"chunk_max_chars": 255},
+        {"chunk_max_chars": 4001},
+        {"chunk_overlap_chars": -1},
+        {"chunk_overlap_chars": 1001},
+        {"chunk_max_count": 0},
+        {"chunk_max_count": 5001},
+        {"chunk_max_chars": 256, "chunk_overlap_chars": 256},
+    ],
+)
+def test_chunk_configuration_is_bounded_and_makes_progress(values: dict) -> None:
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, **values)
+
+
+def test_chunk_policy_can_be_configured_without_client_input(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("AGENTHIRE_CHUNK_MAX_CHARS", "1500")
+    monkeypatch.setenv("AGENTHIRE_CHUNK_OVERLAP_CHARS", "200")
+    monkeypatch.setenv("AGENTHIRE_CHUNK_MAX_COUNT", "1200")
+    settings = Settings(_env_file=None)
+    assert (
+        settings.chunk_max_chars,
+        settings.chunk_overlap_chars,
+        settings.chunk_max_count,
+    ) == (1500, 200, 1200)
