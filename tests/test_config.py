@@ -148,3 +148,16 @@ def test_chunk_policy_can_be_configured_without_client_input(
         settings.chunk_overlap_chars,
         settings.chunk_max_count,
     ) == (1500, 200, 1200)
+
+
+@pytest.mark.parametrize("value", [99, 10001])
+def test_document_search_timeout_is_bounded(value: int) -> None:
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, document_search_timeout_ms=value)
+
+
+def test_document_search_timeout_reads_environment(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("AGENTHIRE_DOCUMENT_SEARCH_TIMEOUT_MS", "2000")
+    assert Settings(_env_file=None).document_search_timeout_ms == 2000
