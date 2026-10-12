@@ -15,6 +15,7 @@ SMOKE_MODULES = (
     "job_retrieval_smoke",
     "job_matching_smoke",
     "retrieval_evaluation_smoke",
+    "storage_integrity_smoke",
 )
 
 

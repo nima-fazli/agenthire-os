@@ -16,6 +16,8 @@ versioned quality evaluation.
 - PostgreSQL full-text search and one best resume witness per candidate.
 - Explicit job search/match profiles with independent required/preferred criteria.
 - Reproducible synthetic reference evaluation with quality gates.
+- Application tenant consistency enforced in PostgreSQL after a migration audit.
+- Private operator reconciliation with a dry-run default and guarded scoped cleanup.
 
 Retrieval scores measure lexical relevance. Criterion evidence does not verify a
 skill or determine hiring suitability. Embeddings, LLM explanations, agents and
@@ -36,7 +38,7 @@ uv run --locked --no-sync python -m scripts.ci_verify
 ```
 
 The last command builds a separate temporary stack, applies migrations, checks
-schema drift and runs all ten real-stack smoke modules. It generates temporary
+schema drift and runs all eleven real-stack smoke modules. It generates temporary
 test credentials, publishes no API port and cleans its own containers, networks
 and volumes. It uses the existing Docker context and retains build images/cache.
 
@@ -58,7 +60,8 @@ claiming hosted CI is verified.
 - [Retrieval and evaluation contracts](docs/retrieval.md)
 - [Roadmap and delivery gates](docs/roadmap.md)
 
-The last user-verified baseline before the CI stage is main `62da13a`: all 998
-Docker tests passed, Alembic head `0014_create_job_match_profiles` had no drift,
-and the real-stack synthetic evaluation passed. This records a baseline, not a
-production deployment or a hosted CI result.
+The latest user-verified baseline is main `4570707`: the stage-9 Docker runner,
+all ten then-current smoke modules and cleanup passed. Alembic head was
+`0014_create_job_match_profiles` with no drift. Stage 10 adds migration
+`0015_application_tenant_fks` and the eleventh smoke; its user acceptance is pending.
+Hosted GitHub Actions and production deployment remain unverified.

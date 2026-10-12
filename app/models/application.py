@@ -5,6 +5,7 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    ForeignKeyConstraint,
     Index,
     String,
     UniqueConstraint,
@@ -20,6 +21,16 @@ class Application(Base):
     __tablename__ = "applications"
 
     __table_args__ = (
+        ForeignKeyConstraint(
+            ["organization_id", "job_id"],
+            ["jobs.organization_id", "jobs.id"],
+            name="fk_applications_organization_id_job_id_jobs",
+        ),
+        ForeignKeyConstraint(
+            ["organization_id", "candidate_id"],
+            ["candidates.organization_id", "candidates.id"],
+            name="fk_applications_organization_id_candidate_id_candidates",
+        ),
         UniqueConstraint(
             "job_id",
             "candidate_id",

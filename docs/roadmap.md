@@ -1,6 +1,6 @@
 # Roadmap
 
-The completed baseline is user main `62da13a`. Stages are implementation slices,
+The completed baseline is user main `4570707`. Stages are implementation slices,
 not estimates or an assertion that the whole product is production-ready.
 
 | Stage | Status | Delivery gate |
@@ -14,8 +14,8 @@ not estimates or an assertion that the whole product is production-ready.
 | 6: job candidate retrieval | Verified | Candidate grouping, profiles and best-source pagination |
 | 7: independent criteria | Verified | Cross-chunk witnesses, readiness and one snapshot |
 | 8: quality evaluation | Verified | Versioned synthetic reference and real-stack gate |
-| 9: CI/documentation | Prepared | User isolated Docker run, focused commits, actual hosted run when connected |
-| 10: storage/data hardening | Planned | Reconciliation/retention and audited application tenant constraints |
+| 9: CI/documentation | Docker runner and commits verified | Hosted Actions run remains unverified until connected and observed |
+| 10: storage/data hardening | Prepared | Audited Application tenant FKs, guarded dry-run/scoped orphan cleanup and real-stack acceptance |
 | 11: semantic retrieval | Planned | Selected model/provider, versioned embeddings, isolated retrieval and measured baseline improvement |
 | 12: grounded AI explanation | Conditional | Structured source-backed output, privacy/cost limits and hallucination evaluation |
 | 13: recruiter UI | Planned | Tenant-aware source/evidence flows, accessibility and tested API integration |

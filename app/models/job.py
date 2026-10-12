@@ -8,6 +8,7 @@ from sqlalchemy import (
     Index,
     String,
     Text,
+    UniqueConstraint,
     Uuid,
     func,
 )
@@ -20,6 +21,7 @@ class Job(Base):
     __tablename__ = "jobs"
 
     __table_args__ = (
+        UniqueConstraint("organization_id", "id", name="uq_jobs_organization_id_id"),
         CheckConstraint(
             "status IN ('draft', 'open', 'closed')",
             name="status",

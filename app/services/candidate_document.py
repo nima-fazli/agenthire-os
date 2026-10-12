@@ -4,6 +4,7 @@ from collections.abc import AsyncIterator
 from typing import BinaryIO
 from uuid import UUID
 
+from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -136,6 +137,11 @@ class CandidateDocumentService:
                 )
         try:
             async with asyncio.timeout(self._upload_timeout_seconds):
+                # Held through publication and the metadata commit. Reconciliation
+                # takes the conflicting SHARE ROW EXCLUSIVE table lock.
+                await self._session.execute(
+                    text("LOCK TABLE candidate_documents IN ROW EXCLUSIVE MODE")
+                )
                 stored = await self._storage.save_pdf(chunks, max_bytes=self._max_bytes)
         except TimeoutError as error:
             raise upload_error(
