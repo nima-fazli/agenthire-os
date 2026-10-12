@@ -5,15 +5,18 @@ from sqlalchemy import (
     CheckConstraint,
     DateTime,
     ForeignKey,
+    Index,
     Integer,
     String,
     Text,
     UniqueConstraint,
     Uuid,
     func,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.core.text_search import LATEST_SET_INDEX, SEARCH_INDEX
 from app.db.base import Base
 
 
@@ -62,6 +65,11 @@ class DocumentChunkSet(Base):
 class DocumentChunk(Base):
     __tablename__ = "document_chunks"
     __table_args__ = (
+        Index(
+            SEARCH_INDEX,
+            text("to_tsvector('simple'::regconfig, agenthire_search_text_v1(text))"),
+            postgresql_using="gin",
+        ).ddl_if(dialect="postgresql"),
         CheckConstraint("position >= 0", name="position"),
         CheckConstraint("start_offset >= 0", name="start_offset"),
         CheckConstraint("end_offset > start_offset", name="end_offset"),
@@ -80,3 +88,11 @@ class DocumentChunk(Base):
     end_offset: Mapped[int] = mapped_column(Integer, nullable=False)
     text: Mapped[str] = mapped_column(Text, nullable=False)
     sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+Index(
+    LATEST_SET_INDEX,
+    DocumentChunkSet.document_id,
+    DocumentChunkSet.created_at.desc(),
+    DocumentChunkSet.id.desc(),
+)
