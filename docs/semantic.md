@@ -145,4 +145,11 @@ applicant scope, profile/membership race checks and synthetic fixture cleanup.
 These are single service-call samples on a tiny synthetic corpus, not latency
 percentiles or production throughput. Persian inference took longer in this run.
 Broader corpus evaluation and load testing remain release work. Technical
-acceptance is complete; the two scoped stage 11-B commits remain pending.
+acceptance and commits are complete: feature 2ffc3a2, tests 38e60af.
+
+Stage 12 adds optional grounded briefs using qwen3:0.6b in the same Ollama runtime;
+see [explanation contracts and recorded acceptance](explanations.md). Native,
+Docker and real CPU explanation gates passed on 2026-10-13; scoped commits remain
+pending. The embedding worker was restored and healthy after the live measurement.
+Ollama keeps one model loaded, so generation and embedding share capacity and
+model switching. The semantic endpoints and encoding contracts stay unchanged.

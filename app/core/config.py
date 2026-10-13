@@ -53,6 +53,15 @@ class Settings(BaseSettings):
     chunk_max_count: int = Field(default=1000, ge=1, le=5000)
     document_search_timeout_ms: int = Field(default=1500, ge=100, le=10000)
 
+    explanations_enabled: bool = False
+    chat_base_url: str = "http://127.0.0.1:11434"
+    chat_timeout_seconds: int = Field(default=120, ge=5, le=180)
+
+    @field_validator("chat_base_url")
+    @classmethod
+    def require_local_chat_url(cls, value: str) -> str:
+        return local_base_url(value)
+
     semantic_enabled: bool = False
     embedding_base_url: str = "http://127.0.0.1:11434"
     embedding_timeout_seconds: int = Field(default=60, ge=5, le=120)

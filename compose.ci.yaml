@@ -6,6 +6,8 @@ services:
 
   api:
     image: ${AGENTHIRE_CI_PROJECT:?CI project required}-api
+    environment:
+      AGENTHIRE_EXPLANATIONS_ENABLED: "false"
     env_file: !override
       - ${AGENTHIRE_CI_ENV_FILE:?CI environment required}
     ports: !reset []
@@ -17,6 +19,8 @@ services:
 
   smoke:
     image: ${AGENTHIRE_CI_PROJECT:?CI project required}-smoke
+    environment:
+      AGENTHIRE_EXPLANATIONS_ENABLED: "false"
     env_file: !override
       - ${AGENTHIRE_CI_ENV_FILE:?CI environment required}
 

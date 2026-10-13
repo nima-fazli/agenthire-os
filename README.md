@@ -20,9 +20,10 @@ versioned quality evaluation.
 - Private operator reconciliation with a dry-run default and guarded scoped cleanup.
 - Opt-in local CPU embedding jobs with model/source versioning and atomic pgvector storage.
 - Opt-in exact cosine search and bounded reciprocal-rank fusion with separate source witnesses.
+- Opt-in local extractive evidence briefs with exact quotes and deterministic bilingual summaries.
 
 Retrieval scores measure relevance, not proficiency or hiring suitability.
-LLM explanations, agents and the frontend remain future work.
+The recruiter frontend and release operations are the next delivery stages.
 
 ## Verify
 
@@ -39,7 +40,7 @@ uv run --locked --no-sync python -m scripts.ci_verify
 ```
 
 The last command builds a separate temporary stack, applies migrations, checks
-schema drift and runs all thirteen real-stack smoke modules. It generates temporary
+schema drift and runs all fourteen real-stack smoke modules. It generates temporary
 test credentials, publishes no API port and cleans its own containers, networks
 and volumes. It uses the existing Docker context and retains build images/cache.
 
@@ -61,11 +62,17 @@ claiming hosted CI is verified.
 - [Retrieval and evaluation contracts](docs/retrieval.md)
 - [Roadmap and delivery gates](docs/roadmap.md)
 - [Free local embeddings and activation](docs/semantic.md)
+- [Grounded local evidence briefs](docs/explanations.md)
 
-The latest committed baseline is main `242ccae`: stage 11-A, schema
-`0016_document_embeddings`, local CPU model and healthy embedding worker accepted.
-Stage 11-B semantic/hybrid retrieval passed Windows tests, 1241 Docker tests,
-all thirteen real-stack smoke modules and the live CPU model comparison. Its
-two scoped commits remain pending. The small synthetic comparison is not a
-production quality or capacity benchmark. Hosted GitHub Actions and production
+The latest committed baseline is main `38e60af`: stage 11-B, schema
+`0016_document_embeddings`, 1241 Docker tests, thirteen smoke modules and the
+real CPU semantic comparison accepted. Its feature/test commits are `2ffc3a2`
+and `38e60af`. Stage 12 adds a grounded local quote extractor and the fourteenth
+smoke. Its technical acceptance passed on 2026-10-13: Windows 1306 passed / 5
+platform skips, Docker 1311 passed, all 24 isolated checks and cleanup passed,
+and the real CPU grounding gate and private authenticated HTTP passed. Both
+stacks had no schema drift; all six normal-stack services ended healthy.
+Stage 12's two scoped commits remain pending. The Persian explanation sample
+took 13.81 seconds. Synthetic references and single timing samples are not
+production quality or capacity benchmarks. Hosted GitHub Actions and production
 deployment remain unverified. No paid AI provider is required.

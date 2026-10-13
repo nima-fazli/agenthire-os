@@ -18,6 +18,7 @@ SMOKE_MODULES = (
     "storage_integrity_smoke",
     "document_embeddings_smoke",
     "semantic_retrieval_smoke",
+    "grounded_explanations_smoke",
 )
 
 

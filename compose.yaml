@@ -60,6 +60,8 @@ services:
       AGENTHIRE_DOCUMENT_STORAGE_PATH: /app/storage/candidate_documents
       AGENTHIRE_SEMANTIC_ENABLED: "${AGENTHIRE_SEMANTIC_ENABLED:-false}"
       AGENTHIRE_EMBEDDING_BASE_URL: http://ollama:11434
+      AGENTHIRE_EXPLANATIONS_ENABLED: "${AGENTHIRE_EXPLANATIONS_ENABLED:-false}"
+      AGENTHIRE_CHAT_BASE_URL: http://ollama:11434
 
     volumes:
       - agenthire_document_data:/app/storage
@@ -197,6 +199,8 @@ services:
       AGENTHIRE_DOCUMENT_STORAGE_PATH: /app/storage/candidate_documents
       AGENTHIRE_SEMANTIC_ENABLED: "${AGENTHIRE_SEMANTIC_ENABLED:-false}"
       AGENTHIRE_EMBEDDING_BASE_URL: http://ollama:11434
+      AGENTHIRE_EXPLANATIONS_ENABLED: "${AGENTHIRE_EXPLANATIONS_ENABLED:-false}"
+      AGENTHIRE_CHAT_BASE_URL: http://ollama:11434
 
     volumes:
       - agenthire_document_data:/app/storage

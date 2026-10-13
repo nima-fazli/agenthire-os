@@ -1,6 +1,6 @@
 # Roadmap
 
-The latest committed baseline is user main `242ccae`. Stages are implementation slices,
+The latest committed baseline is user main `38e60af`. Stages are implementation slices,
 not estimates or an assertion that the whole product is production-ready.
 
 | Stage | Status | Delivery gate |
@@ -17,9 +17,9 @@ not estimates or an assertion that the whole product is production-ready.
 | 9: CI/documentation | Docker runner and commits verified | Hosted Actions run remains unverified until connected and observed |
 | 10: storage/data hardening | Verified | Audited Application tenant FKs, guarded cleanup, eleven smokes and normal stack accepted |
 | 11-A: local embeddings | Verified and committed | Free local CPU model, durable source/model versions, pgvector invariants and real-model smoke |
-| 11-B: semantic/hybrid retrieval | Verified; commits pending | Tenant/source scope, real PostgreSQL and CPU model comparison passed; broader corpus/load evaluation remains open |
-| 12: grounded AI explanation | Conditional | Structured source-backed output, privacy/cost limits and hallucination evaluation |
-| 13: recruiter UI | Planned | Tenant-aware source/evidence flows, accessibility and tested API integration |
+| 11-B: semantic/hybrid retrieval | Verified and committed | Tenant/source scope, real PostgreSQL and CPU model comparison passed; broader corpus/load evaluation remains open |
+| 12: grounded AI explanation | Verified; scoped commits pending | Native/Docker checks and local CPU quote gate passed; wider quality/load evaluation remains open |
+| 13: recruiter UI | Planned | Tenant-aware source/evidence flows, loading/cancellation, accessibility and tested API integration |
 | 14: reliability/observability | Planned | Readiness, traces/latency, operational monitoring and justified auth controls |
 | 15: release/operations | Planned | Reviewed deployment, migration procedure, backup restore and real acceptance |
 
@@ -48,3 +48,13 @@ Agents, LangGraph, MCP tools, Redis and Temporal remain conditional extensions.
 Add them only for a real user workflow with tool permissions, retries/approval and
 observable outcomes. Human review remains the owner of hiring decisions. CI setup
 does not authorize a remote push, deployment or a production data migration.
+
+Stage 12 selects local qwen3:0.6b for bounded quote extraction from the existing
+criterion evidence. It introduces no hiring probability, arbitrary generated prose
+or persistent output store. On 2026-10-13, Windows ran 1306 passed / 5 platform
+skips, Docker ran 1311 passed, and 24 isolated checks, 14 smokes and cleanup passed.
+Fixture/live grounding gates and authenticated private HTTP passed; schema stayed
+at 0016 with no drift, and all six services ended healthy. The two scoped commits
+remain pending. See explanations.md for model/reference hashes and timing samples.
+The Persian sample took 13.81 seconds; wider quality, load and peak memory still
+need evaluation. The next implementation slice is the recruiter UI.
