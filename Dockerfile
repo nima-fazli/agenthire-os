@@ -56,6 +56,11 @@ USER agenthire
 CMD ["python", "-m", "app.workers.document_extraction"]
 
 
+FROM runtime AS embedding-worker
+
+CMD ["python", "-m", "app.workers.document_embeddings"]
+
+
 FROM runtime AS smoke
 
 COPY --chown=agenthire:agenthire scripts ./scripts

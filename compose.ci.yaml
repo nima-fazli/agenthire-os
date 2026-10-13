@@ -23,8 +23,15 @@ services:
   test:
     image: ${AGENTHIRE_CI_PROJECT:?CI project required}-test
 
+  embedding-worker:
+    image: ${AGENTHIRE_CI_PROJECT:?CI project required}-embedding-worker
+    env_file: !override
+      - ${AGENTHIRE_CI_ENV_FILE:?CI environment required}
+
 volumes:
   agenthire_postgres_data:
     name: ${AGENTHIRE_CI_PROJECT:?CI project required}_postgres
   agenthire_document_data:
     name: ${AGENTHIRE_CI_PROJECT:?CI project required}_documents
+  agenthire_embedding_model_data:
+    name: ${AGENTHIRE_CI_PROJECT:?CI project required}_embedding_models

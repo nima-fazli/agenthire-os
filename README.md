@@ -18,10 +18,11 @@ versioned quality evaluation.
 - Reproducible synthetic reference evaluation with quality gates.
 - Application tenant consistency enforced in PostgreSQL after a migration audit.
 - Private operator reconciliation with a dry-run default and guarded scoped cleanup.
+- Opt-in local CPU embedding jobs with model/source versioning and atomic pgvector storage.
 
 Retrieval scores measure lexical relevance. Criterion evidence does not verify a
-skill or determine hiring suitability. Embeddings, LLM explanations, agents and
-the frontend remain future work.
+skill or determine hiring suitability. Local embedding infrastructure is prepared;
+semantic/hybrid retrieval, LLM explanations, agents and the frontend remain future work.
 
 ## Verify
 
@@ -38,7 +39,7 @@ uv run --locked --no-sync python -m scripts.ci_verify
 ```
 
 The last command builds a separate temporary stack, applies migrations, checks
-schema drift and runs all eleven real-stack smoke modules. It generates temporary
+schema drift and runs all twelve real-stack smoke modules. It generates temporary
 test credentials, publishes no API port and cleans its own containers, networks
 and volumes. It uses the existing Docker context and retains build images/cache.
 
@@ -59,9 +60,11 @@ claiming hosted CI is verified.
 - [Verification and troubleshooting](docs/verification.md)
 - [Retrieval and evaluation contracts](docs/retrieval.md)
 - [Roadmap and delivery gates](docs/roadmap.md)
+- [Free local embeddings and activation](docs/semantic.md)
 
-The latest user-verified baseline is main `4570707`: the stage-9 Docker runner,
-all ten then-current smoke modules and cleanup passed. Alembic head was
-`0014_create_job_match_profiles` with no drift. Stage 10 adds migration
-`0015_application_tenant_fks` and the eleventh smoke; its user acceptance is pending.
-Hosted GitHub Actions and production deployment remain unverified.
+The latest user-verified baseline is main `0c9778f`: stage 10, all eleven then-current
+smoke modules, cleanup and the normal stack passed. Alembic head was
+`0015_application_tenant_fks` with no drift. Stage 11-A adds migration
+`0016_document_embeddings` and the twelfth DB pipeline smoke; its user Docker and
+real-model acceptance are pending. Hosted GitHub Actions and production deployment
+remain unverified. No paid AI provider is part of this stage.

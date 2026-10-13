@@ -58,6 +58,8 @@ services:
       AGENTHIRE_POSTGRES_HOST: postgres
       AGENTHIRE_POSTGRES_PORT: "5432"
       AGENTHIRE_DOCUMENT_STORAGE_PATH: /app/storage/candidate_documents
+      AGENTHIRE_SEMANTIC_ENABLED: "${AGENTHIRE_SEMANTIC_ENABLED:-false}"
+      AGENTHIRE_EMBEDDING_BASE_URL: http://ollama:11434
 
     volumes:
       - agenthire_document_data:/app/storage
@@ -122,6 +124,61 @@ services:
       start_period: 10s
     restart: unless-stopped
 
+  ollama:
+    profiles: [semantic]
+    image: ollama/ollama:0.40.3
+    environment:
+      OLLAMA_NO_CLOUD: "1"
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_MAX_QUEUE: "8"
+    volumes:
+      - agenthire_embedding_model_data:/root/.ollama
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+    mem_limit: 3g
+    cpus: 2.0
+    restart: unless-stopped
+
+  embedding-worker:
+    profiles: [semantic]
+    build:
+      context: .
+      target: embedding-worker
+    env_file: [.env]
+    environment:
+      AGENTHIRE_POSTGRES_HOST: postgres
+      AGENTHIRE_POSTGRES_PORT: "5432"
+      AGENTHIRE_SEMANTIC_ENABLED: "true"
+      AGENTHIRE_EMBEDDING_BASE_URL: http://ollama:11434
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+      ollama:
+        condition: service_healthy
+    read_only: true
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=16m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+    cpus: 0.5
+    pids_limit: 32
+    stop_grace_period: 150s
+    healthcheck:
+      test: ["CMD", "python", "-m", "app.workers.document_embeddings", "--healthcheck"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+
   smoke:
     profiles:
       - smoke
@@ -138,6 +195,8 @@ services:
       AGENTHIRE_POSTGRES_HOST: postgres
       AGENTHIRE_POSTGRES_PORT: "5432"
       AGENTHIRE_DOCUMENT_STORAGE_PATH: /app/storage/candidate_documents
+      AGENTHIRE_SEMANTIC_ENABLED: "${AGENTHIRE_SEMANTIC_ENABLED:-false}"
+      AGENTHIRE_EMBEDDING_BASE_URL: http://ollama:11434
 
     volumes:
       - agenthire_document_data:/app/storage
@@ -162,3 +221,4 @@ services:
 volumes:
   agenthire_postgres_data:
   agenthire_document_data:
+  agenthire_embedding_model_data:

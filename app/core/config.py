@@ -4,6 +4,8 @@ from typing import Literal, Self
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.core.semantic_embeddings import local_base_url
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
@@ -50,6 +52,24 @@ class Settings(BaseSettings):
     chunk_overlap_chars: int = Field(default=150, ge=0, le=1000)
     chunk_max_count: int = Field(default=1000, ge=1, le=5000)
     document_search_timeout_ms: int = Field(default=1500, ge=100, le=10000)
+
+    semantic_enabled: bool = False
+    embedding_base_url: str = "http://127.0.0.1:11434"
+    embedding_timeout_seconds: int = Field(default=60, ge=5, le=120)
+    embedding_lease_seconds: int = Field(default=300, ge=30, le=600)
+    embedding_batch_size: int = Field(default=4, ge=1, le=8)
+    embedding_max_attempts: int = Field(default=3, ge=1, le=10)
+
+    @field_validator("embedding_base_url")
+    @classmethod
+    def require_local_embedding_url(cls, value: str) -> str:
+        return local_base_url(value)
+
+    @model_validator(mode="after")
+    def require_embedding_lease_margin(self) -> Self:
+        if self.embedding_lease_seconds < 3 * self.embedding_timeout_seconds + 30:
+            raise ValueError("Embedding lease must cover model checks and inference with a 30-second margin.")
+        return self
 
     @model_validator(mode="after")
     def require_chunk_progress(self) -> Self:

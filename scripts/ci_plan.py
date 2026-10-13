@@ -16,6 +16,7 @@ SMOKE_MODULES = (
     "job_matching_smoke",
     "retrieval_evaluation_smoke",
     "storage_integrity_smoke",
+    "document_embeddings_smoke",
 )
 
 
