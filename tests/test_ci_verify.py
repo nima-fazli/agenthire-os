@@ -118,6 +118,7 @@ def test_dry_run_has_no_process_or_file_side_effects(monkeypatch, capsys):
     assert "No commands executed" in output
     assert set(Path.cwd().iterdir()) == before
     assert all(f"scripts.{name}" in output for name in SMOKE_MODULES)
+    assert "scripts.semantic_retrieval_smoke" in output
     assert "--volumes" in output
 
 
