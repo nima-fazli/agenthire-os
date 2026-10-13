@@ -49,6 +49,8 @@ def test_environment_is_fresh_and_does_not_mutate_host(tmp_path):
         "PATH": "keep",
         "AGENTHIRE_POSTGRES_PASSWORD": "host-private",
         "AGENTHIRE_APP_NAME": "host-name",
+        "AGENTHIRE_SEMANTIC_ENABLED": "true",
+        "AGENTHIRE_EMBEDDING_BASE_URL": "http://foreign.invalid:11434",
         "COMPOSE_FILE": "foreign.yaml",
         "compose_project_name": "main",
         "DOCKER_CONTEXT": "desktop-linux",
@@ -60,6 +62,8 @@ def test_environment_is_fresh_and_does_not_mutate_host(tmp_path):
     assert first["PATH"] == "keep"
     assert "AGENTHIRE_APP_NAME" not in first and "COMPOSE_FILE" not in first
     assert "compose_project_name" not in first
+    assert "AGENTHIRE_SEMANTIC_ENABLED" not in first
+    assert "AGENTHIRE_EMBEDDING_BASE_URL" not in first
     assert first["AGENTHIRE_ENVIRONMENT"] == "test"
     assert len(first["AGENTHIRE_JWT_SECRET"]) == 64
     assert first["AGENTHIRE_JWT_SECRET"] != second["AGENTHIRE_JWT_SECRET"]
