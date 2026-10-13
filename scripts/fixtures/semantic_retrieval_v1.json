@@ -1,0 +1,14 @@
+{
+  "version": "semantic-reference-v1",
+  "judgments": {"backend": 3, "artist": 0, "pending": 0},
+  "passages": {
+    "backend": "I built Python APIs with FastAPI, PostgreSQL, and Docker.",
+    "artist": "I specialize in watercolor painting and gallery exhibition curation.",
+    "pending": "Still learning databases."
+  },
+  "cases": [
+    {"key": "literal", "q": "Python FastAPI"},
+    {"key": "paraphrase", "q": "Find a backend engineer experienced with databases and API development."},
+    {"key": "persian", "q": "مهندس بک‌اند با تجربهٔ توسعهٔ API و پایگاه داده"}
+  ]
+}

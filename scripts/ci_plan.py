@@ -17,6 +17,7 @@ SMOKE_MODULES = (
     "retrieval_evaluation_smoke",
     "storage_integrity_smoke",
     "document_embeddings_smoke",
+    "semantic_retrieval_smoke",
 )
 
 

@@ -1,6 +1,6 @@
 # Roadmap
 
-The completed baseline is user main `0c9778f`. Stages are implementation slices,
+The latest committed baseline is user main `242ccae`. Stages are implementation slices,
 not estimates or an assertion that the whole product is production-ready.
 
 | Stage | Status | Delivery gate |
@@ -16,8 +16,8 @@ not estimates or an assertion that the whole product is production-ready.
 | 8: quality evaluation | Verified | Versioned synthetic reference and real-stack gate |
 | 9: CI/documentation | Docker runner and commits verified | Hosted Actions run remains unverified until connected and observed |
 | 10: storage/data hardening | Verified | Audited Application tenant FKs, guarded cleanup, eleven smokes and normal stack accepted |
-| 11-A: local embeddings | Prepared, user acceptance pending | Free local CPU model, durable source/model versions, pgvector invariants and real-model smoke |
-| 11-B: semantic/hybrid retrieval | Next | Isolated latest-ready candidate retrieval and measured quality/latency against lexical reference |
+| 11-A: local embeddings | Verified and committed | Free local CPU model, durable source/model versions, pgvector invariants and real-model smoke |
+| 11-B: semantic/hybrid retrieval | Verified; commits pending | Tenant/source scope, real PostgreSQL and CPU model comparison passed; broader corpus/load evaluation remains open |
 | 12: grounded AI explanation | Conditional | Structured source-backed output, privacy/cost limits and hallucination evaluation |
 | 13: recruiter UI | Planned | Tenant-aware source/evidence flows, accessibility and tested API integration |
 | 14: reliability/observability | Planned | Readiness, traces/latency, operational monitoring and justified auth controls |
@@ -25,7 +25,8 @@ not estimates or an assertion that the whole product is production-ready.
 
 ## Decisions before semantic retrieval
 
-Current constraints are Persian/English, CPU with 8-16 GiB RAM and no paid service.
+Current constraints are Persian/English, local CPU inference and no paid service.
+Actual user RAM and production corpus capacity have not been measured.
 Stage 11-A selects local Ollama/qwen3-embedding:0.6b, 1024 dimensions and immutable
 model digests. Resume text stays on the controlled local machine. Actual corpus
 size, acceptable latency, measured bilingual quality and release hosting remain
@@ -33,9 +34,9 @@ open. Do not add paid providers, incompatible dimensions or AI suitability proba
 
 Persist model/version/dimension and exact source hash; make embedding jobs durable
 and idempotent. Enforce the same latest-ready source scope and deletion lifecycle.
-Migration 0016 adds actual versioned vector storage. Semantic search is not yet
-implemented by that storage alone. Keep the opt-in path and evaluate hybrid
-retrieval against the existing lexical baseline in stage 11-B.
+Migration 0016 adds actual versioned vector storage. Stage 11-B adds exact cosine search and equal-weight RRF beside lexical APIs.
+The versioned synthetic comparison passed on the real model. Broaden the reference
+corpus and measure latency under load before treating quality gains as product-level evidence.
 
 ## Product completion and optional extensions
 

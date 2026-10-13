@@ -2,7 +2,7 @@
 
 A modular recruiting backend built with Python 3.12, FastAPI, async SQLAlchemy,
 PostgreSQL 18 and Docker Compose. It implements tenant-scoped recruiting workflows,
-private resume processing, lexical retrieval, independent criterion evidence and
+private resume processing, lexical/semantic retrieval, independent criterion evidence and
 versioned quality evaluation.
 
 ## Implemented
@@ -19,10 +19,10 @@ versioned quality evaluation.
 - Application tenant consistency enforced in PostgreSQL after a migration audit.
 - Private operator reconciliation with a dry-run default and guarded scoped cleanup.
 - Opt-in local CPU embedding jobs with model/source versioning and atomic pgvector storage.
+- Opt-in exact cosine search and bounded reciprocal-rank fusion with separate source witnesses.
 
-Retrieval scores measure lexical relevance. Criterion evidence does not verify a
-skill or determine hiring suitability. Local embedding infrastructure is prepared;
-semantic/hybrid retrieval, LLM explanations, agents and the frontend remain future work.
+Retrieval scores measure relevance, not proficiency or hiring suitability.
+LLM explanations, agents and the frontend remain future work.
 
 ## Verify
 
@@ -39,7 +39,7 @@ uv run --locked --no-sync python -m scripts.ci_verify
 ```
 
 The last command builds a separate temporary stack, applies migrations, checks
-schema drift and runs all twelve real-stack smoke modules. It generates temporary
+schema drift and runs all thirteen real-stack smoke modules. It generates temporary
 test credentials, publishes no API port and cleans its own containers, networks
 and volumes. It uses the existing Docker context and retains build images/cache.
 
@@ -62,9 +62,10 @@ claiming hosted CI is verified.
 - [Roadmap and delivery gates](docs/roadmap.md)
 - [Free local embeddings and activation](docs/semantic.md)
 
-The latest user-verified baseline is main `0c9778f`: stage 10, all eleven then-current
-smoke modules, cleanup and the normal stack passed. Alembic head was
-`0015_application_tenant_fks` with no drift. Stage 11-A adds migration
-`0016_document_embeddings` and the twelfth DB pipeline smoke; its user Docker and
-real-model acceptance are pending. Hosted GitHub Actions and production deployment
-remain unverified. No paid AI provider is part of this stage.
+The latest committed baseline is main `242ccae`: stage 11-A, schema
+`0016_document_embeddings`, local CPU model and healthy embedding worker accepted.
+Stage 11-B semantic/hybrid retrieval passed Windows tests, 1241 Docker tests,
+all thirteen real-stack smoke modules and the live CPU model comparison. Its
+two scoped commits remain pending. The small synthetic comparison is not a
+production quality or capacity benchmark. Hosted GitHub Actions and production
+deployment remain unverified. No paid AI provider is required.
