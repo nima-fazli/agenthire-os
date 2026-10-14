@@ -20,10 +20,12 @@ def complete_checkout(tmp_path, monkeypatch):
         "alembic.ini",
         "app/main.py",
         "app/web/router.py",
+        "app/web/__init__.py",
         *UI_ASSETS,
         ".github/workflows/verify.yml",
         ".github/dependabot.yml",
         "tests/recruiter_ui.test.mjs",
+        "tests/recruiter_notifications.test.mjs",
         *(f"scripts/{name}.py" for name in SMOKE_MODULES),
     ):
         path = tmp_path / name

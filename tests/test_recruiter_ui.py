@@ -86,12 +86,88 @@ def test_empty_asset_never_returns_success(tmp_path, monkeypatch, filename):
     assert ui.asset_response(filename).status_code == 404
 
 
-def test_named_module_imports_have_matching_exports():
-    for filename in ui.ASSETS:
+def _assert_named_module_exports(asset_root, filenames):
+    filenames = frozenset(filenames)
+    import_pattern = r"""import\s*\{([^}]*)\}\s*from\s*["']\./([^"']+)["']"""
+    export_pattern = (
+        r"export\s+(?:async\s+)?(?:function|class|const|let|var)\s+([\w$]+)"
+    )
+    for filename in sorted(filenames):
         if not filename.endswith(".mjs"):
             continue
-        text = (ui.ASSET_ROOT / filename).read_text(encoding="utf-8")
-        for names, dependency in re.findall(r'import\s*\{([^}]+)\}\s*from "\./([^"]+)"', text):
-            target = (ui.ASSET_ROOT / dependency).read_text(encoding="utf-8")
-            exports = set(re.findall(r"export\s+(?:async\s+)?(?:function|class|const|let)\s+([\w$]+)", target))
-            assert {name.strip().split(" as ")[0] for name in names.split(",")} <= exports
+        text = (asset_root / filename).read_text(encoding="utf-8")
+        for names, dependency in re.findall(import_pattern, text):
+            assert dependency in filenames, f"{filename}: undeclared module {dependency}"
+            target = (asset_root / dependency).read_text(encoding="utf-8")
+            exports = set(re.findall(export_pattern, target))
+            specifiers = names.strip().split(",")
+            if not specifiers[-1].strip():
+                specifiers.pop()
+            imports = set()
+            for specifier in specifiers:
+                binding = re.fullmatch(
+                    r"([\w$]+)(?:\s+as\s+[\w$]+)?", specifier.strip()
+                )
+                assert binding is not None, (
+                    f"Malformed named import in {filename}: {specifier!r}"
+                )
+                imports.add(binding.group(1))
+            missing = imports - exports
+            assert not missing, (
+                f"{filename}: {dependency} does not export {', '.join(sorted(missing))}"
+            )
+
+
+def test_named_module_imports_have_matching_exports():
+    _assert_named_module_exports(ui.ASSET_ROOT, ui.ASSETS)
+
+
+@pytest.mark.parametrize(
+    ("source", "target"),
+    [
+        (
+            'import { value } from "./dep.mjs";',
+            "export function value() {}",
+        ),
+        (
+            'import { value, } from "./dep.mjs";',
+            "export const value = 1;",
+        ),
+        (
+            'import {\n  value,\n  other,\n} from "./dep.mjs";',
+            "export class value {}\nexport async function other() {}",
+        ),
+        (
+            "import {\n  value\tas\n  localValue,\n} from\n './dep.mjs';",
+            "export let value = 1;",
+        ),
+    ],
+    ids=["single-line", "trailing-comma", "multiline", "multiline-alias"],
+)
+def test_named_import_scan_accepts_valid_formatting(tmp_path, source, target):
+    (tmp_path / "entry.mjs").write_text(source, encoding="utf-8")
+    (tmp_path / "dep.mjs").write_text(target, encoding="utf-8")
+    _assert_named_module_exports(tmp_path, {"entry.mjs", "dep.mjs"})
+
+
+@pytest.mark.parametrize(
+    "specifiers",
+    ["missing,", "value as localValue, missing as value,"],
+)
+def test_named_import_scan_still_rejects_missing_exports(tmp_path, specifiers):
+    (tmp_path / "entry.mjs").write_text(
+        f'import {{{specifiers}}} from "./dep.mjs";', encoding="utf-8"
+    )
+    (tmp_path / "dep.mjs").write_text("export const value = 1;", encoding="utf-8")
+    with pytest.raises(AssertionError, match=r"dep\.mjs does not export missing"):
+        _assert_named_module_exports(tmp_path, {"entry.mjs", "dep.mjs"})
+
+
+@pytest.mark.parametrize("specifiers", ["value,,", ",value", "value as,"])
+def test_named_import_scan_rejects_malformed_bindings(tmp_path, specifiers):
+    (tmp_path / "entry.mjs").write_text(
+        f'import {{{specifiers}}} from "./dep.mjs";', encoding="utf-8"
+    )
+    (tmp_path / "dep.mjs").write_text("export const value = 1;", encoding="utf-8")
+    with pytest.raises(AssertionError, match="Malformed named import"):
+        _assert_named_module_exports(tmp_path, {"entry.mjs", "dep.mjs"})

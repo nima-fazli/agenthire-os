@@ -26,10 +26,12 @@ def make_checkout(root):
         "alembic.ini",
         "app/main.py",
         "app/web/router.py",
+        "app/web/__init__.py",
         *UI_ASSETS,
         ".github/workflows/verify.yml",
         ".github/dependabot.yml",
         "tests/recruiter_ui.test.mjs",
+        "tests/recruiter_notifications.test.mjs",
         *(f"scripts/{name}.py" for name in SMOKE_MODULES),
     ):
         path = root / name
@@ -100,7 +102,7 @@ def test_commands_keep_spaces_as_single_arguments(tmp_path):
     assert len(steps) == 11 + len(SMOKE_MODULES)
     assert SMOKE_MODULES[-2:] == ("grounded_explanations_smoke", "recruiter_ui_smoke")
     ui = next(step for step in steps if step.name == "docker-ui-tests")
-    assert ui.command[-3:] == ("node", "--test", "tests/recruiter_ui.test.mjs")
+    assert ui.command[-4:] == ("node", "--test", "tests/recruiter_ui.test.mjs", "tests/recruiter_notifications.test.mjs")
     for step in (*steps, cleanup_step(prefix)):
         assert step.command[: len(prefix)] == prefix
         assert step.command[step.command.index("--project-name") + 1] == PROJECT
@@ -130,4 +132,12 @@ def test_empty_ui_asset_is_rejected_before_docker(tmp_path, asset):
     root = make_checkout(tmp_path)
     (root / "app/web/assets" / asset).write_bytes(b"")
     with pytest.raises(ValueError, match="nonempty"):
+        repository_root(root)
+
+
+@pytest.mark.parametrize("filename", ["app/web/__init__.py", "tests/recruiter_notifications.test.mjs"])
+def test_incomplete_feedback_delivery_fails_before_docker(tmp_path, filename):
+    root = make_checkout(tmp_path)
+    (root / filename).unlink()
+    with pytest.raises(ValueError, match="complete"):
         repository_root(root)
