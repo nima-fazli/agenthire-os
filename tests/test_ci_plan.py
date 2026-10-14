@@ -4,6 +4,7 @@ import pytest
 
 from scripts.ci_plan import (
     SMOKE_MODULES,
+    UI_ASSETS,
     cleanup_step,
     compose_prefix,
     new_project_name,
@@ -24,11 +25,16 @@ def make_checkout(root):
         "compose.ci.yaml",
         "alembic.ini",
         "app/main.py",
+        "app/web/router.py",
+        *UI_ASSETS,
+        ".github/workflows/verify.yml",
+        ".github/dependabot.yml",
+        "tests/recruiter_ui.test.mjs",
         *(f"scripts/{name}.py" for name in SMOKE_MODULES),
     ):
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.touch()
+        path.write_text("fixture\n", encoding="utf-8")
     (root / "pyproject.toml").write_text(
         '[project]\nname="agenthire-os"\n', encoding="utf-8"
     )
@@ -91,8 +97,10 @@ def test_commands_keep_spaces_as_single_arguments(tmp_path):
     env_file = tmp_path / "temporary directory" / "ci.env"
     prefix = compose_prefix(root, PROJECT, env_file)
     steps = verification_plan(prefix)
-    assert len(steps) == 10 + len(SMOKE_MODULES)
-    assert SMOKE_MODULES[-3:] == ("document_embeddings_smoke", "semantic_retrieval_smoke", "grounded_explanations_smoke")
+    assert len(steps) == 11 + len(SMOKE_MODULES)
+    assert SMOKE_MODULES[-2:] == ("grounded_explanations_smoke", "recruiter_ui_smoke")
+    ui = next(step for step in steps if step.name == "docker-ui-tests")
+    assert ui.command[-3:] == ("node", "--test", "tests/recruiter_ui.test.mjs")
     for step in (*steps, cleanup_step(prefix)):
         assert step.command[: len(prefix)] == prefix
         assert step.command[step.command.index("--project-name") + 1] == PROJECT
@@ -115,3 +123,11 @@ def test_commands_keep_spaces_as_single_arguments(tmp_path):
 def test_relative_paths_cannot_reach_compose(root, env_file):
     with pytest.raises(ValueError, match="absolute"):
         compose_prefix(root, PROJECT, env_file)
+
+
+@pytest.mark.parametrize("asset", ["api.mjs", "dom.mjs", "styles.css"])
+def test_empty_ui_asset_is_rejected_before_docker(tmp_path, asset):
+    root = make_checkout(tmp_path)
+    (root / "app/web/assets" / asset).write_bytes(b"")
+    with pytest.raises(ValueError, match="nonempty"):
+        repository_root(root)

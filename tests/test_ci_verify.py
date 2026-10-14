@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 from scripts import ci_verify
-from scripts.ci_plan import SMOKE_MODULES
+from scripts.ci_plan import SMOKE_MODULES, UI_ASSETS
 
 PROJECT = "agenthire-ci-" + "b" * 32
 
@@ -19,11 +19,16 @@ def complete_checkout(tmp_path, monkeypatch):
         "compose.ci.yaml",
         "alembic.ini",
         "app/main.py",
+        "app/web/router.py",
+        *UI_ASSETS,
+        ".github/workflows/verify.yml",
+        ".github/dependabot.yml",
+        "tests/recruiter_ui.test.mjs",
         *(f"scripts/{name}.py" for name in SMOKE_MODULES),
     ):
         path = tmp_path / name
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.touch()
+        path.write_text("fixture\n", encoding="utf-8")
     (tmp_path / "pyproject.toml").write_text(
         '[project]\nname="agenthire-os"\n', encoding="utf-8"
     )
@@ -119,13 +124,15 @@ def test_dry_run_has_no_process_or_file_side_effects(monkeypatch, capsys):
     assert set(Path.cwd().iterdir()) == before
     assert all(f"scripts.{name}" in output for name in SMOKE_MODULES)
     assert "scripts.semantic_retrieval_smoke" in output
+    assert "scripts.recruiter_ui_smoke" in output
+    assert "tests/recruiter_ui.test.mjs" in output
     assert "--volumes" in output
 
 
 @pytest.mark.parametrize(
     "failure",
-    [None, "docker-pytest", "retrieval_evaluation_smoke", "cleanup"],
-    ids=["pass", "tests", "quality", "cleanup"],
+    [None, "docker-pytest", "docker-ui-tests", "retrieval_evaluation_smoke", "cleanup"],
+    ids=["pass", "tests", "ui", "quality", "cleanup"],
 )
 def test_full_cli_preserves_isolation_failure_and_temporary_cleanup(
     failure, monkeypatch, tmp_path, capsys
@@ -153,6 +160,8 @@ def test_full_cli_preserves_isolation_failure_and_temporary_cleanup(
         is_failed = (
             failure == "docker-pytest"
             and "pytest" in command
+            or failure == "docker-ui-tests"
+            and "node" in command
             or failure == "retrieval_evaluation_smoke"
             and command[-1] == "scripts.retrieval_evaluation_smoke"
             or failure == "cleanup"
@@ -167,7 +176,7 @@ def test_full_cli_preserves_isolation_failure_and_temporary_cleanup(
     assert "host-private-password" not in output
     assert "down" in calls[-1]
     assert all(not path.exists() for path in temporary)
-    if failure == "docker-pytest":
+    if failure in {"docker-pytest", "docker-ui-tests"}:
         assert not any("up" in command for command in calls)
     if failure is None:
         assert sum(command[-1].startswith("scripts.") for command in calls) == len(SMOKE_MODULES)
