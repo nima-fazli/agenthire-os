@@ -4,6 +4,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
+UI_ASSETS = tuple(f"app/web/assets/{name}" for name in (
+    "index.html", "styles.css", "app.mjs", "api.mjs", "dom.mjs", "session.mjs",
+    "requests.mjs", "workspace.mjs", "profiles.mjs", "candidates.mjs", "evidence.mjs", "notifications.mjs",
+))
+
 SMOKE_MODULES = (
     "docker_smoke",
     "candidate_smoke",
@@ -19,6 +24,7 @@ SMOKE_MODULES = (
     "document_embeddings_smoke",
     "semantic_retrieval_smoke",
     "grounded_explanations_smoke",
+    "recruiter_ui_smoke",
 )
 
 
@@ -39,10 +45,19 @@ def repository_root(path: Path) -> Path:
         "compose.ci.yaml",
         "alembic.ini",
         "app/main.py",
+        "app/web/router.py",
+        "app/web/__init__.py",
+        *UI_ASSETS,
+        ".github/workflows/verify.yml",
+        ".github/dependabot.yml",
+        "tests/recruiter_ui.test.mjs",
+        "tests/recruiter_notifications.test.mjs",
         *(f"scripts/{name}.py" for name in SMOKE_MODULES),
     )
     if not all((root / name).is_file() for name in required):
         raise ValueError("Run from the complete AgentHire OS checkout.")
+    if any((root / name).is_symlink() or not (root / name).stat().st_size for name in UI_ASSETS):
+        raise ValueError("Recruiter UI assets must be nonempty regular files.")
     project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))
     if project.get("project", {}).get("name") != "agenthire-os":
         raise ValueError("This checkout is not AgentHire OS.")
@@ -107,6 +122,10 @@ def verification_plan(prefix: tuple[str, ...]) -> tuple[Step, ...]:
                 "check",
                 ".",
             ),
+        ),
+        Step(
+            "docker-ui-tests",
+            prefix + ("--profile", "test", "run", "--rm", "test", "node", "--test", "tests/recruiter_ui.test.mjs", "tests/recruiter_notifications.test.mjs"),
         ),
         Step(
             "runtime-images",

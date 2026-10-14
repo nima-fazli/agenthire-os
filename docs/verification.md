@@ -1,74 +1,63 @@
 # Verification
 
-The GitHub workflow has native Linux/Windows jobs and a dependent Ubuntu Docker
-job. It runs on pushes/PRs to main and manual dispatch. It uses read-only repository
-permission, immutable action SHAs, no stored deployment credentials and no deploy step.
-Dependabot proposes weekly action updates; review them before merging.
+## Accepted 13-A checkpoint — 2026-10-14
 
-## Docker acceptance sequence
+Evidence: the user's latest terminal archive and manual acceptance of /workspace/.
+The last observed Git HEAD before the completion commits is main 4db6cb6.
 
-`python -m scripts.ci_verify` executes these checks in a fresh isolated project:
-
-1. Compose validation and PostgreSQL image availability.
-2. Test-image build, full pytest and Ruff inside Linux.
-3. API/migration/worker and smoke-image builds.
-4. Healthy API/PostgreSQL and two extraction workers after migrations.
-5. Current Alembic head and schema drift check.
-6. All smoke modules, in order, followed by CI-volume/container/network cleanup.
-
-| Module | Coverage |
+| Check | Observed result |
 | --- | --- |
-| docker_smoke | Authentication, membership-scoped organizations and jobs |
-| candidate_smoke | Candidate operations and tenant isolation |
-| application_smoke | Transition graph, retries, terminal states and race |
-| candidate_document_smoke | Private PDFs, deduplication, ownership and deletion |
-| document_extraction_smoke | Parser limits, durable leases, recovery and fencing |
-| document_chunk_smoke | Atomic versions, source reconstruction and deletion races |
-| document_search_smoke | Real GIN/latest indexes, normalization and deadlines |
-| job_retrieval_smoke | Candidate grouping, witness stability, profiles and pagination |
-| job_matching_smoke | Independent criteria, source readiness and snapshot consistency |
-| retrieval_evaluation_smoke | Reference metrics, provenance, tenant exclusion and quality gate |
-| storage_integrity_smoke | Application FKs/audit, scoped orphan cleanup, global references and live upload guard |
+| Recruiter UI Python tests | 34 passed |
+| Native Windows Python, warnings as errors | 1347 passed, 5 platform skips |
+| Native Windows Node | 42 passed, no skips |
+| Native Windows Ruff | Passed |
+| Docker Python | 1352 passed, no skips |
+| Docker Node | 42 passed, no skips |
+| Docker Ruff | Passed |
+| Isolated ci_verify | All 26 checks and separate cleanup exited 0 |
+| Normal stack | API/PostgreSQL/extraction-worker healthy after rebuild |
+| Alembic current | 0016_document_embeddings (head) |
+| Alembic check | No new upgrade operations detected |
+| Normal recruiter_ui_smoke | Passed |
+| Manual browser | User checked the page and accepted it |
 
-Each command has a deadline. A timeout becomes exit 124, inability to launch a child
-becomes 127, and interruption becomes 130. The first check's failure is preserved
-if cleanup also fails. Failed cleanup prevents an otherwise successful result.
-The summary includes only check names and exit codes; child tools stream their
-normal output. GitHub also receives the summary in its job summary pane.
+The five native skips cover Windows symlink privileges and real Linux/PDF tools.
+They all ran in Docker. The trailing-comma import-test regression is fixed;
+missing exports and malformed bindings still fail. No migration or uv.lock changed.
 
-## Acceptance evidence
+## Repeatable runner
 
-Do not infer hosted CI success from unit tests or a dry run. Record the real Docker
-output and, once a remote exists and a workflow runs, its actual run URL/status.
-The script's success line is:
+    uv run --locked --no-sync python -m scripts.ci_verify --dry-run
+    uv run --locked --no-sync python -m scripts.ci_verify
 
-```text
-[success] Isolated Docker verification passed and cleaned up.
-```
+The plan has 26 checks, including these 15 smoke modules, then separate cleanup:
 
-The current plan has 21 checks plus cleanup, including all eleven smoke modules.
-The storage smoke uses only its own synthetic files/rows. It also pauses a real
-service upload after filesystem publication, deliberately ages that fixture, and
-requires PostgreSQL lock-timeout protection before allowing its metadata commit.
-Unit tests and offline migration rendering do not replace that real-stack check.
+    docker_smoke
+    candidate_smoke
+    application_smoke
+    candidate_document_smoke
+    document_extraction_smoke
+    document_chunk_smoke
+    document_search_smoke
+    job_retrieval_smoke
+    job_matching_smoke
+    retrieval_evaluation_smoke
+    storage_integrity_smoke
+    document_embeddings_smoke
+    semantic_retrieval_smoke
+    grounded_explanations_smoke
+    recruiter_ui_smoke
 
-## Troubleshooting
+Preflight rejects missing, empty or linked required UI files. Both Node suites
+run in the Docker test image. The isolated stack owns its generated credentials
+and volumes; cleanup touches only that project. The first failure stays authoritative,
+and failed cleanup prevents success. Development volumes must not be removed to fix CI.
 
-- Compose older than 2.24.4 cannot apply the override; update Docker Desktop/Compose.
-- If `deb.debian.org` fails to resolve during apt, fix Docker's network/resolver and
-  retry the failed build. Application unit tests cannot prove network availability.
-- A stale schema must be upgraded using the current migration image before drift
-  checking. The isolated runner starts from a new database and applies the full chain.
-- Migration 0015 refuses legacy Application tenant mismatches. Review affected
-  ownership using a private database session before any correction; never stamp
-  the migration as applied or delete application rows just to bypass the audit.
-- A reconciliation lock timeout means document writes are active. Retry in a quiet
-  maintenance window; do not bypass the guard. Preserve the JSON journal on failure.
-- Expected negative smoke checks, such as an extraction marked failed for a broken
-  PDF, are successful assertions when the module ends with `[success]`.
-- An interrupted run may need its printed CI project's resources inspected. Never
-  use a volume-deleting command on the normal development project to fix CI.
+## Limits
 
-References: [Compose merge/override](https://docs.docker.com/reference/compose-file/merge/),
-[GitHub secure use](https://docs.github.com/en/actions/reference/security/secure-use),
-[setup-uv](https://github.com/astral-sh/setup-uv).
+CI embedding/chat gates used deterministic fixtures with real DB/HTTP contracts.
+This run does not prove current live-model quality, realistic load or production
+capacity. DOM stubs and recruiter_ui_smoke are not automated browser tests.
+Manual acceptance does not establish comprehensive keyboard/narrow-screen coverage.
+Hosted GitHub Actions and production deployment/backup restore remain unobserved.
+Record actual new hashes from git log; no post-commit hash is inferred here.

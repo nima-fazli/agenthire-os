@@ -73,10 +73,14 @@ RUN find scripts \
 CMD ["python", "-m", "scripts.docker_smoke"]
 
 
+FROM public.ecr.aws/docker/library/node:24-bookworm-slim AS ui-test-runtime
+
 FROM foundation AS test
 
+COPY --from=ui-test-runtime /usr/local/bin/node /usr/local/bin/node
+
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends poppler-utils util-linux \
+    && apt-get install -y --no-install-recommends poppler-utils util-linux libstdc++6 libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTEST_ADDOPTS="-p no:cacheprovider" \

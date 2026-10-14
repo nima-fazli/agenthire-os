@@ -2,7 +2,7 @@
 
 Stage 12 adds an optional extractive brief for one candidate and a saved job match
 profile. Native, Docker and real CPU model acceptance passed on 2026-10-13;
-the two scoped commits are pending.
+The scoped feature/test commits were accepted on 2026-10-14: 6207ce6 and 708099d.
 It uses qwen3:0.6b (Apache-2.0) through the existing local Ollama 0.40.3 runtime.
 No paid provider, account, API key, SDK dependency or new migration is required.
 
@@ -120,7 +120,8 @@ These are single service-call samples from four synthetic cases. Wider quality,
 concurrent load, peak memory and latency percentiles remain unmeasured. Generation
 took roughly 10-19 seconds in these samples; the recruiter UI needs explicit
 loading/cancellation behavior. Restart counts were not measured by this run.
-Technical acceptance is complete; feature/test commit hashes are not yet recorded.
+Technical acceptance and scoped commits are complete: feature 6207ce6, tests 708099d.
+The recruiter workspace reads these contracts; browser acceptance is a separate gate.
 
 Primary sources:
 - https://ollama.com/library/qwen3:0.6b

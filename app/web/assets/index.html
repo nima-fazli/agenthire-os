@@ -1,0 +1,330 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>AgentHire OS — فضای کار استخدام</title>
+  <link rel="stylesheet" href="/workspace/assets/styles.css">
+  <script type="module" src="/workspace/assets/app.mjs"></script>
+</head>
+<body>
+  <a class="skip" href="#main-content">رفتن به محتوای اصلی</a>
+
+  <header class="topbar">
+    <a class="brand" href="/workspace/">
+      <span class="brand-mark" aria-hidden="true">A</span>
+      <bdi>AgentHire <span>OS</span></bdi>
+    </a>
+
+    <div id="account" hidden>
+      <bdi id="account-email"></bdi>
+      <button id="logout" class="button quiet" type="button">خروج</button>
+    </div>
+
+    <span id="public-label" class="muted">فضای کار استخدام</span>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <div id="notification" class="toast" hidden>
+      <p id="notice" class="notice" role="status" aria-live="polite" aria-atomic="true"></p>
+      <button id="notice-dismiss" class="button quiet" type="button" aria-label="بستن پیام">×</button>
+    </div>
+
+    <p id="notice-alert" class="visually-hidden" role="alert" aria-live="assertive" aria-atomic="true"></p>
+
+    <section id="auth-view" class="auth-grid" aria-labelledby="auth-title">
+      <div class="auth-story">
+        <p class="eyebrow"><bdi>HUMAN DECISIONS. TRACEABLE EVIDENCE.</bdi></p>
+        <h1>از رزومه،<br>به شواهد قابل بررسی.</h1>
+        <p>جست‌وجو، معیارهای مستقل و نقل‌قول مستند؛ در یک فضای کاری برای تصمیم‌های استخدام.</p>
+
+        <div class="story-flow" aria-hidden="true">
+          <span>رزومه</span>
+          <i></i>
+          <span>معیار</span>
+          <i></i>
+          <span>شاهد</span>
+        </div>
+
+        <p class="story-note">نتیجهٔ جست‌وجو نقطهٔ شروع بررسی انسانی است.</p>
+      </div>
+
+      <div class="auth-card">
+        <p class="eyebrow">شروع کار</p>
+        <h2 id="auth-title">ورود به فضای کاری</h2>
+        <p id="auth-description" class="muted">با حساب خود، سازمان و پرونده‌های در دسترس را انتخاب کنید.</p>
+
+        <form id="auth-form">
+          <fieldset id="auth-fields">
+            <label class="field">
+              ایمیل
+              <input id="auth-email" type="email" dir="ltr" autocomplete="username" maxlength="320" required>
+            </label>
+
+            <label class="field">
+              رمز عبور
+              <input id="auth-password" type="password" dir="ltr" autocomplete="current-password" minlength="1" maxlength="128" required>
+            </label>
+
+            <button id="auth-submit" class="button primary full" type="submit">ورود</button>
+          </fieldset>
+        </form>
+
+        <button id="auth-mode" class="button quiet full" type="button">حساب ندارم؛ ثبت‌نام</button>
+        <p class="small muted">با تازه‌سازی، خروج یا بستن صفحه، دوباره باید وارد شوید.</p>
+      </div>
+    </section>
+
+    <section id="shell" class="workspace-grid" hidden aria-label="فضای کاری استخدام">
+      <aside class="sidebar">
+        <p class="eyebrow">فضای کاری</p>
+
+        <label class="field">
+          سازمان
+          <select id="organization-select">
+            <option value="">انتخاب سازمان</option>
+          </select>
+        </label>
+
+        <details class="disclosure">
+          <summary>ساخت سازمان</summary>
+
+          <form id="organization-form">
+            <label class="field">
+              نام سازمان
+              <input id="organization-name" maxlength="200" required>
+            </label>
+
+            <label class="field">
+              شناسهٔ خوانا
+              <input id="organization-slug" dir="ltr" pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="100" required>
+            </label>
+
+            <button id="organization-create" class="button secondary full" type="submit">ساخت سازمان</button>
+          </form>
+        </details>
+
+        <div class="sidebar-divider"></div>
+
+        <label class="field">
+          شغل جاری
+          <select id="job-select">
+            <option value="">انتخاب شغل</option>
+          </select>
+        </label>
+
+        <details class="disclosure">
+          <summary>ساخت شغل</summary>
+
+          <form id="job-form">
+            <label class="field">
+              عنوان
+              <input id="job-title" maxlength="200" required>
+            </label>
+
+            <label class="field">
+              شرح شغل
+              <textarea id="job-description" maxlength="20000" rows="4" required></textarea>
+            </label>
+
+            <button id="job-create" class="button secondary full" type="submit">ساخت پیش‌نویس</button>
+          </form>
+        </details>
+
+        <nav class="sidebar-nav" aria-label="بخش‌های فضای کاری">
+          <a href="#candidates-panel">داوطلبان</a>
+          <a href="#profiles-panel">معیار و جست‌وجو</a>
+          <a href="#candidate-panel">پرونده و شواهد</a>
+        </nav>
+
+        <p class="sidebar-note">سازمان جاری، محدودهٔ تمام پرونده‌های این صفحه است.</p>
+      </aside>
+
+      <div class="workspace-main">
+        <div class="workspace-heading">
+          <div>
+            <p class="eyebrow">پیشخوان شواهد</p>
+            <h1 id="organization-heading">فضای کاری</h1>
+          </div>
+
+          <button id="workspace-refresh" class="button secondary" type="button">تازه‌سازی فهرست‌ها</button>
+        </div>
+
+        <div class="metrics">
+          <article>
+            <span>شغل دریافت‌شده</span>
+            <strong id="jobs-count">—</strong>
+          </article>
+
+          <article>
+            <span>داوطلب دریافت‌شده</span>
+            <strong id="candidates-count">—</strong>
+          </article>
+
+          <article class="metric-note">هر شاهد همراه با متن اصلی و منبع قابل بررسی است.</article>
+        </div>
+
+        <section id="profiles-panel" class="panel" aria-labelledby="profiles-title">
+          <div class="panel-title">
+            <h2 id="profiles-title">شغل، معیار و جست‌وجو</h2>
+            <span class="badge">پروفایل ذخیره‌شده</span>
+          </div>
+
+          <div id="job-description-view"></div>
+
+          <details class="disclosure">
+            <summary>ویرایش معیارها و عبارت جست‌وجو</summary>
+
+            <fieldset id="profiles-fields" disabled>
+              <form id="search-profile-form" class="search-profile">
+                <label class="field">
+                  عبارت بازیابی داوطلب
+                  <input id="search-query" maxlength="256" required>
+                </label>
+
+                <button id="search-save" class="button secondary" type="submit">ذخیرهٔ جست‌وجو</button>
+                <span id="search-revision" class="small muted"></span>
+              </form>
+
+              <form id="match-profile-form">
+                <p class="small muted">هر معیار جدا بررسی می‌شود. ذخیره، مجموعهٔ معیارهای این شغل را جایگزین می‌کند.</p>
+
+                <div id="criteria-list"></div>
+
+                <div class="actions">
+                  <button id="criterion-add" class="button quiet" type="button">افزودن معیار</button>
+                  <button id="match-save" class="button primary" type="submit">ذخیرهٔ معیارها</button>
+                  <span id="match-revision" class="small muted"></span>
+                </div>
+              </form>
+            </fieldset>
+          </details>
+        </section>
+
+        <div class="review-grid">
+          <section id="candidates-panel" class="panel" aria-labelledby="candidates-title">
+            <div class="panel-title">
+              <h2 id="candidates-title">داوطلبان</h2>
+              <span id="candidate-list-count" class="small muted"></span>
+            </div>
+
+            <label class="field">
+              فیلتر فهرست دریافت‌شده
+              <input id="candidate-filter" type="search" placeholder="نام، عنوان یا موقعیت">
+            </label>
+
+            <details class="disclosure">
+              <summary>افزودن داوطلب</summary>
+
+              <form id="candidate-form" class="form-grid">
+                <label class="field">
+                  نام کامل
+                  <input id="candidate-name" maxlength="200" required>
+                </label>
+
+                <label class="field">
+                  ایمیل
+                  <input id="candidate-email" type="email" dir="ltr" maxlength="320">
+                </label>
+
+                <label class="field">
+                  عنوان حرفه‌ای
+                  <input id="candidate-headline" maxlength="300">
+                </label>
+
+                <label class="field">
+                  موقعیت
+                  <input id="candidate-location" maxlength="200">
+                </label>
+
+                <button id="candidate-create" class="button primary" type="submit">ثبت داوطلب</button>
+              </form>
+            </details>
+
+            <div id="candidate-list" class="candidate-list"></div>
+
+            <details class="disclosure">
+              <summary>بازیابی با پروفایل شغل</summary>
+
+              <form id="retrieval-form" class="actions">
+                <label class="field">
+                  روش
+                  <select id="retrieval-mode">
+                    <option value="lexical">واژگانی</option>
+                    <option value="semantic">معنایی</option>
+                    <option value="hybrid">ترکیبی</option>
+                  </select>
+                </label>
+
+                <button id="retrieval-run" class="button secondary" type="submit">بازیابی</button>
+                <button id="retrieval-cancel" class="button quiet" type="button" disabled>لغو انتظار</button>
+              </form>
+
+              <p id="retrieval-progress" class="small muted" role="status" aria-live="polite"></p>
+              <p id="retrieval-info" class="small muted"></p>
+
+              <div id="retrieval-results"></div>
+
+              <div class="actions">
+                <button id="retrieval-previous" class="button quiet" type="button" disabled>قبلی</button>
+                <button id="retrieval-next" class="button quiet" type="button" disabled>بعدی</button>
+              </div>
+            </details>
+          </section>
+
+          <section id="candidate-panel" class="panel dossier" aria-labelledby="candidate-title">
+            <div class="panel-title">
+              <h2 id="candidate-title">پرونده و شواهد</h2>
+              <span class="badge">منبع‌محور</span>
+            </div>
+
+            <div id="candidate-heading"></div>
+
+            <fieldset id="candidate-fields" disabled>
+              <div class="actions">
+                <button id="evidence-load" class="button secondary" type="button">خواندن شواهد معیارها</button>
+                <button id="explanation-run" class="button primary" type="button">توضیح مستند</button>
+                <button id="explanation-cancel" class="button quiet" type="button" disabled>لغو انتظار</button>
+              </div>
+
+              <p id="explanation-progress" class="small muted" role="status" aria-live="polite"></p>
+
+              <div id="evidence-results"></div>
+
+              <details class="disclosure" open>
+                <summary>رزومه‌های PDF</summary>
+
+                <form id="document-form">
+                  <label class="field">
+                    فایل PDF؛ حداکثر ۱۰ MiB
+                    <input id="document-file" type="file" accept="application/pdf,.pdf" required>
+                  </label>
+
+                  <div class="actions">
+                    <button id="document-upload" class="button secondary" type="submit">بارگذاری</button>
+                    <button id="documents-refresh" class="button quiet" type="button">تازه‌سازی اسناد</button>
+                  </div>
+                </form>
+
+                <p id="documents-info" class="small muted"></p>
+
+                <div id="documents-list"></div>
+
+                <div class="actions">
+                  <button id="documents-previous" class="button quiet" type="button" disabled>قبلی</button>
+                  <button id="documents-next" class="button quiet" type="button" disabled>بعدی</button>
+                </div>
+              </details>
+            </fieldset>
+          </section>
+        </div>
+      </div>
+    </section>
+
+    <noscript>
+      <p class="notice error">برای استفاده از فضای کاری، JavaScript مرورگر باید فعال باشد.</p>
+    </noscript>
+  </main>
+</body>
+</html>
