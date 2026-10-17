@@ -1,5 +1,12 @@
+x-bounded-logging: &bounded-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres:
+    logging: *bounded-logging
     image: pgvector/pgvector:0.8.6-pg18-bookworm
 
     environment:
@@ -24,6 +31,7 @@ services:
     restart: unless-stopped
 
   migrate:
+    logging: *bounded-logging
     build:
       context: .
       target: runtime
@@ -47,6 +55,7 @@ services:
     restart: "no"
 
   api:
+    logging: *bounded-logging
     build:
       context: .
       target: runtime
@@ -81,16 +90,17 @@ services:
           "CMD",
           "python",
           "-c",
-          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready', timeout=3)",
         ]
       interval: 5s
-      timeout: 3s
+      timeout: 4s
       retries: 5
       start_period: 5s
 
     restart: unless-stopped
 
   extraction-worker:
+    logging: *bounded-logging
     build:
       context: .
       target: extraction-worker
@@ -127,6 +137,7 @@ services:
     restart: unless-stopped
 
   ollama:
+    logging: *bounded-logging
     profiles: [semantic]
     image: ollama/ollama:0.40.3
     environment:
@@ -147,6 +158,7 @@ services:
     restart: unless-stopped
 
   embedding-worker:
+    logging: *bounded-logging
     profiles: [semantic]
     build:
       context: .

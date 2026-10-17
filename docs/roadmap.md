@@ -1,29 +1,31 @@
 # Roadmap
 
-As of 2026-10-14: backend through stage 12 is committed. Stage 13-A passed
-native checks, isolated Docker, normal-stack schema/HTTP checks and user browser
-acceptance. Its completion commits are next; the last observed HEAD is main 4db6cb6.
-Actual Git history takes precedence over this pre-commit checkpoint.
+As of 2026-10-14, stage 13-A is committed in b604ec6 and 92c23fd after the
+accepted 4db6cb6 test checkpoint. The user's latest main tree was clean.
+The latest instruction postpones frontend work; stage 14-A is the next backend
+delivery. Actual Git history and new verification output take precedence.
 
 | Stage | State | Next work |
 | --- | --- | --- |
 | 0-12 | Committed backend and local evidence pipeline | Wider corpus/load evaluation |
-| 13-A | Workspace and popup feedback accepted | Scoped feature/test completion commits |
-| 13-B | Next; previous draft is not installed or accepted | Application/status UI, editing, confirmed deletion, embedding controls and repeatable browser checks |
-| 14 | Planned | Readiness, observability and justified authorization/session controls |
-| 15 | Planned | Release, migration rollout, backup/restore verification and a free hosting decision |
-| Final frontend | Deferred until the user starts it | English-first bilingual design, typography, colors, interaction and responsive browser QA |
+| 13-A | Accepted and committed recruiter workspace | Preserve current UI |
+| 13-B | Deferred by the user's current instruction | Application/status UI, editing, confirmed deletion, embedding controls and repeatable browser checks |
+| 14-A | Backend operations delivery; new user acceptance pending | Readiness, private diagnostics, request correlation and bounded logs |
+| 14-B | Planned after 14-A acceptance | Failure/load exercises and justified authorization/session controls based on observed needs |
+| 15 | Planned | Release, migration rollout, coordinated backup/restore verification and a free hosting decision |
+| Final frontend | Starts only on the user's instruction | English-first bilingual design, typography, colors, interaction and responsive browser QA |
 
-Continue 13-B from the actual committed 13-A source. Historical draft results
-1363 Python / 52 Node are not the accepted current 13-A results, which are
-Windows 1347 + 5 skips, Docker 1352, Node 42 and Ruff passed.
+14-A does not add a migration, model download or paid service. Source schema
+head remains 0016_document_embeddings. /ready checks core DB/schema/storage;
+model availability and worker health have separate operator checks.
 
 All AI/services remain free/local: qwen3-embedding:0.6b, 1024 dimensions,
-and qwen3:0.6b. No paid provider or silent cloud fallback. Source head remains
-0016_document_embeddings. Hosted Actions, broader model/corpus/load evaluation
-and production recovery/deployment remain open. Agents, Redis, LangGraph, MCP
-and Temporal require a concrete workflow need. Full teaching stays deferred.
+and qwen3:0.6b. No silent cloud fallback. Hosted Actions, broader live-model
+quality, realistic load and production deployment/restore remain open.
+Agents, Redis, LangGraph, MCP and Temporal need a concrete workflow reason.
+Full teaching stays deferred until final delivery.
 
-The final design uses English as the primary language and Persian as secondary,
-with LTR/RTL, deliberate colors, locally bundled openly licensed fonts, accessible
-popup feedback and responsive forms. It does not start during the current workflow work.
+The final design uses English as primary and Persian as secondary, with
+LTR/RTL, deliberate colors, locally bundled openly licensed fonts, accessible
+popup feedback and responsive forms. Historical 13-B draft results are not
+installed or accepted and must not be reported as the current baseline.

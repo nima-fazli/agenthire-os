@@ -25,6 +25,7 @@ SMOKE_MODULES = (
     "semantic_retrieval_smoke",
     "grounded_explanations_smoke",
     "recruiter_ui_smoke",
+    "operations_smoke",
 )
 
 

@@ -6,6 +6,8 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.core.request_observability import request_id_from_scope
+
 logger = logging.getLogger("agenthire.errors")
 
 
@@ -155,10 +157,13 @@ async def unexpected_exception_handler(
     logger.exception(
         "unhandled_exception",
         exc_info=exc,
+        extra={"request_id": request_id_from_scope(request.scope)},
     )
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        headers={"X-Request-ID": request_id_from_scope(request.scope)}
+        if request_id_from_scope(request.scope) is not None else None,
         content={
             "error": {
                 "code": "INTERNAL_SERVER_ERROR",
