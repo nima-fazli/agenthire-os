@@ -102,7 +102,7 @@ def test_commands_keep_spaces_as_single_arguments(tmp_path):
     prefix = compose_prefix(root, PROJECT, env_file)
     steps = verification_plan(prefix)
     assert len(steps) == 13 + len(SMOKE_MODULES)
-    assert SMOKE_MODULES[-3:] == ("recruiter_ui_smoke", "operations_smoke", "operations_failure_smoke")
+    assert SMOKE_MODULES[-4:] == ("recruiter_ui_smoke", "operations_smoke", "operations_failure_smoke", "workload_smoke")
     ui = next(step for step in steps if step.name == "docker-ui-tests")
     assert ui.command[-4:] == ("node", "--test", "tests/recruiter_ui.test.mjs", "tests/recruiter_notifications.test.mjs")
     for step in (*steps, cleanup_step(prefix)):

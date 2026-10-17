@@ -130,6 +130,7 @@ def test_dry_run_has_no_process_or_file_side_effects(monkeypatch, capsys):
     assert "scripts.recruiter_ui_smoke" in output
     assert "scripts.operations_smoke" in output
     assert "scripts.operations_failure_smoke" in output
+    assert "scripts.workload_smoke" in output
     assert "--index 2 -T extraction-worker" in output
     assert "tests/recruiter_ui.test.mjs" in output
     assert "--volumes" in output
