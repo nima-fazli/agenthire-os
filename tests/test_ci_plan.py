@@ -1,3 +1,4 @@
+import sys
 from pathlib import Path
 
 import pytest
@@ -101,11 +102,16 @@ def test_commands_keep_spaces_as_single_arguments(tmp_path):
     env_file = tmp_path / "temporary directory" / "ci.env"
     prefix = compose_prefix(root, PROJECT, env_file)
     steps = verification_plan(prefix)
-    assert len(steps) == 13 + len(SMOKE_MODULES)
+    assert len(steps) == 14 + len(SMOKE_MODULES)
     assert SMOKE_MODULES[-4:] == ("recruiter_ui_smoke", "operations_smoke", "operations_failure_smoke", "workload_smoke")
     ui = next(step for step in steps if step.name == "docker-ui-tests")
     assert ui.command[-4:] == ("node", "--test", "tests/recruiter_ui.test.mjs", "tests/recruiter_notifications.test.mjs")
     for step in (*steps, cleanup_step(prefix)):
+        if step.name == "recovery-drill":
+            assert step.command == (sys.executable, "-m", "scripts.recovery_drill", "--execute")
+            assert steps[-1] == step
+            assert step.timeout == 2400
+            continue
         assert step.command[: len(prefix)] == prefix
         assert step.command[step.command.index("--project-name") + 1] == PROJECT
         assert str(root / "compose.ci.yaml") in step.command
