@@ -127,6 +127,7 @@ def test_dry_run_has_no_process_or_file_side_effects(monkeypatch, capsys):
     assert all(f"scripts.{name}" in output for name in SMOKE_MODULES)
     assert "scripts.semantic_retrieval_smoke" in output
     assert "scripts.recruiter_ui_smoke" in output
+    assert "scripts.operations_smoke" in output
     assert "tests/recruiter_ui.test.mjs" in output
     assert "--volumes" in output
 

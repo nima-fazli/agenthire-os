@@ -136,3 +136,49 @@ def test_unhandled_database_error_is_safe_in_response_and_log(
     assert canary not in response.text
     assert canary not in output.getvalue()
     assert json.loads(output.getvalue())["exception"]["type"] == "IntegrityError"
+
+
+def test_uvicorn_message_arguments_and_exception_are_redacted() -> None:
+    canary = "synthetic-private-server-message"
+    try:
+        raise RuntimeError(canary)
+    except RuntimeError:
+        record = logging.LogRecord(
+            name="uvicorn.error", level=logging.ERROR, pathname=__file__, lineno=1,
+            msg="failed request %s", args=(canary,), exc_info=sys.exc_info(),
+        )
+    data = JsonFormatter().format(record)
+    assert canary not in data
+    assert json.loads(data)["message"] == "server_event"
+    assert json.loads(data)["exception"]["type"] == "RuntimeError"
+
+
+def test_configure_logging_disables_raw_access_log_and_formats_server_errors(monkeypatch):
+    access = logging.getLogger("uvicorn.access")
+    errors = logging.getLogger("uvicorn.error")
+    monkeypatch.setattr(access, "disabled", False)
+    monkeypatch.setattr(errors, "handlers", [])
+    monkeypatch.setattr(errors, "propagate", True)
+    configure_logging(level="INFO")
+    assert access.disabled
+    assert errors.propagate is False
+    assert isinstance(errors.handlers[0].formatter, JsonFormatter)
+
+
+def test_http_formatter_allows_bounded_fields_and_discards_unknown_data():
+    record = logging.LogRecord("agenthire.http", logging.INFO, __file__, 1, "http_request_completed", (), None)
+    record.request_id = "a" * 32
+    record.method = "GET"
+    record.route = "/items/{identifier}"
+    record.status_code = 200
+    record.outcome = "complete"
+    record.duration_ms = 12.5
+    record.authorization = "synthetic-private-token"
+    record.query = "synthetic-private-query"
+    data = JsonFormatter().format(record)
+    assert "synthetic-private" not in data
+    assert json.loads(data)["duration_ms"] == 12.5
+    record.duration_ms = float("nan")
+    record.route = "/bad?q=private"
+    invalid = json.loads(JsonFormatter().format(record))
+    assert "duration_ms" not in invalid and "route" not in invalid
