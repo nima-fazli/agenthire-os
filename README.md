@@ -1,34 +1,46 @@
 # AgentHire OS
 
-Tenant-scoped recruiting, private PDFs and free local CPU models. Backend stages
-through 12 and the stage 13-A recruiter workspace are committed. The latest
-observed user checkpoint is main 92c23fd, following b604ec6, with a clean tree.
+Private multi-organization recruiting backend and recruiter workspace, built
+with FastAPI, PostgreSQL/pgvector and local Ollama models.
 
-/workspace/ supports accounts, organizations/jobs, profiles, candidates,
-retrieval, source evidence and private PDF processing. The current Persian UI
-is preserved. Stage 13-B and the final English-first bilingual design are
-deferred until the user requests frontend work.
+The backend includes scoped jobs/candidates/applications, private PDFs, durable
+extraction, immutable chunks, lexical/semantic/hybrid retrieval and exact grounded
+quotes. Model scores are retrieval evidence, never a hiring probability.
 
-Stage 14-A adds /ready, server-generated request IDs, safe structured HTTP
-events, bounded container logs and local operator diagnostics. /health retains
-its existing liveness contract. No migration, dependency or model changes.
-New Docker/PostgreSQL acceptance is pending execution on the user's machine.
+## Current checkpoint
 
-## Check
+Backend stages 0-12 and UI 13-A are committed through main 92c23fd.
+The latest supplied 14-A terminal passed Windows Python 1386 + 5 platform skips,
+Docker Python 1391, Node 42, Ruff, 27 isolated checks and separate cleanup.
+Normal-stack schema was 0016_document_embeddings without drift. Its two commit
+hashes have not been supplied; commit accepted 14-A before copying 14-B1 files.
+
+14-B1 adds private queue limits, aggregate Compose inventory, bounded local HTTP
+latency probes and real PostgreSQL timeout/read-only rollback exercises. Its CI
+plan has 30 checks, 17 smokes and separate cleanup, including explicit checks of
+both extraction workers. New user Docker acceptance and commits remain pending.
+
+## Verify
 
     uv sync --locked --no-install-project
     uv run --locked --no-sync ruff check .
     uv run --locked --no-sync pytest -rs -W error
     node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs
-    uv run --locked --no-sync python -m scripts.ci_verify --dry-run
     uv run --locked --no-sync python -m scripts.ci_verify
 
-The current isolated plan has 27 checks, including 16 smokes, plus separate
-cleanup. Historical accepted 13-A results were Windows Python 1347 passed / 5
-platform skips, Docker Python 1352 passed, Node 42 passed and all 26 former CI
-checks passed. Alembic was at 0016_document_embeddings with no drift.
-These historical results do not establish acceptance of the new stage.
+The isolated runner owns separate generated credentials and volumes. Never use
+development-volume deletion to repair a failed check. Keep .env and private PDFs
+out of Git and delivery archives. Personal recovery documents stay outside Git.
 
-See [Operations](docs/operations.md), [Verification](docs/verification.md),
-[Recruiter workspace](docs/recruiter-ui.md) and [Roadmap](docs/roadmap.md).
-The personal recovery document stays outside Git.
+## Documentation
+
+- [Architecture](docs/architecture.md)
+- [Development](docs/development.md)
+- [Verification](docs/verification.md)
+- [Operations](docs/operations.md)
+- [Incident runbook](docs/operations-runbook.md)
+- [Retrieval](docs/retrieval.md)
+- [Semantic retrieval](docs/semantic.md)
+- [Grounded explanations](docs/explanations.md)
+- [Recruiter workspace](docs/recruiter-ui.md)
+- [Roadmap](docs/roadmap.md)

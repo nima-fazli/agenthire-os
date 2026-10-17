@@ -9,6 +9,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.core.config import get_settings
 from app.core.logging import configure_logging
+from app.core.operational_policy import QueueLimits
 from app.core.readiness import StorageProbe, expected_migration_heads
 from app.repositories.runtime_health import RuntimeHealthRepository
 from app.services.runtime_health import RuntimeReadiness
@@ -56,15 +57,25 @@ async def queue_report(session_factory):
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--queues", action="store_true")
+    parser.add_argument("--max-queue-age-seconds", type=int)
+    parser.add_argument("--max-expired-leases", type=int)
     args = parser.parse_args(argv)
+    limited = args.max_queue_age_seconds is not None or args.max_expired_leases is not None
     try:
+        limits = QueueLimits(args.max_queue_age_seconds, args.max_expired_leases)
+        if limited and not args.queues:
+            raise ValueError("Queue limits require --queues.")
         report = asyncio.run(collect(queues=args.queues))
+        if limited:
+            report["queue_policy"] = limits.assess(report.get("queues"))
     except (SQLAlchemyError, OSError, ValueError, RuntimeError):
         report = {"status": "not_ready", "diagnostic": "unavailable"}
     except KeyboardInterrupt:
         return 130
     print(json.dumps(report, sort_keys=True))
-    return 0 if report["status"] == "ready" and report.get("queues") != "unavailable" else 1
+    success = report["status"] == "ready" and report.get("queues") != "unavailable"
+    success = success and report.get("queue_policy", {}).get("status", "within_limits") == "within_limits"
+    return 0 if success else 1
 
 
 if __name__ == "__main__":

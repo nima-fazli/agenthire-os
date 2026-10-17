@@ -1,73 +1,50 @@
 # Verification
 
-## Accepted 13-A checkpoint — 2026-10-14
+## Observed 14-A baseline
 
-The user's terminal and manual /workspace/ acceptance established this baseline.
-Completion commits are b604ec6 and 92c23fd; the latest observed main tree is clean.
+Latest supplied user terminal, after the committed 13-A main 92c23fd:
 
-| Check | Historical observed result |
+| Check | Observed result |
 | --- | --- |
-| Recruiter UI Python tests | 34 passed |
-| Native Windows Python, warnings as errors | 1347 passed, 5 platform skips |
-| Native Windows Node / Ruff | 42 passed / passed |
-| Docker Python / Node / Ruff | 1352 passed / 42 passed / passed |
-| Former isolated ci_verify | All 26 checks and separate cleanup exited 0 |
-| Normal stack | API/PostgreSQL/extraction-worker healthy after rebuild |
-| Alembic current / check | 0016_document_embeddings (head) / no drift |
-| Normal recruiter_ui_smoke | Passed |
-| Manual browser | User accepted the page |
+| Windows Python with warnings as errors | 1386 passed, 5 platform skips |
+| Docker Python | 1391 passed, no skips |
+| Node / Ruff | 42 passed / passed on both platforms |
+| Isolated runner | 27 checks and separate cleanup exited zero |
+| Normal stack | API/PostgreSQL/two extraction workers healthy |
+| Alembic current/check | 0016_document_embeddings / no drift |
+| operations_smoke | Passed in isolated and normal stacks |
+| Commits | 14-A hashes not supplied; last observed HEAD remains 92c23fd |
 
-The five Windows skips cover symlink privileges and real Linux/PDF tools; they
-ran in the accepted Docker run. The multiline/trailing-comma import regression
-was fixed. No stage 14-A result should be inferred from these historical checks.
+Do not reuse the 14-A result as acceptance of the new 14-B1 code. Commit the
+accepted 14-A files before replacing files with this delivery.
 
-## Stage 14-A acceptance
+## 14-B1 acceptance
 
-This delivery adds tests for storage probe cleanup, concurrency and cancellation;
-migration mismatch, failed DB/storage and coalesced readiness; minimal public
-responses; private diagnostics; request ID isolation, safe errors and streaming.
-The existing UI assets, Node suites, lock file and migration graph are unchanged.
-
-Run native Ruff, Python with warnings as errors, both Node suites, isolated CI,
-normal image builds/startup, Alembic current/check and operations_smoke. Record
-new platform-specific counts and actual exit codes. New user Docker/PostgreSQL
-acceptance is pending; do not label an assistant-only unit run as real-stack proof.
-No frontend redesign or new browser acceptance is part of this backend change.
-
-## Repeatable runner
-
+    uv sync --locked --no-install-project
+    uv run --locked --no-sync ruff check .
+    uv run --locked --no-sync pytest -rs -W error
+    node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs
     uv run --locked --no-sync python -m scripts.ci_verify --dry-run
     uv run --locked --no-sync python -m scripts.ci_verify
 
-The current plan has 27 checks, including 16 smoke modules, then separate cleanup:
+The plan has 30 checks and separate cleanup: the previous 16 smokes, the new
+operations_failure_smoke and two indexed extraction-worker healthchecks.
+Record actual platform-specific counts and exits. Rebuild/start the normal
+API/migrate/extraction-worker images, keep two extraction workers, check schema,
+run both operations smokes and private diagnostics. On the host run
+stack_diagnostics and operations_probe. Queue thresholds are explicit operator
+policies and can fail independently of core readiness.
 
-    docker_smoke
-    candidate_smoke
-    application_smoke
-    candidate_document_smoke
-    document_extraction_smoke
-    document_chunk_smoke
-    document_search_smoke
-    job_retrieval_smoke
-    job_matching_smoke
-    retrieval_evaluation_smoke
-    storage_integrity_smoke
-    document_embeddings_smoke
-    semantic_retrieval_smoke
-    grounded_explanations_smoke
-    recruiter_ui_smoke
-    operations_smoke
+The runner retains isolated credentials/volumes, first-failure authority and
+unconditional owned cleanup. Operations helper files and UI assets must exist
+before Docker starts. No deployment, model download, UI change or migration is
+part of this slice. Known Windows platform skips still run in Docker/Linux.
 
-Preflight rejects missing, empty or linked required UI files. Both Node suites
-run in the Docker test image. CI owns its generated credentials and volumes;
-cleanup touches only its isolated project. First failure stays authoritative,
-and failed cleanup prevents success. Never remove development volumes to fix CI.
+## Evidence boundaries
 
-## Limits
-
-CI embedding/chat gates use deterministic fixtures with real DB/HTTP contracts.
-They do not prove current live-model quality, realistic load or production
-capacity. DOM stubs and recruiter_ui_smoke are not automated browser tests.
-Readiness does not imply worker or model readiness. Hosted GitHub Actions and
-production deployment/backup restore remain unobserved. See operations.md for
-cooperative timeout limits and the private operator workflow.
+Local unit tests and socket-server failure tests do not replace real PostgreSQL
+smokes. CI embeddings/chat still use deterministic fixtures. A small readiness
+sample includes its cache and does not prove realistic load or live-model
+quality. Compose health and worker heartbeat do not prove throughput. Hosted
+Actions, broad browser QA, production deployment and coordinated restore remain
+unverified. See operations.md and operations-runbook.md for exact limits.

@@ -101,6 +101,40 @@ queues, alembic_version, running services and documents are not modified.
 This smoke does not stop a real service, test a network partition, establish
 load capacity, restore a backup or verify live model quality.
 
-The isolated CI plan adds operations_smoke as its sixteenth smoke. Execute it
-and normal-stack acceptance before the two scoped commits. Production rollout,
+The accepted 14-A plan added operations_smoke as its sixteenth smoke. Execute
+normal-stack acceptance before scoped commits. Production rollout,
 backup/restore and wider failure/load exercises remain later work.
+
+## Stage 14-B1 private checks
+
+See operations-runbook.md for host and private-container commands. Queue limits
+are opt-in CLI arguments requiring --queues. Existing report fields remain;
+queue_policy is added only when a limit is supplied. Limits inspect both queues,
+never mutate rows, do not infer model/worker health and can cause exit 1 while
+the core status remains ready. Invalid or unavailable aggregates fail closed.
+
+Host stack_diagnostics reads Compose JSON Lines or legacy JSON arrays, includes
+stopped containers and reports only requested service aggregates. Every observed
+required replica must be healthy; migration containers must have exited zero.
+Missing replicas fail. Optional semantic inventory must be explicitly requested.
+
+operations_probe issues 1..64 GETs with concurrency 1..8 to /health or /ready on
+HTTP loopback or the trusted Compose hostname api. It sends no auth or request
+body, uses no proxy/redirect and reports no URL, response body or exception text.
+The fixed health routes must return bounded Content-Length JSON and a server
+request ID; /ready must be minimal and no-store. Other paths/origins are rejected.
+Each request has a 0.05..5 second socket-I/O deadline covering headers and body.
+OS name resolution/connection scheduling can extend wall time; this is not a hard
+process-kill guarantee. Interrupt cancels pending work and waits for running probes.
+
+Latency p50/p95 use nearest-rank over all attempts, including failures; max and
+outcome counts are included. --max-p95-ms is an optional explicit acceptance
+limit. The sampler includes cold readiness and its cache. It neither measures
+inference nor establishes production throughput, peak memory or capacity.
+
+operations_failure_smoke exercises real PostgreSQL statement cancellation,
+read-only write denial, rollback resetting local settings and same-connection
+reuse, then 20 concurrent readiness GETs. The rejected DDL always rolls back.
+It does not stop services, commit schema/data changes or test disaster restore.
+The isolated CI adds this seventeenth smoke and checks both extraction workers
+explicitly. User acceptance of this new slice remains pending.

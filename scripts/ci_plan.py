@@ -9,6 +9,11 @@ UI_ASSETS = tuple(f"app/web/assets/{name}" for name in (
     "requests.mjs", "workspace.mjs", "profiles.mjs", "candidates.mjs", "evidence.mjs", "notifications.mjs",
 ))
 
+OPERATIONS_FILES = (
+    "app/core/operational_policy.py", "app/core/probe_metrics.py", "app/core/probe_transport.py",
+    "scripts/operations_probe.py", "scripts/stack_diagnostics.py", "scripts/runtime_diagnostics.py",
+)
+
 SMOKE_MODULES = (
     "docker_smoke",
     "candidate_smoke",
@@ -26,6 +31,7 @@ SMOKE_MODULES = (
     "grounded_explanations_smoke",
     "recruiter_ui_smoke",
     "operations_smoke",
+    "operations_failure_smoke",
 )
 
 
@@ -49,6 +55,7 @@ def repository_root(path: Path) -> Path:
         "app/web/router.py",
         "app/web/__init__.py",
         *UI_ASSETS,
+        *OPERATIONS_FILES,
         ".github/workflows/verify.yml",
         ".github/dependabot.yml",
         "tests/recruiter_ui.test.mjs",
@@ -167,6 +174,13 @@ def verification_plan(prefix: tuple[str, ...]) -> tuple[Step, ...]:
                 "alembic",
                 "current",
             ),
+        ),
+        *(
+            Step(f"extraction-worker-{index}-health", prefix + (
+                "exec", "--index", str(index), "-T", "extraction-worker", "python", "-m",
+                "app.workers.document_extraction", "--healthcheck",
+            ), 30)
+            for index in (1, 2)
         ),
         Step(
             "migration-drift",
