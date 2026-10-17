@@ -118,3 +118,17 @@ For later changes, rebuild affected normal images before repeating the same
 measurement; preserve normal volumes and verify Alembic current/check and
 workload_smoke. Live inference does not need to be repeated to measure a
 heartbeat probe. Adjust intervals only when later measurements justify doing so.
+
+## Recovery rehearsal (15-A2)
+
+Run scripts.recovery_drill on the host project root; default invocation prints a
+plan and --execute creates/restores two fresh synthetic stacks. Full CI includes
+this gate. It stops only the generated source writers and restores only into its
+fresh target, then checks schema, PDF bytes, deterministic vectors, application
+state, retrieval and tenant isolation. See [recovery.md](recovery.md) for limits.
+
+Require status=passed together with cleanup=completed. On cleanup=attention,
+retain the reported owned project names and inspect only those namespaces.
+Never substitute the normal project name into a drill cleanup or restore.
+The temporary bundle is removed; this gate does not provide retained backups,
+normal-data restore, offsite retention or a measured RPO/RTO.

@@ -3,8 +3,9 @@
 Actual source, Git and latest user output take precedence over snapshots.
 UI 13-A is committed through b604ec6/92c23fd; 14-A through 31b7730/f8286de;
 14-B1 through 822c4c2/78987f4; 14-B2 through 09f232e/e2b42e9.
-14-B3 native acceptance passed with e2b42e9 as the observed Git baseline;
-its scoped feature/test commit hashes have not yet been observed.
+14-B3 was accepted and committed as 955ac94/c7d66c2. The latest observed main
+is c7d66c22a43336c2cd8069a082d3e1725fec5939 and was clean at the 15-A1 inventory.
+15-A2 native acceptance passed; its 15 scoped files await feature/test commits.
 
 | Stage | State | Remaining work/acceptance |
 | --- | --- | --- |
@@ -14,8 +15,10 @@ its scoped feature/test commit hashes have not yet been observed.
 |14-A|Accepted and committed|Closed checkpoint|
 |14-B1|Accepted and committed|Closed checkpoint; 30 checks/17 smokes/cleanup passed|
 |14-B2|Accepted and committed|31 checks/18 smokes/cleanup, four workflows and both live models passed|
-|14-B3|Native acceptance passed|Record scoped commits; Windows 1541+5 skips, Docker 1546, schema/workflow and measured CPU improvement verified|
-|15|Planned|Release, migration rollout, coordinated tested backup/restore, free hosting decision|
+|14-B3|Accepted and committed|Windows 1541+5 skips, Docker 1546 and measured healthcheck CPU improvement verified|
+|15-A1|Accepted read-only inventory|PostgreSQL tools/server 18.6, vector 0.8.6, two PDF objects and empty queues observed|
+|15-A2|Native acceptance passed; commits pending|Windows 1591+5 skips, Docker 1596; all 32 checks/18 smokes and two-stack recovery/cleanup passed|
+|15|In progress|Retained private backups, operational restore/retention, release and migration rollout, free hosting decision|
 |Final frontend|Starts on explicit user instruction|English-first bilingual design, LTR/RTL and real browser QA|
 
 14-B2 uses synthetic PDFs through real HTTP/extraction/chunk/retrieval, plus a

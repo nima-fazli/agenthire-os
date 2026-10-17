@@ -1,4 +1,5 @@
 import re
+import sys
 import tomllib
 from dataclasses import dataclass
 from pathlib import Path
@@ -15,6 +16,8 @@ OPERATIONS_FILES = (
     "app/core/benchmark_metrics.py", "app/core/resource_metrics.py", "scripts/benchmark_http.py",
     "scripts/workload_benchmark.py", "scripts/model_benchmark.py", "scripts/resource_watch.py",
     "scripts/queue_watch.py", "scripts/benchmark_run.py",
+    "app/core/recovery_archive.py", "scripts/recovery_objects.py",
+    "scripts/recovery_fixture.py", "scripts/recovery_drill.py",
 )
 
 SMOKE_MODULES = (
@@ -214,6 +217,7 @@ def verification_plan(prefix: tuple[str, ...]) -> tuple[Step, ...]:
             )
             for name in SMOKE_MODULES
         ),
+        Step("recovery-drill", (sys.executable, "-m", "scripts.recovery_drill", "--execute"), 2400),
     )
 
 

@@ -10,8 +10,7 @@ quotes. Model scores are retrieval evidence, never a hiring probability.
 ## Current checkpoint
 
 Backend 0-12, UI 13-A and operations 14-A/14-B1/14-B2 are accepted and committed.
-14-B3 native acceptance passed on Windows and Docker. The observed Git baseline
-before its scoped commits is e2b42e9, following 09f232e. Windows passed 1541 tests
+14-B3 native acceptance passed and was committed as 955ac94/c7d66c2. Windows passed 1541 tests
 with 5 known platform skips; Docker passed 1546 without skips. Node passed 42 and
 Ruff passed in both environments. All 31 CI checks, 18 smokes and separate cleanup
 passed. Normal images were rebuilt, four synthetic workflows completed with
@@ -26,6 +25,16 @@ their existing behavior. Median healthcheck CPU fell by 65.6/58.5 percent for th
 two extraction replicas and 54.7 percent for embedding in the recorded three-call
 samples. These observations do not establish production capacity. Live inference
 was not repeated in 14-B3; the accepted local-model samples remain from 14-B2.
+
+15-A1's read-only inventory passed on clean main c7d66c2: PostgreSQL tools/server
+18.6, pgvector 0.8.6, two PDFs totalling 138041 bytes and an approximately 10 MB
+database. 15-A2 native acceptance passed: Windows 1591 tests with 5 known platform
+skips, Docker 1596 without skips, Node 42 and Ruff in both environments. All 32 CI
+checks, 18 smokes and separate cleanup passed, including coordinated DB/PDF
+recovery into a second fresh synthetic stack. Two tenant PDFs, exact fixture
+vectors, authenticated downloads, lexical retrieval and tenant isolation were
+verified. The normal stack remained healthy with empty queues. Scoped 15-A2
+commits are pending; retained backups of normal application data remain later work.
 
 ## Verify
 
@@ -46,6 +55,7 @@ out of Git and delivery archives. Personal recovery documents stay outside Git.
 - [Verification](docs/verification.md)
 - [Operations](docs/operations.md)
 - [Incident runbook](docs/operations-runbook.md)
+- [Recovery rehearsal](docs/recovery.md)
 - [Retrieval](docs/retrieval.md)
 - [Semantic retrieval](docs/semantic.md)
 - [Grounded explanations](docs/explanations.md)
