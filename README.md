@@ -9,16 +9,17 @@ quotes. Model scores are retrieval evidence, never a hiring probability.
 
 ## Current checkpoint
 
-Backend stages 0-12 and UI 13-A are committed through main 92c23fd.
-The latest supplied 14-A terminal passed Windows Python 1386 + 5 platform skips,
-Docker Python 1391, Node 42, Ruff, 27 isolated checks and separate cleanup.
-Normal-stack schema was 0016_document_embeddings without drift. Its two commit
-hashes have not been supplied; commit accepted 14-A before copying 14-B1 files.
+Backend 0-12, UI 13-A, operations 14-A and 14-B1 are accepted and committed.
+Latest user HEAD is 78987f4; 14-B1 feature/test commits are 822c4c2/78987f4.
+User Windows passed 1458 tests with 5 known platform skips; Docker passed 1463
+without skips; Node 42 and Ruff passed in both environments. All 30 CI checks,
+17 smokes and separate cleanup passed. Schema remains 0016_document_embeddings.
 
-14-B1 adds private queue limits, aggregate Compose inventory, bounded local HTTP
-latency probes and real PostgreSQL timeout/read-only rollback exercises. Its CI
-plan has 30 checks, 17 smokes and separate cleanup, including explicit checks of
-both extraction workers. New user Docker acceptance and commits remain pending.
+14-B2 now adds bounded synthetic recruiting/PDF/worker/retrieval measurements,
+serial live-model transport samples, private queue time series and sampled
+container memory/CPU. Existing application contracts, models, quotas, feature
+flags, UI, migrations and dependencies remain unchanged. New user acceptance
+is pending; prior 14-B1 results are not acceptance of this delivery.
 
 ## Verify
 
@@ -44,3 +45,21 @@ out of Git and delivery archives. Personal recovery documents stay outside Git.
 - [Grounded explanations](docs/explanations.md)
 - [Recruiter workspace](docs/recruiter-ui.md)
 - [Roadmap](docs/roadmap.md)
+
+## Bounded operator measurements
+
+First rebuild the smoke image after installing this slice:
+
+    docker compose --profile smoke build smoke
+    uv run --locked --no-sync python -m scripts.resource_watch --samples 15
+    docker compose --profile smoke run --rm --no-deps smoke python -m scripts.queue_watch --samples 15
+    uv run --locked --no-sync python -m scripts.benchmark_run --kind workflow --execute --items 4 --concurrency 2
+    uv run --locked --no-sync python -m scripts.benchmark_run --kind models --execute --samples 3
+
+The last two commands explicitly create this run's synthetic workflow records or
+invoke the already-installed CPU models. Without --execute they print a plan.
+They do not pull a model, enable API flags or restart normal services. The host
+supervisor samples existing service containers while its own named smoke
+container runs. Reports contain counts/timings/digests, not tokens, document
+text, credentials, tenant IDs, container names or raw provider output.
+See operations-runbook.md for failure/cleanup boundaries and interpretation.

@@ -43,3 +43,35 @@ request_id, safe error category and measured results. Do not retry an uncertain
 write before reading its state. Do not automatically delete files, clear queues,
 change feature flags or remove volumes. Coordinated restore needs the later
 release backup/restore procedure; the personal recovery file is not a backup.
+
+## Measurement run
+
+After the core stack is healthy with two extraction workers and the smoke image
+has been rebuilt, capture idle observations on the host and inside the private
+smoke container. Keep ordinary work quiet when comparing runs:
+
+    uv run --locked --no-sync python -m scripts.resource_watch --samples 15 --interval 1
+    docker compose --profile smoke run --rm --no-deps smoke python -m scripts.queue_watch --samples 15 --interval 1
+    uv run --locked --no-sync python -m scripts.benchmark_run --kind workflow --execute --items 4 --concurrency 2
+    uv run --locked --no-sync python -m scripts.benchmark_run --kind models --execute --samples 3
+
+The workflow command uses real API/PDF/extraction/chunk/lexical retrieval.
+The model command uses installed qwen3-embedding:0.6b and qwen3:0.6b directly
+with synthetic reference data; CPU-only contracts are unchanged. Compare runs
+with the same input counts/concurrency/hardware. No fixed latency SLA is invented.
+Inspect passed/completed/cleanup together. A low percentile with failed attempts
+or incomplete resource coverage is not an accepted result.
+
+If a run fails, preserve its aggregate run_id and diagnostic. For a workflow it
+maps to organization slug workload-<run_id> and its synthetic account. An uncertain
+write is not retried or automatically deleted. Inspect scoped API/DB state before
+using normal deletion protocols; do not bulk-delete workload-prefixed tenants.
+The host supervisor stops only its own generated smoke container on failure;
+normal API, workers, DB and Ollama remain under their existing operator controls.
+A failed synthetic run can leave its own metadata/files for review.
+
+Sampled Docker memory excludes/handles cache according to Docker's platform
+accounting and can miss the true peak. Repeated high worker CPU with empty
+queues warrants separating healthcheck/import cost from polling/SQL cost before
+changing intervals. Neither one snapshot nor one small synthetic run establishes
+production capacity. Save aggregate reports; never publish raw logs/env or PDFs.

@@ -12,6 +12,9 @@ UI_ASSETS = tuple(f"app/web/assets/{name}" for name in (
 OPERATIONS_FILES = (
     "app/core/operational_policy.py", "app/core/probe_metrics.py", "app/core/probe_transport.py",
     "scripts/operations_probe.py", "scripts/stack_diagnostics.py", "scripts/runtime_diagnostics.py",
+    "app/core/benchmark_metrics.py", "app/core/resource_metrics.py", "scripts/benchmark_http.py",
+    "scripts/workload_benchmark.py", "scripts/model_benchmark.py", "scripts/resource_watch.py",
+    "scripts/queue_watch.py", "scripts/benchmark_run.py",
 )
 
 SMOKE_MODULES = (
@@ -32,6 +35,7 @@ SMOKE_MODULES = (
     "recruiter_ui_smoke",
     "operations_smoke",
     "operations_failure_smoke",
+    "workload_smoke",
 )
 
 

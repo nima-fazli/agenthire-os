@@ -1,24 +1,30 @@
 # Verification
 
-## Observed 14-A baseline
+## Accepted 14-B1 baseline
 
-Latest supplied user terminal, after the committed 13-A main 92c23fd:
+User main 78987f4 is clean. Feature/test commits 822c4c2/78987f4 follow accepted
+14-A 31b7730/f8286de. The final user output recorded:
 
-| Check | Observed result |
+| Check | Actual result |
 | --- | --- |
-| Windows Python with warnings as errors | 1386 passed, 5 platform skips |
-| Docker Python | 1391 passed, no skips |
-| Node / Ruff | 42 passed / passed on both platforms |
-| Isolated runner | 27 checks and separate cleanup exited zero |
-| Normal stack | API/PostgreSQL/two extraction workers healthy |
-| Alembic current/check | 0016_document_embeddings / no drift |
-| operations_smoke | Passed in isolated and normal stacks |
-| Commits | 14-A hashes not supplied; last observed HEAD remains 92c23fd |
+|Windows Python with -W error|1458 passed, 5 known platform skips|
+|Docker Python|1463 passed, no skips|
+|Node/Ruff|42 passed/Ruff passed on both platforms|
+|Isolated CI|30 checks, 17 smokes and separate cleanup, all exit 0|
+|Normal stack|API/PostgreSQL/two extraction workers healthy|
+|Schema|0016_document_embeddings; no drift in either stack|
+|Readiness sample|20/20 successful; host p95=109ms; not a capacity result|
 
-Do not reuse the 14-A result as acceptance of the new 14-B1 code. Commit the
-accepted 14-A files before replacing files with this delivery.
+Do not reuse these results as acceptance of 14-B2.
 
-## 14-B1 acceptance
+## Assistant checks for this delivery
+
+Linux Python passed 1530 tests with warnings treated as errors; Node passed 42
+tests and Ruff passed. The full collection also enforced the Windows 32767-character
+environment-value bound; the maximum PYTEST_CURRENT_TEST value was 5284 characters.
+This is not native Windows, Docker, PostgreSQL or live Ollama acceptance.
+
+## Current 14-B2 acceptance
 
     uv sync --locked --no-install-project
     uv run --locked --no-sync ruff check .
@@ -27,24 +33,28 @@ accepted 14-A files before replacing files with this delivery.
     uv run --locked --no-sync python -m scripts.ci_verify --dry-run
     uv run --locked --no-sync python -m scripts.ci_verify
 
-The plan has 30 checks and separate cleanup: the previous 16 smokes, the new
-operations_failure_smoke and two indexed extraction-worker healthchecks.
-Record actual platform-specific counts and exits. Rebuild/start the normal
-API/migrate/extraction-worker images, keep two extraction workers, check schema,
-run both operations smokes and private diagnostics. On the host run
-stack_diagnostics and operations_probe. Queue thresholds are explicit operator
-policies and can fail independently of core readiness.
+The isolated plan has 31 checks, 18 smokes and separate owned cleanup. New
+workload_smoke performs two concurrent synthetic workflows through real HTTP,
+PDF conversion, workers, chunks, lexical retrieval and scoped cleanup. All prior
+operations/storage/provenance gates and both indexed worker healthchecks remain.
+It does not call a live model. Unit mocks are not acceptance of that smoke.
 
-The runner retains isolated credentials/volumes, first-failure authority and
-unconditional owned cleanup. Operations helper files and UI assets must exist
-before Docker starts. No deployment, model download, UI change or migration is
-part of this slice. Known Windows platform skips still run in Docker/Linux.
+Rebuild the normal smoke image and run workload_smoke there, then resource_watch,
+queue_watch and benchmark_run for workflow/models as documented in the runbook.
+The existing normal API/extraction image and schema do not change in this slice.
+Models must already exist in the running Ollama service. The supervisor neither
+pulls models nor enables semantic/explanation HTTP flags. Capture aggregate
+results and actual platform counts before the two scoped commits.
+
+Default workload/model/host-supervisor CLIs print a plan without --execute.
+Socket-server tests exercise the real bounded HTTP transport; supervisor tests
+cover own-container stop on failure, report validation, missing resources and
+output overflow. Short explicit parameter IDs avoid Windows environment limits.
 
 ## Evidence boundaries
 
-Local unit tests and socket-server failure tests do not replace real PostgreSQL
-smokes. CI embeddings/chat still use deterministic fixtures. A small readiness
-sample includes its cache and does not prove realistic load or live-model
-quality. Compose health and worker heartbeat do not prove throughput. Hosted
-Actions, broad browser QA, production deployment and coordinated restore remain
-unverified. See operations.md and operations-runbook.md for exact limits.
+Real user Docker/PostgreSQL/workload/model acceptance for this slice is pending.
+Direct live-model synthetic-client timings are not full API model-workflow or
+broad corpus quality evidence. Docker samples are not exact RSS peaks. Shared
+normal-stack load can affect results. Hosted CI, final frontend/browser QA,
+production deployment and coordinated restore remain separate unverified work.

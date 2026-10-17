@@ -1,28 +1,30 @@
 # Roadmap
 
 Actual source, Git and latest user output take precedence over snapshots.
-Backend 0-12 and UI 13-A are committed through b604ec6 / 92c23fd. The latest
-14-A terminal passed native/isolated Docker/normal-stack acceptance; its two
-commit hashes are still unobserved. Close that checkpoint before installing
-14-B1. Never invent hashes or repeat completed stages from an old recovery.
+UI 13-A is committed through b604ec6/92c23fd; 14-A through 31b7730/f8286de;
+14-B1 through 822c4c2/78987f4. User main was clean after those commits.
 
-| Stage | State | Remaining acceptance/work |
+| Stage | State | Remaining work/acceptance |
 | --- | --- | --- |
-| 0-12 | Committed backend and local evidence pipeline | Wider corpus and live-model evaluation |
-| 13-A | Accepted and committed workspace | Preserve current UI |
-| 13-B | Deferred by the user | Application/status UI, editing, confirmed deletion, embedding controls |
-| 14-A | User verification passed; commits pending | Two scoped commits and recovery update |
-| 14-B1 | Current source delivery; new user Docker acceptance pending | Queue/service diagnostics, bounded latency probe, DB timeout/read-only recovery smoke |
-| 14-B2 | Planned after this slice | Realistic workload/queue progression, model latency/memory and justified access/session controls |
-| 15 | Planned | Release, reviewed migration rollout, coordinated tested backup/restore, free hosting decision |
-| Final frontend | Starts on explicit user instruction | English-first bilingual design, LTR/RTL and real browser QA |
+|0-12|Accepted backend and local evidence pipeline|Wider corpus and live-model quality evidence|
+|13-A|Accepted and committed workspace|Preserve current UI|
+|13-B|Deferred by the user|Application/status UI, editing, confirmed deletion, embedding controls|
+|14-A|Accepted and committed|Closed checkpoint|
+|14-B1|Accepted and committed|Closed checkpoint; 30 checks/17 smokes/cleanup passed|
+|14-B2|Current measurement toolchain delivery|Run the 31-check/18-smoke CI and normal workloads, queue/resource samples and live-model measurements; inspect evidence before tuning controls|
+|15|Planned|Release, migration rollout, coordinated tested backup/restore, free hosting decision|
+|Final frontend|Starts on explicit user instruction|English-first bilingual design, LTR/RTL and real browser QA|
 
-14-B1 adds no dependency, model, migration, paid service or UI change. Core
-readiness, worker liveness and model availability remain different signals.
-Its small GET sampler is not a capacity benchmark. Model scores are evidence
-relevance, never hiring probability. Logs/reports must not contain private data.
+14-B2 uses synthetic PDFs through real HTTP/extraction/chunk/retrieval, plus a
+separate synthetic-client live-model sample. It does not certify capacity or
+full inference-through-API performance. Docker memory is sampled working-set
+usage, not exact process RSS peak. A quiet queue and one CPU snapshot cannot
+establish worker health, a busy loop, throughput or an SLA. Repeated evidence
+should justify any later polling, healthcheck, rate or session control change.
 
-Agents, Redis, LangGraph, MCP and Temporal need a concrete workflow reason.
-Roles/invites, token lifecycle, rate limiting, OCR and malware scanning are not
-implicitly implemented. Production retention/backup expiration need an explicit
-policy. Full teaching remains deferred until final delivery.
+No dependency, migration, model, resource quota, production flag or UI changes
+are included. Roles/invites, token refresh/revocation, distributed rate limiting,
+OCR, malware scanning and backup retention remain explicit future decisions.
+Scores are evidence relevance, never hiring probability. Paid services are out
+of scope. Redis, agents, LangGraph, MCP or Temporal need a concrete workflow
+reason. Full teaching remains deferred until final delivery.

@@ -137,4 +137,61 @@ read-only write denial, rollback resetting local settings and same-connection
 reuse, then 20 concurrent readiness GETs. The rejected DDL always rolls back.
 It does not stop services, commit schema/data changes or test disaster restore.
 The isolated CI adds this seventeenth smoke and checks both extraction workers
-explicitly. User acceptance of this new slice remains pending.
+explicitly. User accepted and committed 14-B1 as 822c4c2/78987f4.
+
+## Stage 14-B2 bounded measurements
+
+The native preflight observed both expected models installed, none loaded,
+Ollama 111.3 MiB / 3 GiB, workers 87.68 MiB and 118 MiB / 768 MiB each. Their individual
+CPU samples 71.66% / 99.17% are observations from separate instants, not an idle
+baseline or proof of a worker-loop fault. The extraction loop already waits
+when no task is processed. Capture a queue time series and resource window.
+
+workload_benchmark defaults to a plan. --execute uses a random synthetic user
+and organization, one job/profile and 1..8 synthetic candidates/PDFs/applications.
+It transitions each application to screening, submits extraction once, polls
+with a 180-second cooperative deadline and at most 240 polls, builds chunks and
+checks candidate/document identity in lexical retrieval. Default concurrency
+is 2; at most 4 is allowed. No failed or uncertain write is automatically retried.
+Request I/O has a 15-second socket deadline, bounded headers/body and only local
+HTTP origins. DNS/OS scheduling can extend wall time. Metrics include all
+attempts, failures and nearest-rank percentiles. request_to_completion includes
+submission, processing and polling; it is not isolated queue-wait time.
+
+After a completely successful workflow, document deletion uses the existing
+API/storage protocol. Private metadata cleanup deletes only recorded IDs in
+the synthetic organization in one transaction with 5s statement / 1 s lock limits.
+Any failed/ambiguous run skips automatic cleanup; its run_id identifies the
+synthetic namespace for operator review. Partial cleanup may have removed some
+own PDFs before a later error. Never sweep other runs or ordinary documents.
+The isolated CI owns/discards its own volumes even when its workload gate fails.
+
+model_benchmark requires --execute for 1..4 sequential samples of each existing
+CPU client. It encodes synthetic reference text and grounds generated quotes
+against a synthetic DTO. Fixed model/dimension/digest contracts are retained.
+No new model is pulled and no API feature flag changes. Results are direct
+client/model measurements, not DB/HTTP workflow timings or a broad quality gate.
+Embedding retains its existing 5 m keep-alive; chat retains keep_alive=0.
+First/repeated samples are reported without asserting controlled cold/warm
+conditions. Another model user can contend for the same Ollama slot.
+
+resource_watch maps validated private Docker IDs to whitelisted service labels,
+then discards IDs/names/commands. It sums replicas within each sample and records
+observed CPU/memory maxima. An unchanged replica count and memory limit are
+required; missing/changed stats fail closed. Sampling can miss short peaks.
+The watcher has 1..120 samples; each Docker command has a 5-second timeout and a
+bounded accepted output. Its interval is added to command time, not an exact
+sampling frequency. queue_watch reads global aggregates in existing read-only
+transactions, 1..60 samples at intervals 0.25..5 s, disposing its engine on exit.
+It does not infer throughput, model availability or a stalled task from counts.
+
+benchmark_run is a host-only supervisor for two fixed commands. It starts one
+uniquely named smoke container with --no-deps/--rm, drains bounded stdout/stderr,
+validates the successful aggregate report and samples existing service resources
+before/during/after execution. Default deadline is 600 s. On interruption,
+timeout, malformed output or missing resource data it reports incomplete and
+requests stop only for its own generated container; it never stops the normal
+stack. A stop request is not proof of rollback or remote termination. The run_id
+also identifies that workflow's synthetic namespace if manual review is needed.
+Untrusted/raw child output is not published. Docker CLI/read/cleanup time can
+extend cooperative deadlines; no hard process-stop or exact-peak claim is made.
