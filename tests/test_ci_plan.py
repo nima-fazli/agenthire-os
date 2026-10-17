@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from scripts.ci_plan import (
+    OPERATIONS_FILES,
     SMOKE_MODULES,
     UI_ASSETS,
     cleanup_step,
@@ -28,6 +29,7 @@ def make_checkout(root):
         "app/web/router.py",
         "app/web/__init__.py",
         *UI_ASSETS,
+        *OPERATIONS_FILES,
         ".github/workflows/verify.yml",
         ".github/dependabot.yml",
         "tests/recruiter_ui.test.mjs",
@@ -99,8 +101,8 @@ def test_commands_keep_spaces_as_single_arguments(tmp_path):
     env_file = tmp_path / "temporary directory" / "ci.env"
     prefix = compose_prefix(root, PROJECT, env_file)
     steps = verification_plan(prefix)
-    assert len(steps) == 11 + len(SMOKE_MODULES)
-    assert SMOKE_MODULES[-3:] == ("grounded_explanations_smoke", "recruiter_ui_smoke", "operations_smoke")
+    assert len(steps) == 13 + len(SMOKE_MODULES)
+    assert SMOKE_MODULES[-3:] == ("recruiter_ui_smoke", "operations_smoke", "operations_failure_smoke")
     ui = next(step for step in steps if step.name == "docker-ui-tests")
     assert ui.command[-4:] == ("node", "--test", "tests/recruiter_ui.test.mjs", "tests/recruiter_notifications.test.mjs")
     for step in (*steps, cleanup_step(prefix)):
@@ -110,6 +112,11 @@ def test_commands_keep_spaces_as_single_arguments(tmp_path):
         assert str(env_file) in step.command
     up = next(step for step in steps if step.name == "healthy-stack")
     assert "extraction-worker=2" in up.command
+    for index in (1, 2):
+        health = next(step for step in steps if step.name == f"extraction-worker-{index}-health")
+        assert health.command[-9:] == ("exec", "--index", str(index), "-T", "extraction-worker",
+                                       "python", "-m", "app.workers.document_extraction", "--healthcheck")
+        assert steps.index(health) > steps.index(up)
     modules = [step.command[-1] for step in steps if step.name in SMOKE_MODULES]
     assert modules == [f"scripts.{name}" for name in SMOKE_MODULES]
 
@@ -137,6 +144,14 @@ def test_empty_ui_asset_is_rejected_before_docker(tmp_path, asset):
 
 @pytest.mark.parametrize("filename", ["app/web/__init__.py", "tests/recruiter_notifications.test.mjs"])
 def test_incomplete_feedback_delivery_fails_before_docker(tmp_path, filename):
+    root = make_checkout(tmp_path)
+    (root / filename).unlink()
+    with pytest.raises(ValueError, match="complete"):
+        repository_root(root)
+
+
+@pytest.mark.parametrize("filename", OPERATIONS_FILES)
+def test_incomplete_operations_delivery_fails_before_docker(tmp_path, filename):
     root = make_checkout(tmp_path)
     (root / filename).unlink()
     with pytest.raises(ValueError, match="complete"):

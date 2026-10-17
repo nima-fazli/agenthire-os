@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 from scripts import ci_verify
-from scripts.ci_plan import SMOKE_MODULES, UI_ASSETS
+from scripts.ci_plan import OPERATIONS_FILES, SMOKE_MODULES, UI_ASSETS
 
 PROJECT = "agenthire-ci-" + "b" * 32
 
@@ -22,6 +22,7 @@ def complete_checkout(tmp_path, monkeypatch):
         "app/web/router.py",
         "app/web/__init__.py",
         *UI_ASSETS,
+        *OPERATIONS_FILES,
         ".github/workflows/verify.yml",
         ".github/dependabot.yml",
         "tests/recruiter_ui.test.mjs",
@@ -128,14 +129,16 @@ def test_dry_run_has_no_process_or_file_side_effects(monkeypatch, capsys):
     assert "scripts.semantic_retrieval_smoke" in output
     assert "scripts.recruiter_ui_smoke" in output
     assert "scripts.operations_smoke" in output
+    assert "scripts.operations_failure_smoke" in output
+    assert "--index 2 -T extraction-worker" in output
     assert "tests/recruiter_ui.test.mjs" in output
     assert "--volumes" in output
 
 
 @pytest.mark.parametrize(
     "failure",
-    [None, "docker-pytest", "docker-ui-tests", "retrieval_evaluation_smoke", "cleanup"],
-    ids=["pass", "tests", "ui", "quality", "cleanup"],
+    [None, "docker-pytest", "docker-ui-tests", "retrieval_evaluation_smoke", "worker", "operations", "cleanup"],
+    ids=["pass", "tests", "ui", "quality", "worker", "operations", "cleanup"],
 )
 def test_full_cli_preserves_isolation_failure_and_temporary_cleanup(
     failure, monkeypatch, tmp_path, capsys
@@ -167,6 +170,10 @@ def test_full_cli_preserves_isolation_failure_and_temporary_cleanup(
             and "node" in command
             or failure == "retrieval_evaluation_smoke"
             and command[-1] == "scripts.retrieval_evaluation_smoke"
+            or failure == "worker"
+            and command[-1] == "--healthcheck"
+            or failure == "operations"
+            and command[-1] == "scripts.operations_failure_smoke"
             or failure == "cleanup"
             and "down" in command
         )

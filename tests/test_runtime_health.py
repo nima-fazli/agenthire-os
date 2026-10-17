@@ -72,3 +72,25 @@ def test_queue_timeout_closes_session():
     session.execute = AsyncMock(side_effect=TimeoutError)
     assert asyncio.run(cli.queue_report(MagicMock(return_value=session))) == "unavailable"
     session.__aexit__.assert_awaited_once()
+
+
+def test_queue_policy_can_fail_operator_check_without_relabeling_core_readiness(monkeypatch, capsys):
+    async def fake(**_):
+        return {"status": "ready", "queues": {
+            name: {"queued": 2, "running": 1, "expired_leases": 1, "oldest_queued_seconds": 61}
+            for name in ("extraction", "embedding")}}
+
+    monkeypatch.setattr(cli, "collect", fake)
+    assert cli.main(["--queues", "--max-queue-age-seconds", "60", "--max-expired-leases", "0"]) == 1
+    report = json.loads(capsys.readouterr().out)
+    assert report["status"] == "ready" and report["queue_policy"]["status"] == "attention"
+
+
+@pytest.mark.parametrize("arguments", [["--max-expired-leases", "0"], ["--queues", "--max-queue-age-seconds", "-1"]])
+def test_invalid_queue_policy_does_not_open_database(arguments, monkeypatch, capsys):
+    async def forbidden(**_):
+        pytest.fail("Invalid arguments must not open the database")
+
+    monkeypatch.setattr(cli, "collect", forbidden)
+    assert cli.main(arguments) == 1
+    assert json.loads(capsys.readouterr().out)["status"] == "not_ready"
