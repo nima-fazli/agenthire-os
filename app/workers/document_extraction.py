@@ -1,19 +1,17 @@
+from __future__ import annotations
+
 import argparse
-import asyncio
-import logging
-import signal
 import tempfile
 import time
 from pathlib import Path
+from typing import TYPE_CHECKING
 
-from app.core.config import Settings, get_settings
-from app.core.document_storage import LocalDocumentStorage
-from app.core.logging import configure_logging
-from app.core.pdf_extraction import PdfExtractor
-from app.db.session import async_session_factory, engine
-from app.services.document_extraction import ExtractionProcessor
+if TYPE_CHECKING:
+    import asyncio
 
-logger = logging.getLogger("agenthire.extraction.worker")
+    from app.core.config import Settings
+    from app.services.document_extraction import ExtractionProcessor
+
 HEARTBEAT = Path(tempfile.gettempdir()) / "agenthire-extraction.heartbeat"
 
 
@@ -37,6 +35,10 @@ async def run_worker(
     stop: asyncio.Event,
     path: Path = HEARTBEAT,
 ) -> None:
+    import asyncio
+    import logging
+
+    logger = logging.getLogger("agenthire.extraction.worker")
     while not stop.is_set():
         heartbeat(path)
         try:
@@ -54,6 +56,14 @@ async def run_worker(
 
 
 async def main_loop(settings: Settings) -> None:
+    import asyncio
+    import signal
+
+    from app.core.document_storage import LocalDocumentStorage
+    from app.core.pdf_extraction import PdfExtractor
+    from app.db.session import async_session_factory, engine
+    from app.services.document_extraction import ExtractionProcessor
+
     PdfExtractor.ensure_tools()
     stop = asyncio.Event()
     loop = asyncio.get_running_loop()
@@ -75,9 +85,17 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--healthcheck", action="store_true")
     args = parser.parse_args()
+
+    from app.core.config import get_settings
+
     settings = get_settings()
     if args.healthcheck:
         raise SystemExit(0 if healthy(settings) else 1)
+
+    import asyncio
+
+    from app.core.logging import configure_logging
+
     configure_logging(level=settings.log_level)
     asyncio.run(main_loop(settings))
 

@@ -75,3 +75,46 @@ accounting and can miss the true peak. Repeated high worker CPU with empty
 queues warrants separating healthcheck/import cost from polling/SQL cost before
 changing intervals. Neither one snapshot nor one small synthetic run establishes
 production capacity. Save aggregate reports; never publish raw logs/env or PDFs.
+
+## Worker healthcheck startup (14-B3)
+
+The accepted e2b42e9 baseline had empty queues at both ends of the observation.
+Each ten-second PID 1 window averaged 0.8/1.0 percent CPU for the extraction
+replicas and 1.4 percent for embedding. Median CPU per extraction healthcheck was
+2851.659/2843.580 ms; embedding was 771.468 ms. The corresponding fresh Python
+launches consumed 54.349/56.450/80.864 ms. These are individual child timings,
+not a measured average for the whole container or proof of continuous saturation.
+
+Settings previously imported local-model URL validation through the SQLAlchemy
+vector module. 14-B3 isolates that validator and defers extraction/storage/DB
+imports until normal worker startup. Embedding's heartbeat-only CLI also avoids
+loading asyncio/logging. Poll intervals, heartbeat timestamps/age margins and
+Compose healthcheck commands are unchanged. Extraction still validates its
+settings, including a longer configured task timeout.
+
+Native Windows and isolated Docker acceptance passed. The user rebuilt the
+api/migrate/extraction/embedding/smoke images, started the existing semantic
+profile with two extraction replicas, and verified the normal schema and synthetic
+workflow. The same read-only measurement then produced:
+
+| Worker | p50 CPU before (ms) | p50 CPU after (ms) | Reduction |
+| --- | --- | --- | --- |
+| Extraction 1 | 2851.659 | 980.490 | 65.6% |
+| Extraction 2 | 2843.580 | 1181.112 | 58.5% |
+| Embedding 1 | 771.468 | 349.616 | 54.7% |
+
+Median wall times changed from 2874.435/3918.522/2697.530 ms to
+1019.626/1320.356/969.522 ms in the same worker order. All nine new calls exited
+zero. Ten-second PID 1 averages were 0.6/0.9/1.4 percent after the change. Queues
+were empty at both observation boundaries and the final stack was healthy.
+
+These are three calls per worker in each run, not controlled cold/warm trials or
+a guaranteed reduction for every machine. The resource watcher still recorded a
+172.16 percent extraction CPU maximum summed across two replicas; that sample
+does not establish continuous load. Compare child CPU and wall time separately.
+Fresh-process tests enforce import separation without arbitrary timing limits.
+
+For later changes, rebuild affected normal images before repeating the same
+measurement; preserve normal volumes and verify Alembic current/check and
+workload_smoke. Live inference does not need to be repeated to measure a
+heartbeat probe. Adjust intervals only when later measurements justify doing so.

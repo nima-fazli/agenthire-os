@@ -4,7 +4,7 @@ from typing import Literal, Self
 from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.core.semantic_embeddings import local_base_url
+from app.core.local_model_origin import local_base_url
 
 
 class Settings(BaseSettings):

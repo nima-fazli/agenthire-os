@@ -9,17 +9,23 @@ quotes. Model scores are retrieval evidence, never a hiring probability.
 
 ## Current checkpoint
 
-Backend 0-12, UI 13-A, operations 14-A and 14-B1 are accepted and committed.
-Latest user HEAD is 78987f4; 14-B1 feature/test commits are 822c4c2/78987f4.
-User Windows passed 1458 tests with 5 known platform skips; Docker passed 1463
-without skips; Node 42 and Ruff passed in both environments. All 30 CI checks,
-17 smokes and separate cleanup passed. Schema remains 0016_document_embeddings.
+Backend 0-12, UI 13-A and operations 14-A/14-B1/14-B2 are accepted and committed.
+14-B3 native acceptance passed on Windows and Docker. The observed Git baseline
+before its scoped commits is e2b42e9, following 09f232e. Windows passed 1541 tests
+with 5 known platform skips; Docker passed 1546 without skips. Node passed 42 and
+Ruff passed in both environments. All 31 CI checks, 18 smokes and separate cleanup
+passed. Normal images were rebuilt, four synthetic workflows completed with
+scoped cleanup, and both normal/CI schemas remain 0016_document_embeddings with
+no drift. Both queues were empty before and after worker-cost observations.
 
-14-B2 now adds bounded synthetic recruiting/PDF/worker/retrieval measurements,
-serial live-model transport samples, private queue time series and sampled
-container memory/CPU. Existing application contracts, models, quotas, feature
-flags, UI, migrations and dependencies remain unchanged. New user acceptance
-is pending; prior 14-B1 results are not acceptance of this delivery.
+14-B3 reduces worker healthcheck startup imports. Shared local-model URL
+validation is independent of SQLAlchemy; extraction defers processing imports,
+and embedding defers its asynchronous runtime until normal worker startup.
+Heartbeat files, configured age margins, queue polling and model contracts retain
+their existing behavior. Median healthcheck CPU fell by 65.6/58.5 percent for the
+two extraction replicas and 54.7 percent for embedding in the recorded three-call
+samples. These observations do not establish production capacity. Live inference
+was not repeated in 14-B3; the accepted local-model samples remain from 14-B2.
 
 ## Verify
 

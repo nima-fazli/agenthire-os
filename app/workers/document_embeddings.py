@@ -1,7 +1,4 @@
 import argparse
-import asyncio
-import logging
-import signal
 import tempfile
 import time
 from pathlib import Path
@@ -9,7 +6,6 @@ from pathlib import Path
 HEARTBEAT = Path(tempfile.gettempdir()) / "agenthire-embedding.heartbeat"
 HEARTBEAT_INTERVAL_SECONDS = 5
 HEARTBEAT_MAX_AGE_SECONDS = 90
-logger = logging.getLogger("agenthire.embeddings.worker")
 
 
 def heartbeat(path: Path = HEARTBEAT) -> None:
@@ -27,6 +23,11 @@ def healthy(path: Path = HEARTBEAT) -> bool:
 
 
 async def run_worker(processor, settings, stop, path: Path = HEARTBEAT) -> None:
+    import asyncio
+    import logging
+
+    logger = logging.getLogger("agenthire.embeddings.worker")
+
     async def pulse():
         while not stop.is_set():
             heartbeat(path)
@@ -56,6 +57,9 @@ async def run_worker(processor, settings, stop, path: Path = HEARTBEAT) -> None:
 
 
 async def main_loop(settings) -> None:
+    import asyncio
+    import signal
+
     from app.core.local_embeddings import LocalEmbeddingEncoder
     from app.db.session import async_session_factory, engine
     from app.services.document_embeddings import EmbeddingProcessor
@@ -78,6 +82,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.healthcheck:
         raise SystemExit(0 if healthy() else 1)
+
+    import asyncio
 
     from app.core.config import get_settings
     from app.core.logging import configure_logging
