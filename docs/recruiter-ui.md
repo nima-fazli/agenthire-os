@@ -1,31 +1,45 @@
 # Recruiter workspace
 
-/workspace/ uses local HTML/CSS/native ES modules and the existing Persian shell.
-Token/data stay in memory; reload/logout requires login. There is no browser
-storage, cookie, service worker, CDN, npm build step or model cloud fallback.
+`/workspace/` uses local HTML/CSS and native ES modules. Token and application
+state stay in memory. Reload/logout requires login. There is no browser
+storage, cookie, service worker, CDN or npm build step.
 
-The workspace covers account access, organizations/jobs, saved profiles, candidates,
-lexical/semantic retrieval, exact grounded quotes, private PDFs, extraction and chunking.
-Application/status screens, editing, confirmed deletion and embedding controls belong
-to 13-B and are not part of the accepted current source.
+The workspace covers organizations/jobs, candidates, saved search/match
+profiles, applications and transitions, private PDFs, extraction/chunking,
+embedding controls, lexical/semantic/hybrid retrieval and grounded evidence.
 
-Feedback is fixed above the scrolled workspace. Success expires after eight
-seconds and pauses on hover/focus. Errors remain until dismissed/replaced and
-use an assertive alert. All messages use textContent and local error allowlists.
-Creation messages are shown after dependent refreshes so selection feedback does
-not replace them. PDF/candidate refresh failures distinguish an accepted write
-from a failed following read. Accepted writes are never automatically retried.
+Organization, job, candidate and application lists now use bounded server
+pages. Search applies to the whole authorized collection. Current selections
+stay pinned when pages or filters change. Count labels refer to the current
+search. Empty, loading and failed states are explicit.
 
-Context changes cancel request ownership; late responses cannot replace a new
-selection. Cancellation does not undo an accepted write or stop a model thread.
-Refresh before repeating an uncertain mutation. Transport/body limits and exact
-source identity/hash/Unicode quote checks remain intact.
+Editing uses full replacement with the exact server `updated_at` version.
+Blank optional candidate fields clear their old values. Conflicts preserve the
+local draft until the user reads the new version or changes selection. Form
+copy explains that those actions replace unsaved input.
 
-13-A was accepted on 2026-10-14: Windows Python 1347 + 5 skips, Docker Python
-1352 without skips, Node 42 on both platforms, Ruff, all isolated checks/cleanup,
-normal-stack head/drift and recruiter_ui_smoke passed. The user checked the browser
-page and accepted it. The native suites use DOM stubs, and the HTTP smoke is not
-browser automation; comprehensive viewport/keyboard coverage is still unrecorded.
+Application choices come from the existing server state machine. A recruiter
+selects a target and confirms it. Final states offer no further transitions.
+PDF deletion requires its exact filename in a native confirmation dialog.
+Context changes close the dialog and invalidate old request ownership.
 
-The final English-first bilingual redesign is deferred until the user starts it.
-Persian remains secondary in the final design; i18n is not complete in this source.
+Document controls request extraction/chunking/embedding explicitly. Embedding
+status is refreshed with a read; retry is an explicit action. The client neither
+downloads models nor changes feature flags. A disabled service has a localized
+error, with no automatic retry or search fallback.
+
+Feedback remains visible while the workspace scrolls. Success expires after
+eight seconds and pauses on hover/focus; errors persist and use an assertive
+alert. Server response text is not echoed. Text rendering uses safe DOM APIs.
+Exact source identity, hashes and Unicode code-point offsets remain checked;
+complete assigned quotes support the v2 maximum of 4000 code points.
+
+Late responses cannot replace a different selection. Cancellation does not
+undo an accepted write or stop a server model thread; refresh before repeating
+an uncertain mutation. See [recruiting-workflow.md](recruiting-workflow.md).
+
+Stage 1 native acceptance is recorded in stabilization.md. Stage 2 native
+acceptance is pending. Node controller tests use a DOM fixture; the expanded
+HTTP smoke exercises real authenticated APIs and SQL. Neither is a complete
+browser automation suite. Final English-first bilingual design and broad
+viewport/keyboard browser QA remain stage 5.

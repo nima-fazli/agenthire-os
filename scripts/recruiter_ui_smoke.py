@@ -1,8 +1,10 @@
 import asyncio
+from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 from uuid import uuid4
 
 from app.web.router import ASSETS, UI_HEADERS
+from scripts.application_smoke import cleanup_application_rows
 from scripts.candidate_smoke import cleanup_candidate_rows
 from scripts.docker_smoke import (
     API_BASE_URL,
@@ -46,7 +48,9 @@ def verify_workflow(owner, outsider, slug):
     org = call("POST", "/organizations", token, {"name": "Recruiter UI fixture", "slug": slug}, 201)
     root = f"/organizations/{org['id']}"
     job = call("POST", f"{root}/jobs", token, {"title": "Backend Engineer", "description": "Synthetic UI acceptance", "status": "draft"}, 201)
-    candidate = call("POST", f"{root}/candidates", token, {"full_name": "داوطلب مصنوعی", "headline": "Python Engineer"}, 201)
+    candidate = call("POST", f"{root}/candidates", token, {
+        "full_name": "داوطلب مصنوعی", "headline": "Python Engineer", "email": f"ui-{slug}@example.com",
+    }, 201)
     job_path = f"{root}/jobs/{job['id']}"
     candidate_path = f"{root}/candidates/{candidate['id']}"
     if not any(item["id"] == candidate["id"] for item in call("GET", f"{root}/candidates", token)):
@@ -65,9 +69,51 @@ def verify_workflow(owner, outsider, slug):
         raise SmokeFailure("Recruiter private document listing changed.")
     if call("GET", f"{job_path}/candidate-retrieval?limit=20&offset=0", token)["total"] != 0:
         raise SmokeFailure("Recruiter empty retrieval contract changed.")
-    for path in (f"{root}/jobs", candidate_path, f"{job_path}/match-profile", f"{job_path}/candidates/{candidate['id']}/match-evidence"):
+    for name in ("Literal_100%", "LiteralX100Z"):
+        call("POST", f"{root}/candidates", token, {"full_name": name}, 201)
+    first = call("GET", f"{root}/recruiting/candidates?limit=2&offset=0", token)
+    second = call("GET", f"{root}/recruiting/candidates?limit=2&offset=2", token)
+    identifiers = [row["id"] for row in first["items"] + second["items"]]
+    if first["total"] != 3 or second["total"] != 3 or len(set(identifiers)) != 3:
+        raise SmokeFailure("Recruiter database pagination failed.")
+    literal = call("GET", f"{root}/recruiting/candidates?{urlencode({'q': '_100%'})}", token)
+    if literal["total"] != 1 or literal["items"][0]["full_name"] != "Literal_100%":
+        raise SmokeFailure("Recruiter literal search escaped incorrectly.")
+    if call("GET", f"/organizations/page?{urlencode({'q': slug})}", token)["total"] != 1:
+        raise SmokeFailure("Recruiter organization page scope changed.")
+    empty_page = call("GET", f"{root}/recruiting/candidates?offset=100", token)
+    if empty_page["items"] or empty_page["total"] != 3:
+        raise SmokeFailure("Recruiter empty page lost its total.")
+    job_edit = {"title": "Updated Backend", "description": "Synthetic UI acceptance",
+                "status": "open", "expected_updated_at": job["updated_at"]}
+    changed = call("PUT", f"{root}/recruiting/jobs/{job['id']}", token, job_edit)
+    if changed["title"] != "Updated Backend" or changed["status"] != "open":
+        raise SmokeFailure("Recruiter job editing failed.")
+    stale = call("PUT", f"{root}/recruiting/jobs/{job['id']}", token, job_edit, 409)
+    if stale["error"]["code"] != "RECORD_CHANGED":
+        raise SmokeFailure("Recruiter edit version protection failed.")
+    candidate_edit = {"full_name": "Updated Candidate", "email": None, "headline": "Python Engineer",
+                      "expected_updated_at": candidate["updated_at"]}
+    changed = call("PUT", f"{root}/recruiting/candidates/{candidate['id']}", token, candidate_edit)
+    if changed["full_name"] != "Updated Candidate" or changed["email"] is not None:
+        raise SmokeFailure("Recruiter candidate replacement failed.")
+    application = call("POST", f"{root}/applications", token,
+                       {"job_id": job["id"], "candidate_id": candidate["id"]}, 201)
+    applications = f"{root}/recruiting/applications?job_id={job['id']}"
+    page = call("GET", applications, token)
+    if page["total"] != 1 or page["items"][0]["allowed_statuses"] != ["rejected", "screening"]:
+        raise SmokeFailure("Recruiter application choices changed.")
+    for target in ("screening", "interview", "offer", "hired"):
+        result = call("POST", f"{root}/applications/{application['id']}/transitions", token, {"status": target})
+        if result["status"] != target:
+            raise SmokeFailure("Recruiter application transition failed.")
+    if call("GET", applications, token)["items"][0]["allowed_statuses"]:
+        raise SmokeFailure("A final application still offers a transition.")
+    for path in (f"{root}/jobs", candidate_path, f"{job_path}/match-profile", f"{job_path}/candidates/{candidate['id']}/match-evidence",
+                 f"{root}/recruiting/jobs", f"{root}/recruiting/candidates", applications):
         call("GET", path, foreign_token, status=404)
-    log_ok("Real authenticated organization/job/candidate/profile/evidence APIs and foreign-member denial")
+    call("PUT", f"{root}/recruiting/jobs/{job['id']}", foreign_token, job_edit, 404)
+    log_ok("Recruiting pages, literal search, versioned edits, transitions and tenant denial")
 
 
 async def main():
@@ -79,9 +125,12 @@ async def main():
         verify_workflow(owner, outsider, slug)
     finally:
         try:
-            await cleanup_candidate_rows(slug)
+            await cleanup_application_rows(slug)
         finally:
-            await cleanup_smoke_data(organization_slug=slug, user_emails=(owner, outsider))
+            try:
+                await cleanup_candidate_rows(slug)
+            finally:
+                await cleanup_smoke_data(organization_slug=slug, user_emails=(owner, outsider))
     log_ok("Only this smoke's random-ID fixture rows cleaned")
     print("[success] Recruiter UI real-stack HTTP contracts passed; this is not browser automation.", flush=True)
 

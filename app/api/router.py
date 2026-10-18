@@ -13,6 +13,7 @@ from app.api.routes.job_matching import router as job_matching_router
 from app.api.routes.job_retrieval import router as job_retrieval_router
 from app.api.routes.jobs import router as jobs_router
 from app.api.routes.organizations import router as organizations_router
+from app.api.routes.recruiting import router as recruiting_router
 from app.api.routes.semantic_retrieval import router as semantic_retrieval_router
 from app.api.routes.users import router as users_router
 
@@ -23,6 +24,8 @@ api_router.include_router(health_router)
 api_router.include_router(auth_router)
 
 api_router.include_router(users_router)
+
+api_router.include_router(recruiting_router)
 
 api_router.include_router(organizations_router)
 

@@ -80,12 +80,26 @@
       <aside class="sidebar">
         <p class="eyebrow">فضای کاری</p>
 
+        <fieldset id="organization-browser-fields" disabled>
         <label class="field">
           سازمان
           <select id="organization-select">
             <option value="">انتخاب سازمان</option>
           </select>
         </label>
+
+        <form id="organization-search-form" class="record-search" aria-label="جست‌وجوی سازمان‌ها">
+          <label class="field">نام یا شناسهٔ سازمان
+            <input id="organization-filter" type="search" maxlength="120">
+          </label>
+          <button class="button secondary" type="submit">جست‌وجو</button>
+        </form>
+        <div class="pager">
+          <button id="organization-previous" class="button quiet" type="button" disabled>قبلی</button>
+          <button id="organization-next" class="button quiet" type="button" disabled>بعدی</button>
+        </div>
+        <p id="organization-page-info" class="small" role="status" aria-live="polite"></p>
+        </fieldset>
 
         <details class="disclosure">
           <summary>ساخت سازمان</summary>
@@ -107,12 +121,34 @@
 
         <div class="sidebar-divider"></div>
 
+        <fieldset id="job-browser-fields" disabled>
         <label class="field">
           شغل جاری
           <select id="job-select">
             <option value="">انتخاب شغل</option>
           </select>
         </label>
+
+        <form id="job-search-form" class="record-search" aria-label="جست‌وجوی شغل‌ها">
+          <label class="field">عنوان یا شرح شغل
+            <input id="job-filter" type="search" maxlength="120">
+          </label>
+          <label class="field">وضعیت
+            <select id="job-status-filter">
+              <option value="">همه</option>
+              <option value="draft">پیش‌نویس</option>
+              <option value="open">باز</option>
+              <option value="closed">بسته</option>
+            </select>
+          </label>
+          <button class="button secondary" type="submit">جست‌وجو</button>
+        </form>
+        <div class="pager">
+          <button id="job-previous" class="button quiet" type="button" disabled>قبلی</button>
+          <button id="job-next" class="button quiet" type="button" disabled>بعدی</button>
+        </div>
+        <p id="job-page-info" class="small" role="status" aria-live="polite"></p>
+        </fieldset>
 
         <details class="disclosure">
           <summary>ساخت شغل</summary>
@@ -135,6 +171,7 @@
         <nav class="sidebar-nav" aria-label="بخش‌های فضای کاری">
           <a href="#candidates-panel">داوطلبان</a>
           <a href="#profiles-panel">معیار و جست‌وجو</a>
+          <a href="#applications-panel">درخواست‌های استخدام</a>
           <a href="#candidate-panel">پرونده و شواهد</a>
         </nav>
 
@@ -153,12 +190,12 @@
 
         <div class="metrics">
           <article>
-            <span>شغل دریافت‌شده</span>
+            <span>نتیجهٔ جست‌وجوی شغل</span>
             <strong id="jobs-count">—</strong>
           </article>
 
           <article>
-            <span>داوطلب دریافت‌شده</span>
+            <span>نتیجهٔ جست‌وجوی داوطلب</span>
             <strong id="candidates-count">—</strong>
           </article>
 
@@ -172,6 +209,27 @@
           </div>
 
           <div id="job-description-view"></div>
+
+          <details class="disclosure">
+            <summary>ویرایش شغل و وضعیت انتشار</summary>
+            <p class="small muted">با تغییر انتخاب یا خواندن نسخهٔ جدید، تغییرات ذخیره‌نشدهٔ فرم جایگزین می‌شوند.</p>
+            <form id="job-edit-form">
+              <fieldset id="job-edit-fields" disabled>
+                <label class="field">عنوان شغل<input id="job-edit-title" maxlength="200" required></label>
+                <label class="field">شرح شغل<textarea id="job-edit-description" maxlength="20000" rows="4" required></textarea></label>
+                <label class="field">وضعیت
+                  <select id="job-edit-status">
+                    <option value="draft">پیش‌نویس</option>
+                    <option value="open">باز</option>
+                    <option value="closed">بسته</option>
+                  </select>
+                </label>
+                <button class="button primary" type="submit">ذخیرهٔ ویرایش شغل</button>
+              </fieldset>
+            </form>
+            <button id="job-edit-refresh" class="button quiet" type="button" disabled>خواندن نسخهٔ جدید شغل</button>
+            <p id="job-edit-version" class="small muted"></p>
+          </details>
 
           <details class="disclosure">
             <summary>ویرایش معیارها و عبارت جست‌وجو</summary>
@@ -202,6 +260,38 @@
           </details>
         </section>
 
+        <section id="applications-panel" class="panel" aria-labelledby="applications-title">
+          <div class="panel-title"><h2 id="applications-title">درخواست‌های استخدام شغل جاری</h2></div>
+          <fieldset id="application-fields" disabled>
+            <p id="application-context" class="summary-note"></p>
+            <div class="actions">
+              <button id="application-create" class="button primary" type="button" disabled>ثبت داوطلب انتخاب‌شده برای این شغل</button>
+              <button id="application-refresh" class="button secondary" type="button">تازه‌سازی درخواست‌ها</button>
+            </div>
+            <form id="application-search-form" class="record-search" aria-label="جست‌وجوی درخواست‌های استخدام">
+              <label class="field">نام داوطلب یا عنوان شغل<input id="application-filter" type="search" maxlength="120"></label>
+              <label class="field">وضعیت
+                <select id="application-status-filter">
+                  <option value="">همه</option>
+                  <option value="applied">ثبت درخواست</option>
+                  <option value="screening">بررسی اولیه</option>
+                  <option value="interview">مصاحبه</option>
+                  <option value="offer">پیشنهاد همکاری</option>
+                  <option value="hired">استخدام‌شده</option>
+                  <option value="rejected">ردشده</option>
+                </select>
+              </label>
+              <button class="button secondary" type="submit">جست‌وجو</button>
+            </form>
+            <div id="application-list" class="application-list"></div>
+            <div class="pager">
+              <button id="application-previous" class="button quiet" type="button" disabled>قبلی</button>
+              <button id="application-next" class="button quiet" type="button" disabled>بعدی</button>
+              <p id="application-page-info" class="small muted" role="status" aria-live="polite"></p>
+            </div>
+          </fieldset>
+        </section>
+
         <div class="review-grid">
           <section id="candidates-panel" class="panel" aria-labelledby="candidates-title">
             <div class="panel-title">
@@ -209,10 +299,13 @@
               <span id="candidate-list-count" class="small muted"></span>
             </div>
 
-            <label class="field">
-              فیلتر فهرست دریافت‌شده
-              <input id="candidate-filter" type="search" placeholder="نام، عنوان یا موقعیت">
-            </label>
+            <fieldset id="candidate-browser-fields" disabled>
+            <form id="candidate-search-form" class="record-search" aria-label="جست‌وجوی داوطلبان">
+              <label class="field">نام، ایمیل، عنوان یا موقعیت
+                <input id="candidate-filter" type="search" maxlength="120">
+              </label>
+              <button class="button secondary" type="submit">جست‌وجو</button>
+            </form>
 
             <details class="disclosure">
               <summary>افزودن داوطلب</summary>
@@ -243,6 +336,12 @@
             </details>
 
             <div id="candidate-list" class="candidate-list"></div>
+            <div class="pager">
+              <button id="candidate-previous" class="button quiet" type="button" disabled>قبلی</button>
+              <button id="candidate-next" class="button quiet" type="button" disabled>بعدی</button>
+              <p id="candidate-page-info" class="small muted" role="status" aria-live="polite"></p>
+            </div>
+            </fieldset>
 
             <details class="disclosure">
               <summary>بازیابی با پروفایل شغل</summary>
@@ -256,6 +355,8 @@
                     <option value="hybrid">ترکیبی</option>
                   </select>
                 </label>
+
+                <label class="check"><input id="retrieval-applicants" type="checkbox">فقط متقاضیان این شغل</label>
 
                 <button id="retrieval-run" class="button secondary" type="submit">بازیابی</button>
                 <button id="retrieval-cancel" class="button quiet" type="button" disabled>لغو انتظار</button>
@@ -281,6 +382,24 @@
 
             <div id="candidate-heading"></div>
 
+            <details class="disclosure">
+              <summary>ویرایش اطلاعات داوطلب</summary>
+              <p class="small muted">خالی‌کردن اطلاعات اختیاری، مقدار قبلی را پاک می‌کند. تغییر انتخاب یا خواندن نسخهٔ جدید، تغییرات ذخیره‌نشدهٔ فرم را جایگزین می‌کند.</p>
+              <form id="candidate-edit-form">
+                <fieldset id="candidate-edit-fields" disabled>
+                  <label class="field">نام و نام خانوادگی<input id="candidate-edit-full_name" maxlength="200" required></label>
+                  <label class="field">ایمیل<input id="candidate-edit-email" type="email" maxlength="320" dir="ltr"></label>
+                  <label class="field">تلفن<input id="candidate-edit-phone" type="tel" maxlength="50" dir="ltr"></label>
+                  <label class="field">عنوان حرفه‌ای<input id="candidate-edit-headline" maxlength="300"></label>
+                  <label class="field">موقعیت<input id="candidate-edit-location" maxlength="200"></label>
+                  <label class="field">خلاصهٔ حرفه‌ای<textarea id="candidate-edit-summary" maxlength="20000" rows="4"></textarea></label>
+                  <button class="button primary" type="submit">ذخیرهٔ ویرایش داوطلب</button>
+                </fieldset>
+              </form>
+              <button id="candidate-edit-refresh" class="button quiet" type="button" disabled>خواندن نسخهٔ جدید داوطلب</button>
+              <p id="candidate-edit-version" class="small muted"></p>
+            </details>
+
             <fieldset id="candidate-fields" disabled>
               <div class="actions">
                 <button id="evidence-load" class="button secondary" type="button">خواندن شواهد معیارها</button>
@@ -294,6 +413,9 @@
 
               <details class="disclosure" open>
                 <summary>رزومه‌های PDF</summary>
+
+                <fieldset id="document-tools" disabled>
+                <p class="small muted">پس از استخراج و ساخت بخش‌های جست‌وجو، آماده‌سازی جست‌وجوی معنایی را درخواست کنید.</p>
 
                 <form id="document-form">
                   <label class="field">
@@ -315,12 +437,27 @@
                   <button id="documents-previous" class="button quiet" type="button" disabled>قبلی</button>
                   <button id="documents-next" class="button quiet" type="button" disabled>بعدی</button>
                 </div>
+                </fieldset>
               </details>
             </fieldset>
           </section>
         </div>
       </div>
     </section>
+
+    <dialog id="confirm-dialog" class="confirmation" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+      <form id="confirm-form">
+        <h2 id="confirm-title"></h2>
+        <p id="confirm-message"></p>
+        <label id="confirm-label" class="field" hidden>برای تأیید حذف، نام فایل را دقیق وارد کنید.
+          <input id="confirm-input" maxlength="200" autocomplete="off" dir="auto">
+        </label>
+        <div class="actions">
+          <button id="confirm-cancel" class="button secondary" type="button">انصراف</button>
+          <button id="confirm-accept" class="button primary" type="submit">تأیید</button>
+        </div>
+      </form>
+    </dialog>
 
     <noscript>
       <p class="notice error">برای استفاده از فضای کاری، JavaScript مرورگر باید فعال باشد.</p>

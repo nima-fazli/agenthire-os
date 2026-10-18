@@ -27,6 +27,10 @@ _ALLOWED_STATUS_TRANSITIONS: dict[ApplicationStatus, frozenset[ApplicationStatus
 }
 
 
+def allowed_application_statuses(status: ApplicationStatus) -> list[ApplicationStatus]:
+    return sorted(_ALLOWED_STATUS_TRANSITIONS[status])
+
+
 class ApplicationService:
     def __init__(self, session: AsyncSession) -> None:
         self._session = session

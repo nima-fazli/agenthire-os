@@ -121,3 +121,19 @@ mark { background:#fff0b7; color:#293c3e; padding:1px 0; }
 @keyframes toast-enter { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
 @media (max-width:760px) { .toast { inset-block-start:16px; inset-inline-end:16px; } }
 @media (prefers-reduced-motion:reduce) { .toast { animation:none; } }
+
+.record-search { display:flex; flex-wrap:wrap; align-items:end; gap:8px; margin-block:14px; }
+.record-search .field { flex:1 1 140px; margin:0; }
+.pager { display:flex; align-items:center; flex-wrap:wrap; gap:8px; margin-block:12px; }
+.pager .button { font-size:12px; padding:6px 10px; }
+.sidebar .pager .quiet { color:#e0eee7; }
+.sidebar .pager .quiet:hover:not(:disabled) { background:#234e48; }
+.check { display:flex; align-items:center; gap:8px; font-size:12px; }
+.check input { width:auto; }
+.application-list { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr)); gap:12px; }
+.application-card { border:1px solid var(--line); border-radius:8px; padding:16px; min-width:0; overflow-wrap:anywhere; }
+.application-card .button { margin-block:4px; }
+.danger { color:var(--danger); background:#fff0eb; border-color:#efd0c7; }
+.confirmation { color:var(--ink); background:white; border:1px solid var(--line); border-radius:16px; padding:24px; width:min(480px,calc(100vw - 32px)); max-height:85dvh; overflow:auto; }
+.confirmation::backdrop { background:#14262e99; }
+.confirmation p { overflow-wrap:anywhere; }

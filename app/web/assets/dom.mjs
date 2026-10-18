@@ -126,7 +126,7 @@ export function sourceParts(hit, citation = null) {
     start < 0 ||
     end <= start ||
     end > chars.length ||
-    end - start > 400 ||
+    end - start > 4000 ||
     typeof citation.quote !== "string" ||
     chars.slice(start, end).join("") !== citation.quote
   ) {

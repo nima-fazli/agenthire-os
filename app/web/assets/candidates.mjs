@@ -9,59 +9,39 @@ import {
   notice,
 } from "./dom.mjs";
 
-import { orgPath, jobPath } from "./session.mjs";
+import { orgPath, jobPath, uuid } from "./session.mjs";
+import { createPager, mutationNotice } from "./paging.mjs";
 
 export function createCandidates(ctx) {
-  let items = [];
   let offset = 0;
   let total = 0;
   let generation = 0;
   let timer = null;
 
-  function render() {
-    const q = $("candidate-filter").value.trim().toLocaleLowerCase();
-
-    const filtered = items.filter(item =>
-      `${item.full_name} ${item.headline ?? ""} ${item.location ?? ""}`
-        .toLocaleLowerCase()
-        .includes(q),
-    );
-
-    $("candidate-list").replaceChildren();
-    $("candidate-list-count").textContent =
-      `${filtered.length} از ${items.length} داوطلب دریافت‌شده`;
-
-    if (!filtered.length) {
-      empty($("candidate-list"), "داوطلبی در این فهرست پیدا نشد.");
-      return;
-    }
-
-    for (const item of filtered) {
-      const card = node("article", "", "candidate-card");
-      const heading = node("h3", item.full_name);
-      const subtitle = node(
-        "p",
-        item.headline || "عنوان حرفه‌ای ثبت نشده",
-        "muted",
-      );
-      const place = node(
-        "p",
-        item.location || "موقعیت ثبت نشده",
-        "muted",
-      );
-
-      heading.dir = subtitle.dir = place.dir = "auto";
-
-      card.append(
-        heading,
-        subtitle,
-        place,
-        button("بررسی پرونده", () => ctx.selectCandidate(item)),
-      );
-
-      $("candidate-list").append(card);
-    }
-  }
+  const pager = createPager(ctx, {
+    name: "candidate", url: () => ctx.session.organization
+      ? `${orgPath(ctx.session.organization.id)}/recruiting/candidates` : null,
+    filters: () => ({ q: $("candidate-filter").value.trim() }),
+    clear: text => empty($("candidate-list"), text),
+    render(page) {
+      const content = document.createDocumentFragment();
+      for (const item of page.items) {
+        uuid(item.id);
+        if (item.organization_id !== ctx.session.organization?.id) throw new Error("INVALID_SCOPE");
+        const card = node("article", "", "candidate-card");
+        const heading = node("h3", item.full_name);
+        const subtitle = node("p", item.headline || "عنوان حرفه‌ای ثبت نشده", "muted");
+        const place = node("p", item.location || "موقعیت ثبت نشده", "muted");
+        heading.dir = subtitle.dir = place.dir = "auto";
+        card.append(heading, subtitle, place, button("بررسی پرونده", () => ctx.selectCandidate(item)));
+        content.append(card);
+      }
+      $("candidate-list").replaceChildren(content);
+      if (!page.items.length) empty($("candidate-list"), "داوطلبی مطابق این جست‌وجو پیدا نشد.");
+      $("candidate-list-count").textContent = `${page.total} نتیجه`;
+      $("candidates-count").textContent = String(page.total);
+    },
+  });
 
   function stop() {
     generation += 1;
@@ -70,8 +50,6 @@ export function createCandidates(ctx) {
     ctx.cancel("retrieval");
     $("retrieval-progress").textContent = "";
   }
-
-  $("candidate-filter").addEventListener("input", render);
 
   $("candidate-form").addEventListener("submit", async event => {
     event.preventDefault();
@@ -93,7 +71,7 @@ export function createCandidates(ctx) {
         `${orgPath(ctx.session.organization.id)}/candidates`,
         { method: "POST", signal, data },
       ),
-      async result => {
+      async (result, owned) => {
         if (
           result.organization_id !== ctx.session.organization?.id
         ) {
@@ -101,21 +79,11 @@ export function createCandidates(ctx) {
         }
 
         $("candidate-form").reset();
-        items.push(result);
-        render();
-
-        $("candidates-count").textContent = String(items.length);
-
-        const refreshed = await ctx.selectCandidate(result);
-
-        if (ctx.session.candidate?.id === result.id) {
-          notice(
-            refreshed === false
-              ? "داوطلب ثبت شد؛ فهرست اسناد را تازه‌سازی کنید."
-              : "داوطلب ثبت شد.",
-            refreshed === false,
-          );
-        }
+        $("candidate-filter").value = "";
+        const listed = await pager.load({ reset: true });
+        if (!owned()) return;
+        const selected = await ctx.selectCandidate(result);
+        if (owned()) mutationNotice("داوطلب ثبت شد", listed === false || selected === false ? false : true);
       },
       $("candidate-create"),
       true,
@@ -129,6 +97,7 @@ export function createCandidates(ctx) {
   });
 
   $("retrieval-mode").addEventListener("change", clearResults);
+  $("retrieval-applicants").addEventListener("change", clearResults);
 
   $("retrieval-next").addEventListener("click", () => {
     offset += 20;
@@ -165,7 +134,7 @@ export function createCandidates(ctx) {
     const base = jobPath(org.id, job.id);
 
     const path = mode === "lexical"
-      ? `${base}/candidate-retrieval?limit=20&offset=${offset}`
+      ? `${base}/candidate-retrieval?limit=20&offset=${offset}&applicants_only=${$("retrieval-applicants").checked}`
       : `${base}/semantic-candidate-retrieval`;
 
     empty($("retrieval-results"), "در حال بازیابی…");
@@ -196,7 +165,7 @@ export function createCandidates(ctx) {
                 mode,
                 limit: 20,
                 min_similarity: 0,
-                applicants_only: false,
+                applicants_only: $("retrieval-applicants").checked,
               },
             }),
       }),
@@ -306,18 +275,15 @@ export function createCandidates(ctx) {
   }
 
   function reset() {
-    items = [];
+    pager.reset();
     $("candidate-filter").value = "";
     $("candidate-form").reset();
-    render();
+    $("retrieval-applicants").checked = false;
     clearResults();
   }
 
   return {
-    setItems(values) {
-      items = values;
-      render();
-    },
+    load: () => pager.load(),
     reset,
     clearResults,
   };

@@ -11,6 +11,7 @@ ASSETS = {
     **{f"{name}.mjs": "text/javascript" for name in (
         "app", "api", "session", "requests", "dom", "workspace",
         "profiles", "candidates", "evidence", "notifications",
+        "paging", "confirmation", "editors", "applications", "documents",
     )},
 }
 UI_HEADERS = {

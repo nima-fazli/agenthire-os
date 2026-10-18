@@ -9,21 +9,15 @@ import {
   notice,
 } from "./dom.mjs";
 
-import { candidatePath, jobPath, uuid } from "./session.mjs";
+import { jobPath, uuid } from "./session.mjs";
 import { ApiError } from "./api.mjs";
+import { createDocuments } from "./documents.mjs";
 
 const sourceStates = {
   no_documents: "سندی وجود ندارد",
   not_indexed: "منابع هنوز بخش‌بندی نشده‌اند",
   partial: "بخشی از منابع آماده است",
   indexed: "منابع قابل جست‌وجو هستند",
-};
-
-const extractionStates = {
-  queued: "در صف استخراج",
-  running: "در حال استخراج",
-  succeeded: "استخراج موفق",
-  failed: "استخراج ناموفق",
 };
 
 export function validatePdf(file) {
@@ -47,9 +41,7 @@ export function validatePdf(file) {
 export function createEvidence(ctx) {
   let generation = 0;
   let timer = null;
-  let documentOffset = 0;
-
-  const blobs = new Set();
+  const documents = createDocuments(ctx, validatePdf);
 
   function clearGeneration() {
     generation += 1;
@@ -243,219 +235,7 @@ export function createEvidence(ctx) {
       "انتظار لغو شد؛ ممکن است پردازش قبلی روی سرور هنوز ادامه داشته باشد.";
   });
 
-  function documentBase() {
-    return `${candidatePath(ctx.session.organization.id, ctx.session.candidate.id)}/documents`;
-  }
-
-  function download(blob, filename) {
-    const url = URL.createObjectURL(blob);
-    blobs.add(url);
-
-    const anchor = node("a");
-    anchor.href = url;
-    anchor.download = filename;
-
-    document.body.append(anchor);
-    anchor.click();
-    anchor.remove();
-
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-      blobs.delete(url);
-    }, 1000);
-  }
-
-  async function loadDocuments() {
-    if (!ctx.session.candidate) return;
-
-    const base = documentBase();
-
-    return ctx.perform(
-      "documents",
-      signal => ctx.api.request(
-        `${base}?limit=10&offset=${documentOffset}`,
-        { signal },
-      ),
-      items => {
-        $("documents-list").replaceChildren();
-
-        $("documents-info").textContent =
-          `نمایش ${items.length} سند از جایگاه ${documentOffset + 1}؛ وضعیت استخراج را تازه‌سازی کنید.`;
-
-        $("documents-previous").disabled = documentOffset === 0;
-        $("documents-next").disabled = items.length < 10;
-
-        if (!items.length) {
-          empty(
-            $("documents-list"),
-            "هنوز رزومه‌ای برای این داوطلب بارگذاری نشده است.",
-          );
-        }
-
-        for (const item of items) {
-          if (
-            item.candidate_id !== ctx.session.candidate.id ||
-            item.organization_id !== ctx.session.organization.id
-          ) {
-            throw new Error("INVALID_SCOPE");
-          }
-
-          const path = `${base}/${uuid(item.id)}`;
-          const card = node("article", "", "document-card");
-          const title = node("h3", item.filename);
-          title.dir = "auto";
-
-          const state = node(
-            "p",
-            `${(item.size_bytes / 1024).toFixed(1)} KiB · وضعیت استخراج بررسی نشده`,
-            "small muted",
-          );
-
-          const actions = node("div", "", "actions");
-
-          const status = button(
-            "وضعیت استخراج",
-            () => ctx.perform(
-              "document-read",
-              signal => ctx.api.request(
-                `${path}/extraction`,
-                { signal },
-              ).catch(error => {
-                if (error.code === "EXTRACTION_NOT_FOUND") {
-                  return { status: "not_requested" };
-                }
-
-                throw error;
-              }),
-              value => {
-                state.textContent =
-                  extractionStates[value.status] ??
-                  "استخراج هنوز درخواست نشده است";
-              },
-              status,
-            ),
-          );
-
-          const extract = button("شروع / تکرار استخراج", () => {
-            ctx.cancel("document-read");
-            ctx.invalidateEvidence();
-
-            return ctx.perform(
-              "document-write",
-              signal => ctx.api.request(`${path}/extraction`, {
-                method: "POST",
-                data: { retry: true },
-                signal,
-              }),
-              value => {
-                state.textContent = extractionStates[value.status];
-                notice(
-                  "درخواست استخراج ثبت شد؛ وضعیت آن را تازه‌سازی کنید.",
-                );
-              },
-              extract,
-              true,
-            );
-          });
-
-          const chunks = button("ساخت بخش‌های جست‌وجو", () => {
-            ctx.cancel("document-read");
-            ctx.invalidateEvidence();
-
-            return ctx.perform(
-              "document-write",
-              signal => ctx.api.request(`${path}/chunks`, {
-                method: "POST",
-                data: {},
-                signal,
-              }),
-              () => {
-                state.textContent = "بخش‌های جست‌وجو آماده شد.";
-                ctx.profileChanged();
-              },
-              chunks,
-              true,
-            );
-          });
-
-          const get = button(
-            "دانلود PDF",
-            () => ctx.perform(
-              "download",
-              signal => ctx.api.request(`${path}/content`, {
-                signal,
-                blob: true,
-              }),
-              value => download(value, item.filename),
-              get,
-            ),
-          );
-
-          actions.append(status, extract, chunks, get);
-          card.append(title, state, actions);
-          $("documents-list").append(card);
-        }
-      },
-      $("documents-refresh"),
-    );
-  }
-
-  $("document-form").addEventListener("submit", async event => {
-    event.preventDefault();
-
-    if (!ctx.session.candidate) return;
-
-    ctx.invalidateEvidence();
-
-    await ctx.perform(
-      "upload",
-      signal => {
-        const file = validatePdf($("document-file").files[0]);
-
-        return ctx.api.request(
-          `${documentBase()}?${new URLSearchParams({ filename: file.name })}`,
-          {
-            method: "POST",
-            body: file,
-            signal,
-            timeout: 65000,
-          },
-        );
-      },
-      async (_value, current) => {
-        $("document-form").reset();
-        documentOffset = 0;
-
-        const refreshed = await loadDocuments();
-
-        if (current()) {
-          notice(
-            refreshed === false
-              ? "رزومه ثبت شد؛ فهرست اسناد را تازه‌سازی کنید."
-              : "رزومه بارگذاری شد.",
-            refreshed === false,
-          );
-        }
-      },
-      $("document-upload"),
-      true,
-    );
-  });
-
-  $("documents-refresh").addEventListener("click", loadDocuments);
-
-  $("documents-next").addEventListener("click", () => {
-    documentOffset += 10;
-    loadDocuments();
-  });
-
-  $("documents-previous").addEventListener("click", () => {
-    documentOffset = Math.max(0, documentOffset - 10);
-    loadDocuments();
-  });
-
   async function selectCandidate(item) {
-    documentOffset = 0;
     clearResults();
 
     $("candidate-heading").replaceChildren(
@@ -471,32 +251,13 @@ export function createEvidence(ctx) {
     $("evidence-load").disabled =
       $("explanation-run").disabled = !ctx.session.job;
 
-    return loadDocuments();
+    return documents.load();
   }
 
   function reset() {
     clearResults();
-    documentOffset = 0;
-
-    for (const key of [
-      "documents",
-      "document-read",
-      "document-write",
-      "download",
-      "upload",
-    ]) {
-      ctx.cancel(key);
-    }
-
-    for (const url of blobs) URL.revokeObjectURL(url);
-    blobs.clear();
-
+    documents.reset();
     $("candidate-fields").disabled = true;
-    $("document-form").reset();
-    $("documents-info").textContent = "";
-    $("documents-list").replaceChildren();
-    $("documents-previous").disabled =
-      $("documents-next").disabled = true;
 
     empty(
       $("candidate-heading"),

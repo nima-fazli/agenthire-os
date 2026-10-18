@@ -7,6 +7,9 @@ import { createProfiles } from "./profiles.mjs";
 import { createCandidates } from "./candidates.mjs";
 import { createEvidence } from "./evidence.mjs";
 import { createNotifications } from "./notifications.mjs";
+import { createConfirmation } from "./confirmation.mjs";
+import { createApplications } from "./applications.mjs";
+import { createEditors } from "./editors.mjs";
 
 setupNotices(createNotifications({
   region: $("notification"),
@@ -25,6 +28,7 @@ let authAttempt = 0;
 const ctx = {
   session,
   gate,
+  confirm: createConfirmation(),
   profilesReady: false,
   api: new ApiClient(
     () => session.token,
@@ -47,6 +51,19 @@ ctx.sync = () => {
   state("job-create", !org, "job-create");
   state("candidate-create", !org, "candidate-create");
   state("organization-create", false, "organization-create");
+  state("organization-browser-fields", !session.token, "organization-page");
+  state("job-browser-fields", !org, "job-page");
+  state("candidate-browser-fields", !org, "candidate-page");
+  state("job-edit-fields", !job, "edit-job");
+  state("candidate-edit-fields", !candidate, "edit-candidate");
+  state("job-edit-refresh", !job, "refresh-job");
+  state("candidate-edit-refresh", !candidate, "refresh-candidate");
+  state("application-fields", !job || pending.has("application-create") || pending.has("application-transition"), "application-page");
+  state("application-create", !job || !candidate, "application-create");
+  state("document-tools", !candidate, "document-write");
+  $("application-context").textContent = job && candidate
+    ? `${candidate.full_name} ← ${job.title}`
+    : "برای ثبت درخواست، یک شغل و یک داوطلب انتخاب کنید.";
 
   state("profiles-fields", !job || !ctx.profilesReady, "profiles");
   state("search-save", !job || !ctx.profilesReady, "search-save");
@@ -147,9 +164,12 @@ ctx.profileChanged = () => {
 };
 
 ctx.selectOrganization = async item => {
+  ctx.confirm.cancel();
   ctx.cancelAll();
   session.selectOrganization(item);
 
+  ctx.applications.reset();
+  ctx.editors.reset();
   ctx.profiles.reset();
   ctx.candidates.reset();
   ctx.evidence.reset();
@@ -162,10 +182,13 @@ ctx.selectOrganization = async item => {
       : "برای شروع، سازمان بسازید یا انتخاب کنید.",
   );
 
-  if (item) await ctx.workspace.loadOrganization();
+  if (item) return ctx.workspace.loadOrganization();
+  return true;
 };
 
 ctx.selectJob = async item => {
+  ctx.confirm.cancel();
+  if (session.job?.id !== item?.id) ctx.cancel("edit-job", "refresh-job", "application-create", "application-transition");
   ctx.cancel(
     "profiles",
     "profile-save",
@@ -177,22 +200,32 @@ ctx.selectJob = async item => {
   );
 
   session.selectJob(item);
+  ctx.applications.reset();
+  ctx.editors.showJob(item);
   ctx.profiles.reset();
   ctx.invalidateEvidence();
   ctx.workspace.showJob(item);
   ctx.sync();
 
-  if (item && !(await ctx.profiles.load())) return;
+  if (item) {
+    const results = await Promise.all([ctx.profiles.load(), ctx.applications.load()]);
+    return results.every(value => value !== false);
+  }
 
   if (!item && !session.job) {
     notice("یک شغل بسازید یا انتخاب کنید.");
   }
+  return true;
 };
 
 ctx.selectCandidate = async item => {
+  const previousCandidate = session.candidate?.id;
+  session.selectCandidate(item);
+  ctx.confirm.cancel();
+  if (previousCandidate !== item?.id) ctx.cancel("edit-candidate", "refresh-candidate", "application-create");
   ctx.cancel("candidate");
   ctx.evidence.reset();
-  session.selectCandidate(item);
+  ctx.editors.showCandidate(item);
   ctx.sync();
 
   if (item) return ctx.evidence.selectCandidate(item);
@@ -214,6 +247,8 @@ ctx.workspace = createWorkspace(ctx);
 ctx.profiles = createProfiles(ctx);
 ctx.candidates = createCandidates(ctx);
 ctx.evidence = createEvidence(ctx);
+ctx.applications = createApplications(ctx);
+ctx.editors = createEditors(ctx);
 
 function setAuthMode(value) {
   registering = value;
@@ -235,10 +270,13 @@ function setAuthMode(value) {
 }
 
 function logout(message = "از حساب خارج شدید.") {
+  ctx.confirm.cancel();
   authAttempt += 1;
   ctx.cancelAll();
   session.clear();
 
+  ctx.applications.reset();
+  ctx.editors.reset();
   ctx.workspace.reset();
   ctx.profiles.reset();
   ctx.candidates.reset();

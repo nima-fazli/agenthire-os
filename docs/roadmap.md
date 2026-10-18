@@ -1,8 +1,8 @@
 # Roadmap
 
-Actual source, Git and observed user results override recovery snapshots.
-The accepted base is main 66de4967ab8f6c4b1764506d2e5de4f0549dfe12.
-Personal recovery documents stay outside Git.
+Observed source, Git and user results take precedence over older recovery notes.
+The accepted base is main 3b58176505d4b6d85d6d908cd268a03256f6e53c.
+Personal recovery stays outside Git.
 
 ## Accepted history
 
@@ -16,33 +16,33 @@ Personal recovery documents stay outside Git.
 | Worker healthcheck imports 14-B3 | 955ac94/c7d66c2 |
 | Isolated recovery 15-A2 | ffe34dd/0777895 |
 | Retained private backup/restore 15-A3 | c5e93e7/66de496 |
+| Completion stage 1 stabilization | 8e4d7fa/3b58176 |
 
-Recorded 15-A3 acceptance: Windows 1672 passed with 5 known platform skips,
-Docker 1677 without skips, Node 42, Ruff, 33 CI checks, 18 smokes and owned
-cleanup. A retained normal-data restore matched 20 rows and 2 PDFs. Original
-containers resumed healthy. Retention was a plan without deletion. These results
-do not establish encrypted/offsite protection or a production RPO/RTO.
+Stage 1 native acceptance on 2026-10-18 passed Windows Python 1720 with 5
+known platform skips, Docker Python 1725, Node 46, Ruff, all 33 isolated CI
+checks and cleanup, the normal workload and stack health. Its source export
+contained 363 files with an independently checked archive hash. Explanations
+were disabled, so live v2 model acceptance was recorded as not run.
 
-## Seven remaining stages
+## Seven-stage completion plan
 
-Each stage is delivered and accepted as one coherent unit, without A/B slices.
+Each stage is delivered and accepted as one coherent unit.
 
-| Stage | Completion condition |
+| Stage | State and completion condition |
 | --- | --- |
-| 1 Stabilize | Context-preserving citations and independent regression gates, correct client errors, complete private-data-free source distribution, current recovery |
-| 2 Complete recruiting workflow | Applications/transitions, editing, confirmed deletion, embedding controls, server search/pagination and stale-context handling |
-| 3 Access and sessions | Needed roles/invites, session lifecycle and tested controls for sensitive operations/requests |
-| 4 Prove AI quality | Diverse reference data, adversarial/negative cases and reproducible model-quality evidence |
-| 5 Final product design | English-first/Farsi-second translation, LTR/RTL, responsive layout, keyboard/accessibility and real browser QA |
-| 6 Release acceptance | Hosted CI, deployment configuration, HTTPS, load evidence and repeatable installation/migration/recovery |
-| 7 Hiring portfolio | Usable demo, synthetic demo data, short video, clear README and architecture/tradeoff explanation |
+| 1 Stabilize | Accepted: context-preserving citations, regression gates, client errors, complete source distribution and recovery |
+| 2 Recruiting workflow | Source delivered; native acceptance pending: applications/transitions, versioned editing, confirmed PDF deletion, embedding controls, server pages/search and stale-context handling |
+| 3 Access and sessions | Pending: needed roles/invites, session lifecycle and sensitive-operation controls |
+| 4 AI quality | Pending: diverse reference data, adversarial/negative cases and reproducible model evidence |
+| 5 Final product design | Pending: English-first/Farsi-second translation, LTR/RTL, responsive layout and comprehensive browser/keyboard QA |
+| 6 Release acceptance | Pending: hosted CI, HTTPS, deployment, load evidence and repeatable installation/migration/recovery |
+| 7 Hiring portfolio | Pending: usable demo, synthetic data, short video, clear architecture and tradeoff explanation |
 
-Stage 1 source is delivered for acceptance. Native Windows/Docker/live-model
-results and the user's new scoped commits are not yet observed. See stabilization.md.
-The migration head, pinned models/encoding and dependency lock remain unchanged.
+Six stages remain until stage 2 is natively accepted; five remain afterward.
+Stage 2 retains schema 0016, pinned dependencies, models and encoding. See
+[recruiting-workflow.md](recruiting-workflow.md) for its contract and gate.
 
-Paid providers/services remain out of scope. Hosting is not selected. Scores
-do not represent hiring probability. A real tool-using agent with human approval
-was discussed as an optional additional stage and has not been added to these
-seven. Redis, LangGraph, MCP or Temporal require an actual workflow reason.
-Full teaching remains deferred until final delivery.
+Paid services remain out of scope. Hosting is not selected. Scores do not
+represent hiring probability. A tool-using agent with human approval remains
+an optional additional stage; it has not been added to this plan. New
+infrastructure requires a concrete workflow reason.

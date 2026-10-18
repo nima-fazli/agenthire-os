@@ -1,55 +1,48 @@
-# Stabilization stage 1
+# Stabilization stage 1: accepted
 
-The installation baseline is main 66de4967ab8f6c4b1764506d2e5de4f0549dfe12.
-The previous accepted checkpoint is 15-A3, committed as c5e93e7/66de496.
-Its Windows/Docker/backup results remain historical evidence in verification.md.
+The installation base was main 66de4967ab8f6c4b1764506d2e5de4f0549dfe12.
+The accepted feature commit is 8e4d7fa2e37dff381f6225f05e3d6466eb44e453;
+the test/main checkpoint is 3b58176505d4b6d85d6d908cd268a03256f6e53c.
+Older 15-A3 recovery evidence remains historical in verification.md.
 
 ## Changes
 
 - Require every complete lexical query term in a model-selected anchor.
 - Reject invented, unrelated and partial-token anchors.
-- Return the entire assigned chunk as the exact citation, preserving context
-  before and after the model's selection and original Unicode offsets/hashes.
-- Version the brief/prompt as v2 and the context policy independently.
-- Add a new immutable nine-case reference. Keep the v1 fixture for history.
-- Independently reject correctly hashed substrings that omit source context.
-- Recognize the actual duplicate-email backend code in the recruiter client.
+- Retain the entire assigned chunk, exact Unicode offsets and source hashes.
+- Version the brief/prompt as v2 and context policy independently.
+- Keep the immutable v1 fixture; add nine v2 reference cases.
+- Independently reject correctly hashed substrings that omit context.
+- Recognize the actual duplicate-email backend code in the client.
 - Export complete committed source with both CI files and a hash manifest.
-- Keep private source configuration, PDFs and personal recovery outside exports.
+- Exclude private configuration, PDFs and personal recovery from source export.
 
-The database schema, frozen search normalization, embedding encoding, models,
-dependency lock and feature flags retain their existing contracts.
-The interface change is limited to safe localized error messages.
+Schema 0016, dependencies, frozen search normalization, embedding encoding,
+model identities and feature flags retained their existing contracts.
 
-## Acceptance
+## Observed native acceptance on 2026-10-18
 
-Local Linux verification on 2026-10-18 passed: 1725 Python tests with -W error
-and no skips, 46 JavaScript tests, Ruff, the source migration head check and
-33-check CI planning without execution. A real-Git export of a separate
-verification copy included all 363 source files, both CI files and the manifest,
-with no private paths. These verification-copy commits are not user commits.
+| Check | Result |
+| --- | --- |
+| Windows Python, warnings as errors | 1720 passed; 5 known platform skips |
+| Docker Python | 1725 passed; no skips |
+| Native Node | 46 passed |
+| Native/Docker Ruff | Passed |
+| Isolated Docker CI | 33 checks plus owned cleanup passed |
+| Grounding v2 fixture | Nine cases passed |
+| Normal API/workload/stack | Passed; two extraction workers healthy |
+| Source export | 363 source files; clean committed tree |
+| Personal recovery | Native acceptance receipt appended outside Git |
+| Live v2 model | Not run: explanation feature was disabled |
 
-Native Windows/Docker acceptance,
-live v2 model acceptance and the user's feature/test commit hashes are pending.
-Never relabel the older 15-A3 acceptance as a run of these changes.
-
-Run all Python tests with warnings as errors, Ruff and all three Node suites.
-Then inspect the CI plan and run the isolated scripts.ci_verify gate. Its normal
-environment separation, owned cleanup and existing backup gates remain required.
-The fixture grounding smoke now consumes the v2 reference automatically.
-
-Rebuild affected normal API/smoke images after successful isolated acceptance,
-then verify the normal stack using the existing runbook. Do not change model
-flags or silently download models. Live v2 inference needs a separate explicit
-operator run using the existing measured local-model workflow.
-
-After native acceptance, make the two explicit scoped commits, inspect their
-real hashes, and create a source bundle from that clean committed tree.
-Update the personal recovery outside Git with those observed results.
+The source ZIP SHA-256 was independently checked as
+`e32e41750db67901f2357fed32057b254b2b57a9696c814ec1928df97664b21d`.
+The uploaded archive and every manifest file were subsequently matched to that
+checkpoint. Fixture model results are separate from real-model quality.
 
 ## Boundaries
 
 Full assigned-chunk context does not prove proficiency, resume truth or context
-outside that chunk. The nine synthetic cases do not establish broad model
-quality. Wider evaluation remains stage 4. Workflow completion is stage 2;
-roles/session controls, final bilingual design and deployment remain later work.
+outside that chunk. Nine synthetic cases do not establish broad model quality.
+Wider evaluation remains stage 4. The recruiting workflow is stage 2; access,
+sessions, final bilingual design, release and portfolio remain later stages.
