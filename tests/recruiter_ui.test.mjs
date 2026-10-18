@@ -1,12 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { ApiClient, ApiError } from "../app/web/assets/api.mjs";
 import { RequestGate } from "../app/web/assets/requests.mjs";
 import { Session, orgPath, jobPath } from "../app/web/assets/session.mjs";
 import { sourceParts, sourceView } from "../app/web/assets/dom.mjs";
 import { profilePayload } from "../app/web/assets/profiles.mjs";
 import { validatePdf } from "../app/web/assets/evidence.mjs";
+import { installDOM, pageResponse } from "./helpers/recruiter_dom.mjs";
 
 const id = "11111111-1111-4111-8111-111111111111";
 const foreign = "22222222-2222-4222-8222-222222222222";
@@ -170,22 +170,7 @@ test("client PDF bounds reject paths, empty files and oversized content", () => 
     assert.throws(() => validatePdf(file), ApiError);
 });
 test("controller handles stale selections, cancelled writes, failed profiles and expired sessions", async () => {
-  class Element extends EventTarget {
-    constructor(tag = "div") { super(); this.tag = tag; this.children = []; this.value = ""; this.disabled = false; this.hidden = false; this.isConnected = true; }
-    set textContent(text) { this.text = String(text); this.children = []; }
-    get textContent() { return (this.text ?? "") + this.children.map(child => child.textContent).join(""); }
-    append(...items) { for (const item of items) { item.parent = this; this.children.push(item); } }
-    replaceChildren(...items) { this.text = ""; this.children = []; this.append(...items); }
-    remove() { this.isConnected = false; if (this.parent) this.parent.children = this.parent.children.filter(item => item !== this); }
-    reset() {} focus() {}
-    emit(type) { this.dispatchEvent(new Event(type, { cancelable: true })); }
-  }
-  const saved = { document: globalThis.document, window: globalThis.window, fetch: globalThis.fetch };
-  const html = readFileSync(new URL("../app/web/assets/index.html", import.meta.url), "utf8");
-  const elements = new Map([...html.matchAll(/id="([^"]+)"/g)].map(match => [match[1], new Element()]));
-  globalThis.document = { getElementById: key => elements.get(key), createElement: tag => new Element(tag),
-    createDocumentFragment: () => new Element("fragment"), createTextNode: text => { const item = new Element("#text"); item.textContent = text; return item; }, body: new Element("body") };
-  globalThis.window = new EventTarget();
+  const dom = installDOM(), { elements } = dom;
   const nextJob = "55555555-5555-4555-8555-555555555555", failedJob = "66666666-6666-4666-8666-666666666666";
   const nextCandidate = "77777777-7777-4777-8777-777777777777";
   const job = "33333333-3333-4333-8333-333333333333", candidate = "44444444-4444-4444-8444-444444444444";
@@ -198,21 +183,22 @@ test("controller handles stale selections, cancelled writes, failed profiles and
     assert.equal(options.headers.Authorization, "Bearer a.b.c");
     if (expired) return json({ error: { code: "EXPIRED" } }, 401);
     if (path === "/users/me") return json({ id, email: "fixture@example.com" });
-    if (path === "/organizations") return json([{ id, name: "سازمان الف" }, { id: foreign, name: "سازمان ب" }]);
-    if (path === `${orgPath(id)}/jobs`) return json([job, nextJob, failedJob].map(value => ({ id: value, organization_id: id, title: "Backend", description: "Synthetic" })));
-    if (path === `${orgPath(id)}/candidates`) return json([record, otherRecord]);
+    if (path.startsWith("/organizations/page?")) return pageResponse([{ id, name: "سازمان الف" }, { id: foreign, name: "سازمان ب" }], path);
+    if (path.startsWith(`${orgPath(id)}/recruiting/jobs?`)) return pageResponse([job, nextJob, failedJob].map(value => ({ id: value, organization_id: id, title: "Backend", description: "Synthetic" })), path);
+    if (path.startsWith(`${orgPath(id)}/recruiting/candidates?`)) return pageResponse([record, otherRecord], path);
+    if (path.includes("/recruiting/applications?")) return pageResponse([], path);
     if (path === `${orgPath(id)}/candidates/${candidate}`) { readStarted = true; return reading.promise; }
     if (path.includes("/candidate-retrieval?")) return json({ job_id: job, total: 1, items: [{ ...hit, candidate_id: candidate, candidate_name: record.full_name, score: 0.7 }] });
     if (path === `${jobPath(id, job)}/match-profile` && options.method === "PUT") { saveStarted = true; return saving.promise; }
     if (path.startsWith(jobPath(id, failedJob))) return json({ error: { code: "HTTP_ERROR" } }, 503);
-    if (path.startsWith(orgPath(foreign))) return json([]);
+    if (path.startsWith(orgPath(foreign))) return pageResponse([], path);
     if (path.endsWith("/match-profile")) return json({ job_id: path.split("/jobs/")[1].split("/")[0], revision: 1, criteria: [{ key: "python", label: "Python", q: "Python", importance: "required" }] });
     if (path.endsWith("/search-profile")) return json({ job_id: path.split("/jobs/")[1].split("/")[0], revision: 1, q: "Python" });
     if (path.includes("/documents?")) return json([]);
     if (path.endsWith("/grounded-explanation")) { started = true; return pending.promise; }
     throw new Error(`Unexpected fixture path: ${path}`);
   };
-  const wait = async condition => { for (let i = 0; i < 100; i++) { if (condition()) return; await new Promise(resolve => setTimeout(resolve, 1)); } assert.fail("Controller did not reach expected state"); };
+  const wait = dom.wait;
   try {
     await import("../app/web/assets/app.mjs");
     elements.get("auth-email").value = "fixture@example.com"; elements.get("auth-password").value = "synthetic-password";
@@ -256,7 +242,7 @@ test("controller handles stale selections, cancelled writes, failed profiles and
     assert.equal(elements.get("auth-password").value, "");
     assert.equal(elements.get("candidate-list").textContent.includes(record.full_name), false);
   } finally {
-    globalThis.document = saved.document; globalThis.window = saved.window; globalThis.fetch = saved.fetch;
+    await dom.restore();
   }
 });
 

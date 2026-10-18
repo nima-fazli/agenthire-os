@@ -1,49 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
 import { createNotifications } from "../app/web/assets/notifications.mjs";
-
-class Element extends EventTarget {
-  constructor(tag = "div") {
-    super();
-    this.tag = tag;
-    this.children = [];
-    this.value = "";
-    this.disabled = false;
-    this.hidden = false;
-  }
-
-  set textContent(text) {
-    this.text = String(text);
-    this.children = [];
-  }
-
-  get textContent() {
-    return (this.text ?? "") +
-      this.children.map(item => item.textContent).join("");
-  }
-
-  append(...items) {
-    this.children.push(...items);
-  }
-
-  replaceChildren(...items) {
-    this.text = "";
-    this.children = items;
-  }
-
-  contains(item) {
-    return item === this ||
-      this.children.some(child => child.contains(item));
-  }
-
-  reset() {}
-  focus() {}
-
-  emit(type) {
-    this.dispatchEvent(new Event(type, { cancelable: true }));
-  }
-}
+import { Element, installDOM, pageResponse } from "./helpers/recruiter_dom.mjs";
 
 function fixture() {
   const fields = Object.fromEntries(
@@ -157,38 +115,7 @@ test("a new error cannot be expired by the previous success timer", () => {
 });
 
 test("actual controllers show feedback after registration and record creation", async () => {
-  const saved = {
-    document: globalThis.document,
-    window: globalThis.window,
-    fetch: globalThis.fetch,
-  };
-
-  const html = readFileSync(
-    new URL("../app/web/assets/index.html", import.meta.url),
-    "utf8",
-  );
-
-  const elements = new Map(
-    [...html.matchAll(/id="([^"]+)"/g)].map(
-      match => [match[1], new Element()],
-    ),
-  );
-
-  const doc = {
-    getElementById: key => elements.get(key),
-    createElement: tag => new Element(tag),
-    createDocumentFragment: () => new Element(),
-    createTextNode: text => {
-      const item = new Element("#text");
-      item.textContent = text;
-      return item;
-    },
-    body: new Element("body"),
-  };
-
-  globalThis.document = doc;
-  globalThis.window = new EventTarget();
-
+  const dom = installDOM(), { elements } = dom;
   const org = "11111111-1111-4111-8111-111111111111";
   const other = "22222222-2222-4222-8222-222222222222";
   const jobId = "33333333-3333-4333-8333-333333333333";
@@ -230,7 +157,10 @@ test("actual controllers show feedback after registration and record creation", 
       return json(item, 201);
     }
 
-    if (path === "/organizations") return json(organizations);
+    if (path.startsWith("/organizations/page?")) return pageResponse(organizations, path);
+    if (path.includes("/recruiting/jobs?")) return pageResponse(jobs, path);
+    if (path.includes("/recruiting/candidates?")) return pageResponse(candidates, path);
+    if (path.includes("/recruiting/applications?")) return pageResponse([], path);
 
     if (path.endsWith("/jobs") && options.method === "POST") {
       const item = {
@@ -292,14 +222,7 @@ test("actual controllers show feedback after registration and record creation", 
     throw new Error("Unexpected synthetic route");
   };
 
-  const wait = async condition => {
-    for (let i = 0; i < 200; i++) {
-      if (condition()) return;
-      await new Promise(resolve => setTimeout(resolve, 1));
-    }
-
-    assert.fail("Feedback state timed out");
-  };
+  const wait = dom.wait;
 
   try {
     await import("../app/web/assets/app.mjs");
@@ -364,8 +287,6 @@ test("actual controllers show feedback after registration and record creation", 
 
     elements.get("notice-dismiss").emit("click");
   } finally {
-    globalThis.document = saved.document;
-    globalThis.window = saved.window;
-    globalThis.fetch = saved.fetch;
+    await dom.restore();
   }
 });
