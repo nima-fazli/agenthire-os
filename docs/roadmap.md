@@ -1,56 +1,48 @@
 # Roadmap
 
-Actual source, Git and latest user output take precedence over snapshots.
-UI 13-A is committed through b604ec6/92c23fd; 14-A through 31b7730/f8286de;
-14-B1 through 822c4c2/78987f4; 14-B2 through 09f232e/e2b42e9.
-14-B3 was accepted and committed as 955ac94/c7d66c2. The latest observed main
-is 07778952be9ff9a6fd86064a3fa2c7dcd048c824, following feature
-ffe34dda4dac44aa92840345ffe122cfb4706e2c; 15-A2 is accepted/committed and main
-was clean at the 15-A3 preflight. Native 15-A3 acceptance subsequently passed on
-2026-10-18 from that baseline. New scoped commit hashes are recorded when observed.
+Actual source, Git and observed user results override recovery snapshots.
+The accepted base is main 66de4967ab8f6c4b1764506d2e5de4f0549dfe12.
+Personal recovery documents stay outside Git.
 
-| Stage | State | Remaining work/acceptance |
-| --- | --- | --- |
-|0-12|Accepted backend and local evidence pipeline|Wider corpus and live-model quality evidence|
-|13-A|Accepted and committed workspace|Preserve current UI|
-|13-B|Deferred by the user|Application/status UI, editing, confirmed deletion, embedding controls|
-|14-A|Accepted and committed|Closed checkpoint|
-|14-B1|Accepted and committed|Closed checkpoint; 30 checks/17 smokes/cleanup passed|
-|14-B2|Accepted and committed|31 checks/18 smokes/cleanup, four workflows and both live models passed|
-|14-B3|Accepted and committed|Windows 1541+5 skips, Docker 1546 and measured healthcheck CPU improvement verified|
-|15-A1|Accepted read-only inventory|PostgreSQL tools/server 18.6, vector 0.8.6, two PDF objects and empty queues observed|
-|15-A2|Accepted and committed ffe34dd/0777895|Windows 1591+5 skips, Docker 1596; all 32 checks/18 smokes and two-stack recovery/cleanup passed|
-|15-A3|Native acceptance passed|Windows 1672+5 skips, Docker 1677; all 33 checks/18 smokes/cleanup; retained normal-data capture, original-writer resume and isolated restore passed; retention plan only|
-|15|In progress|Record scoped 15-A3 commits, encrypted/offsite retention decisions, release and migration rollout, free hosting decision|
-|Final frontend|Starts on explicit user instruction|English-first bilingual design, LTR/RTL and real browser QA|
+## Accepted history
 
-14-B2 uses synthetic PDFs through real HTTP/extraction/chunk/retrieval, plus a
-separate synthetic-client live-model sample. It does not certify capacity or
-full inference-through-API performance. Docker memory is sampled working-set
-usage, not exact process RSS peak. A quiet queue and one CPU snapshot cannot
-establish worker health, a busy loop, throughput or an SLA. Repeated evidence
-should justify any later polling, healthcheck, rate or session control change.
+| Checkpoint | Observed commits |
+| --- | --- |
+| Backend 0-12 | Through 6207ce6/708099d |
+| Recruiter workspace 13-A | b604ec6/92c23fd |
+| Operations 14-A | 31b7730/f8286de |
+| Operations 14-B1 | 822c4c2/78987f4 |
+| Bounded measurements 14-B2 | 09f232e/e2b42e9 |
+| Worker healthcheck imports 14-B3 | 955ac94/c7d66c2 |
+| Isolated recovery 15-A2 | ffe34dd/0777895 |
+| Retained private backup/restore 15-A3 | c5e93e7/66de496 |
 
-14-B3 removes eager worker/runtime imports and the settings-to-SQLAlchemy import
-path. A fresh subprocess regression gate rejects DB/model imports in healthchecks
-and proves normal CLI startup still selects processing. The measured pre-change
-PID 1 averages were 0.8/1.0/1.4 percent; after rebuilding they were 0.6/0.9/1.4.
-Median healthcheck CPU changed from 2851.659/2843.580/771.468 ms to
-980.490/1181.112/349.616 ms. All nine new probe calls exited zero, normal and CI
-schemas showed no drift, four synthetic workflows completed with scoped cleanup,
-and the final stack was healthy with empty queues. Three calls per worker do
-not establish production capacity or guarantee identical savings elsewhere.
+Recorded 15-A3 acceptance: Windows 1672 passed with 5 known platform skips,
+Docker 1677 without skips, Node 42, Ruff, 33 CI checks, 18 smokes and owned
+cleanup. A retained normal-data restore matched 20 rows and 2 PDFs. Original
+containers resumed healthy. Retention was a plan without deletion. These results
+do not establish encrypted/offsite protection or a production RPO/RTO.
 
-No dependency, migration, model, resource quota, production flag or UI changes
-are included. Roles/invites, token refresh/revocation, distributed rate limiting,
-OCR, malware scanning and offsite backup policy remain explicit future decisions.
-Scores are evidence relevance, never hiring probability. Paid services are out
-of scope. Redis, agents, LangGraph, MCP or Temporal need a concrete workflow
-reason. Full teaching remains deferred until final delivery.
+## Seven remaining stages
 
-15-A3 retained one private normal-data bundle and verified an isolated restore
-of 20 database rows and 2 PDFs. The restored target API became ready, owned
-cleanup completed and a restore receipt was recorded. Original source containers
-resumed healthy and both queues were empty. The Windows private-store checks
-passed; retention ran without deletion. This does not establish encrypted/offsite
-protection, normal-environment redeployment, whole-cluster recovery or an RPO/RTO.
+Each stage is delivered and accepted as one coherent unit, without A/B slices.
+
+| Stage | Completion condition |
+| --- | --- |
+| 1 Stabilize | Context-preserving citations and independent regression gates, correct client errors, complete private-data-free source distribution, current recovery |
+| 2 Complete recruiting workflow | Applications/transitions, editing, confirmed deletion, embedding controls, server search/pagination and stale-context handling |
+| 3 Access and sessions | Needed roles/invites, session lifecycle and tested controls for sensitive operations/requests |
+| 4 Prove AI quality | Diverse reference data, adversarial/negative cases and reproducible model-quality evidence |
+| 5 Final product design | English-first/Farsi-second translation, LTR/RTL, responsive layout, keyboard/accessibility and real browser QA |
+| 6 Release acceptance | Hosted CI, deployment configuration, HTTPS, load evidence and repeatable installation/migration/recovery |
+| 7 Hiring portfolio | Usable demo, synthetic demo data, short video, clear README and architecture/tradeoff explanation |
+
+Stage 1 source is delivered for acceptance. Native Windows/Docker/live-model
+results and the user's new scoped commits are not yet observed. See stabilization.md.
+The migration head, pinned models/encoding and dependency lock remain unchanged.
+
+Paid providers/services remain out of scope. Hosting is not selected. Scores
+do not represent hiring probability. A real tool-using agent with human approval
+was discussed as an optional additional stage and has not been added to these
+seven. Redis, LangGraph, MCP or Temporal require an actual workflow reason.
+Full teaching remains deferred until final delivery.

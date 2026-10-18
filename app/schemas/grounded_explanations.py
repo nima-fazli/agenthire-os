@@ -44,8 +44,9 @@ class CriterionExplanation(CriterionEvidence):
 
 
 class GroundedExplanation(BaseModel):
-    explanation_version: Literal["extractive-brief-v1"] = "extractive-brief-v1"
-    prompt_version: Literal["local-quote-selection-v1"] = "local-quote-selection-v1"
+    explanation_version: Literal["extractive-brief-v2"] = "extractive-brief-v2"
+    prompt_version: Literal["local-quote-selection-v2"] = "local-quote-selection-v2"
+    citation_policy: Literal["assigned-chunk-context-v1"] = "assigned-chunk-context-v1"
     matching_version: Literal["criterion-evidence-v1"] = "criterion-evidence-v1"
     evidence_kind: Literal["lexical_terms"] = "lexical_terms"
     job_id: UUID

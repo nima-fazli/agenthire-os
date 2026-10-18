@@ -1,67 +1,72 @@
 # AgentHire OS
 
 Private multi-organization recruiting backend and recruiter workspace, built
-with FastAPI, PostgreSQL/pgvector and local Ollama models.
+with FastAPI, PostgreSQL/pgvector and locally hosted Ollama models.
 
-The backend includes scoped jobs/candidates/applications, private PDFs, durable
-extraction, immutable chunks, lexical/semantic/hybrid retrieval and exact grounded
-quotes. Model scores are retrieval evidence, never a hiring probability.
+The product connects scoped jobs, candidates and applications to private PDF
+processing, immutable source chunks, lexical/semantic/hybrid retrieval and
+traceable criterion evidence. Hiring decisions remain human. Retrieval scores
+are not hiring probabilities, and a resume quotation does not prove proficiency.
+
+## Engineering foundation
+
+- Modular monolith with service-owned authorization and transaction boundaries.
+- Tenant-scoped queries and database constraints across related entities.
+- Durable extraction/embedding workers with leases, bounded attempts and fencing.
+- Versioned source provenance, exact Unicode offsets and local-model contracts.
+- Private operational diagnostics and isolated database/document recovery gates.
+- A recruiter workspace with safe text rendering and stale-request cancellation.
 
 ## Current checkpoint
 
-Backend 0-12, UI 13-A and operations 14-A/14-B1/14-B2 are accepted and committed.
-14-B3 native acceptance passed and was committed as 955ac94/c7d66c2. Windows passed 1541 tests
-with 5 known platform skips; Docker passed 1546 without skips. Node passed 42 and
-Ruff passed in both environments. All 31 CI checks, 18 smokes and separate cleanup
-passed. Normal images were rebuilt, four synthetic workflows completed with
-scoped cleanup, and both normal/CI schemas remain 0016_document_embeddings with
-no drift. Both queues were empty before and after worker-cost observations.
+The accepted baseline is main 66de4967ab8f6c4b1764506d2e5de4f0549dfe12,
+through retained private backup/restore stage 15-A3. Its native acceptance
+recorded Windows 1672 tests plus 5 known skips, Docker 1677, Node 42, Ruff,
+33 CI checks, 18 smokes and owned cleanup. The retained restore matched 20
+database rows and 2 PDFs. See verification.md and backups.md under docs.
 
-14-B3 reduces worker healthcheck startup imports. Shared local-model URL
-validation is independent of SQLAlchemy; extraction defers processing imports,
-and embedding defers its asynchronous runtime until normal worker startup.
-Heartbeat files, configured age margins, queue polling and model contracts retain
-their existing behavior. Median healthcheck CPU fell by 65.6/58.5 percent for the
-two extraction replicas and 54.7 percent for embedding in the recorded three-call
-samples. These observations do not establish production capacity. Live inference
-was not repeated in 14-B3; the accepted local-model samples remain from 14-B2.
+Stabilization stage 1 is delivered for acceptance. Brief v2 preserves the whole
+assigned source chunk, rejects unrelated/partial-token anchors and uses an
+independent context-retention quality gate. The recruiter client recognizes
+the actual duplicate-email code. Source exports include both CI files and a
+hash manifest while excluding private configuration/documents and Git history.
+Native Windows/Docker and live v2 model acceptance remain pending.
 
-15-A1's read-only inventory passed on clean main c7d66c2: PostgreSQL tools/server
-18.6, pgvector 0.8.6, two PDFs totalling 138041 bytes and an approximately 10 MB
-database. 15-A2 native acceptance passed: Windows 1591 tests with 5 known platform
-skips, Docker 1596 without skips, Node 42 and Ruff in both environments. All 32 CI
-checks, 18 smokes and separate cleanup passed, including coordinated DB/PDF
-recovery into a second fresh synthetic stack. Two tenant PDFs, exact fixture
-vectors, authenticated downloads, lexical retrieval and tenant isolation were
-verified. The normal stack remained healthy with empty queues. 15-A2 is committed
-as ffe34dd/0777895. 15-A3 adds private retained DB/PDF/config capture with original
-writer resume, fresh isolated restore and explicit verified retention. Its
-native acceptance passed on 2026-10-18: Windows 1672 tests with 5 known platform
-skips, Docker 1677 without skips, Node 42 and Ruff in both environments. All
-33 CI checks, 18 smokes, both recovery gates and separate cleanup passed. One
-private normal-data backup was retained and restored into a fresh isolated
-target: 20 database rows and 2 PDFs matched, the target API was ready, cleanup
-completed and a restore receipt was created. Original source containers resumed
-healthy and both queues were empty. Retention ran as a plan without deletion.
-See docs/backups.md for private storage and operational boundaries.
+Schema remains 0016_document_embeddings. Dependencies, model identities,
+embedding dimensions/encoding and feature flags retain their existing contracts.
+The full recruiting workflow, final bilingual design and public deployment
+remain unfinished. See the seven-stage roadmap.
 
 ## Verify
 
     uv sync --locked --no-install-project
     uv run --locked --no-sync ruff check .
     uv run --locked --no-sync pytest -rs -W error
-    node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs
+    node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs tests/recruiter_api_errors.test.mjs
+    uv run --locked --no-sync python -m scripts.ci_verify --dry-run
     uv run --locked --no-sync python -m scripts.ci_verify
 
-The isolated runner owns separate generated credentials and volumes. Never use
-development-volume deletion to repair a failed check. Keep .env and private PDFs
-out of Git and delivery archives. Personal recovery documents stay outside Git.
+The isolated runner owns generated credentials, volumes and cleanup. Never
+delete development volumes to repair a failed check. Keep actual .env, tokens,
+private PDFs and personal recovery documents outside Git and delivery archives.
+
+## Distribute source
+
+After reviewing and committing all intended changes:
+
+    uv run --locked --no-sync python -m scripts.source_bundle
+    uv run --locked --no-sync python -m scripts.source_bundle --execute
+
+The default is a plan. Export publishes a new ZIP beside the clean checkout;
+it never overwrites an existing output. This is not a data or Git-history backup.
 
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Development](docs/development.md)
-- [Verification](docs/verification.md)
+- [Verification history](docs/verification.md)
+- [Stabilization acceptance](docs/stabilization.md)
+- [Source distribution](docs/source-distribution.md)
 - [Operations](docs/operations.md)
 - [Incident runbook](docs/operations-runbook.md)
 - [Recovery rehearsal](docs/recovery.md)
@@ -71,21 +76,3 @@ out of Git and delivery archives. Personal recovery documents stay outside Git.
 - [Grounded explanations](docs/explanations.md)
 - [Recruiter workspace](docs/recruiter-ui.md)
 - [Roadmap](docs/roadmap.md)
-
-## Bounded operator measurements
-
-First rebuild the smoke image after installing this slice:
-
-    docker compose --profile smoke build smoke
-    uv run --locked --no-sync python -m scripts.resource_watch --samples 15
-    docker compose --profile smoke run --rm --no-deps smoke python -m scripts.queue_watch --samples 15
-    uv run --locked --no-sync python -m scripts.benchmark_run --kind workflow --execute --items 4 --concurrency 2
-    uv run --locked --no-sync python -m scripts.benchmark_run --kind models --execute --samples 3
-
-The last two commands explicitly create this run's synthetic workflow records or
-invoke the already-installed CPU models. Without --execute they print a plan.
-They do not pull a model, enable API flags or restart normal services. The host
-supervisor samples existing service containers while its own named smoke
-container runs. Reports contain counts/timings/digests, not tokens, document
-text, credentials, tenant IDs, container names or raw provider output.
-See operations-runbook.md for failure/cleanup boundaries and interpretation.

@@ -8,7 +8,7 @@ from uuid import UUID
 
 from app.schemas.job_matching import JobMatchEvidenceRead
 
-REFERENCE = Path(__file__).with_name("fixtures") / "grounded_explanations_v1.json"
+REFERENCE = Path(__file__).with_name("fixtures") / "grounded_explanations_v2.json"
 
 
 def load_reference():
@@ -38,7 +38,7 @@ def example_snapshot(case=None):
 
 
 def evaluate(reference, observations, *, model_kind, model_digest, source_kind):
-    if (reference["version"] != "grounded-reference-v1" or model_kind not in {"fixture", "live"} or
+    if (reference["version"] != "grounded-reference-v2" or model_kind not in {"fixture", "live"} or
         source_kind not in {"example", "real_stack"} or
         model_digest is not None and not re.fullmatch(r"[0-9a-f]{64}", model_digest)):
         raise ValueError("Invalid reference or provenance.")
@@ -66,15 +66,25 @@ def evaluate(reference, observations, *, model_kind, model_digest, source_kind):
                 citation = item["citation"]
                 if expected:
                     quote = citation["quote"] if citation else ""
-                    if (item["state"] != "mention_observed" or not quote or
+                    # Independent reference expectation: the full original
+                    # fixture source, not the production anchor validator.
+                    if (item["state"] != "mention_observed" or quote != case["text"] or
+                        type(citation["start_offset"]) is not int or citation["start_offset"] != 0 or
+                        type(citation["end_offset"]) is not int or citation["end_offset"] != len(case["text"]) or
                         case["text"][citation["start_offset"]:citation["end_offset"]] != quote or
                         citation["document_id"] != row["document_id"] or
                         citation["chunk_set_id"] != row["chunk_set_id"] or
-                        citation["quote_sha256"] != hashlib.sha256(quote.encode()).hexdigest()):
+                        citation["quote_sha256"] != hashlib.sha256(quote.encode()).hexdigest() or
+                        citation["chunk_sha256"] != hashlib.sha256(case["text"].encode()).hexdigest() or
+                        citation["source_text_sha256"] != hashlib.sha256(case["text"].encode()).hexdigest()):
                         issues.append("invalid_citation")
                 elif citation is not None or item["state"] != "no_evidence":
                     issues.append("invented_evidence")
-            if page["language"] != case["language"] or page["generator_used"] != (case["text"] is not None):
+            if (page["language"] != case["language"] or
+                page["generator_used"] is not (case["text"] is not None) or
+                page.get("explanation_version") != "extractive-brief-v2" or
+                page.get("prompt_version") != "local-quote-selection-v2" or
+                page.get("citation_policy") != "assigned-chunk-context-v1"):
                 issues.append("generation_contract")
             if page["generator_used"] and (model_digest is None or page["model_digest"] != model_digest):
                 issues.append("model_space")
@@ -82,7 +92,8 @@ def evaluate(reference, observations, *, model_kind, model_digest, source_kind):
             raise ValueError("Invalid observation status.")
         failures.extend(row["case"] + ":" + issue for issue in issues)
         results.append({"case": row["case"], "status": row["status"], "elapsed_ms": latency, "issues": issues})
-    return {"version": "grounded-quality-v1", "source_kind": source_kind, "model_kind": model_kind,
+    return {"version": "grounded-quality-v2", "source_kind": source_kind, "model_kind": model_kind,
+        "citation_policy": "assigned-chunk-context-v1",
         "model_tag": "qwen3:0.6b", "model_digest": model_digest, "corpus_kind": "synthetic_reference",
         "reference_sha256": hashlib.sha256(json.dumps(reference, ensure_ascii=False, sort_keys=True,
             separators=(",", ":")).encode()).hexdigest(), "cases": results,
