@@ -26,7 +26,8 @@ def test_quote_is_exact_and_deduplicated_prompt_contains_no_identity_metadata():
     quote = "Python APIs"
     citations = ground({"quotes": [{"criterion": "skill", "source": "s0", "quote": quote}]}, assignments)
     citation = citations["skill"]
-    assert snapshot.criteria[0].evidence.text[citation.start_offset:citation.end_offset] == quote
+    assert citation.quote == snapshot.criteria[0].evidence.text
+    assert citation.start_offset == 0 and citation.end_offset == len(citation.quote)
     assert render(snapshot, citations, "fa")["criteria"][0]["state"] == "mention_observed"
     assert render(snapshot, citations, "en")["criteria"][1]["state"] == "no_evidence"
 
@@ -77,7 +78,7 @@ def test_no_evidence_requires_no_model_and_negation_remains_visible():
     assert "never used" in result["criteria"][0]["text"] and "does not establish proficiency" in result["scope_note"]
 
 
-def test_two_criteria_share_one_source_but_keep_independent_quotes_and_offsets():
+def test_two_criteria_share_one_source_and_preserve_its_full_context():
     snapshot = example_snapshot()
     snapshot.criteria[1].q = "PostgreSQL"
     snapshot.criteria[1].evidence = snapshot.criteria[0].evidence.model_copy()
@@ -86,7 +87,8 @@ def test_two_criteria_share_one_source_but_keep_independent_quotes_and_offsets()
     assert schema["properties"]["quotes"]["minItems"] == 2
     citations = ground({"quotes": [{"criterion": "skill", "source": "s0", "quote": "Python"},
                                    {"criterion": "missing", "source": "s0", "quote": "PostgreSQL"}]}, assignments)
-    assert citations["skill"].start_offset < citations["missing"].start_offset
+    assert citations["skill"].quote == citations["missing"].quote
+    assert citations["skill"].start_offset == citations["missing"].start_offset
     assert citations["skill"].document_id == citations["missing"].document_id
 
 
@@ -99,7 +101,9 @@ def observations():
         citations = ground({"quotes": [{"criterion": "skill", "source": "s0", "quote": case["q"]}]}, assignments) if assignments else {}
         result = render(snapshot, citations, case["language"])
         result = json.loads(json.dumps(result, default=lambda value: value.model_dump(mode="json") if hasattr(value, "model_dump") else str(value)))
-        result.update(language=case["language"], generator_used=bool(assignments), model_digest="a" * 64 if assignments else None)
+        result.update(language=case["language"], generator_used=bool(assignments), model_digest="a" * 64 if assignments else None,
+                      explanation_version="extractive-brief-v2", prompt_version="local-quote-selection-v2",
+                      citation_policy="assigned-chunk-context-v1")
         rows.append({"case": case["key"], "status": "ok", "elapsed_ms": 1.0, "result": result,
                      "document_id": str(snapshot.criteria[0].evidence.document_id) if assignments else None,
                      "chunk_set_id": str(snapshot.criteria[0].evidence.chunk_set_id) if assignments else None})

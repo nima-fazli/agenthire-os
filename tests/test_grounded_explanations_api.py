@@ -41,7 +41,8 @@ def context():
 def test_post_is_authenticated_private_and_passes_scope(context):
     response = context.client.post(context.path, json={})
     assert response.status_code == 200 and response.headers["cache-control"] == "private, no-store"
-    assert response.json()["explanation_version"] == "extractive-brief-v1"
+    assert response.json()["explanation_version"] == "extractive-brief-v2"
+    assert response.json()["citation_policy"] == "assigned-chunk-context-v1"
     assert context.service.explain.await_args.kwargs == context.scope
 
 

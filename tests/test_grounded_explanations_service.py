@@ -43,7 +43,8 @@ def test_source_snapshot_closes_before_generation_and_output_is_deterministicall
     c.generator.generate.side_effect = generate
     result = asyncio.run(c.service.explain(ExplanationRequest(language=language), **c.scope))
     assert result.language == language and result.model_digest == "a" * 64
-    assert result.criteria[0].citation.quote == "Python" and result.criteria[1].citation is None
+    assert result.criteria[0].citation.quote == example_snapshot().criteria[0].evidence.text
+    assert result.criteria[1].citation is None
     assert c.service._matching.evidence.await_count == 2 and c.service._repository.check.await_count == 2
     assert c.session.rollback.await_count == 2
     c.session.commit.assert_not_awaited()
