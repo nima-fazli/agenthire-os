@@ -132,3 +132,21 @@ retain the reported owned project names and inspect only those namespaces.
 Never substitute the normal project name into a drill cleanup or restore.
 The temporary bundle is removed; this gate does not provide retained backups,
 normal-data restore, offsite retention or a measured RPO/RTO.
+
+## Retained private backups (15-A3)
+
+See [backups.md](backups.md) for private store setup and capture/restore/retention
+boundaries. Capture pauses normal API/extraction/embedding writers and resumes
+the same originally running IDs; it creates no replacement normal containers.
+Accept capture only with status=passed, retained_backup=true and
+source_resume=completed. Accept isolated restore only with DB/PDF integrity,
+API readiness, cleanup=completed and restore_receipt_created=true.
+
+If capture is interrupted, inspect list/resume_required and use backup_run resume
+with the same private store. An active OS lock, foreign/replaced container or
+invalid journal must not be bypassed. Restore requires the recorded source to
+be resumed first. Keep partial bundles private for scoped inspection; they are
+never accepted as complete and block retention. Reports expose only generated
+backup/project IDs and aggregate states, not environment contents or raw errors.
+Windows store ACL validation is part of native acceptance. Do not infer offsite,
+encryption, whole-cluster recovery or RPO/RTO guarantees from a successful gate.

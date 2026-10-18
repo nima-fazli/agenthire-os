@@ -74,7 +74,7 @@ Normal worker startup must still request its processing runtime. Embedding's
 health CLI must also avoid loading asyncio/logging. Native settings parsing and
 both existing local_base_url import paths retain their prior contracts.
 
-## Accepted 15-A2 verification; commits pending
+## Accepted and committed 15-A2
 
 15-A1's real read-only inventory passed: PostgreSQL/server tools 18.6, vector
 0.8.6, schema 0016_document_embeddings, 9918143 database bytes and two PDFs/
@@ -115,13 +115,13 @@ The drill reported status=passed, phase=completed, cleanup=completed,
 source_writers_stopped=true and normal_stack_touched=false. Its full elapsed
 time was 97461.269 ms, including the rehearsal lifecycle, not a production RTO.
 The fixture did not invoke models and the temporary bundle was not retained.
-The last observed main remains c7d66c22a43336c2cd8069a082d3e1725fec5939;
-15-A2 feature/test commits are pending. No normal images were rebuilt for this
-slice; the final normal-stack and queue observations passed.
+Acceptance was followed by feature ffe34dda4dac44aa92840345ffe122cfb4706e2c
+and tests 07778952be9ff9a6fd86064a3fa2c7dcd048c824; main was clean. No normal
+images were rebuilt for this slice; final stack and queue observations passed.
 
 Run the normal checks above, inspect the recovery plan, then scripts.ci_verify.
 Its new host recovery-drill gate creates two separate fresh synthetic stacks.
-The current plan is 32 checks, 18 smokes, one recovery gate and separate outer
+The 15-A2 plan was 32 checks, 18 smokes, one recovery gate and separate outer
 cleanup. The drill verifies two tenant PDF/API workflows and deterministic
 vector values through actual PostgreSQL dump/restore and owned cleanup.
 
@@ -137,6 +137,64 @@ verify the normal stack and queues. These native acceptance conditions passed
 in the recorded run. No normal image rebuild or model benchmark is required
 for this slice. Repeat affected checks when later code changes justify doing so.
 
+## Accepted 15-A3 verification
+
+The native preflight passed on clean main 07778952be9ff9a6fd86064a3fa2c7dcd048c824:
+all requested services healthy, two extraction replicas, empty queues,
+PostgreSQL tools 18.6 and 91805437952 host free bytes. No backup was created by
+that preflight. New code covers the private store, component/DB fingerprints,
+original-container pause/resume journal, isolated restore receipts and explicit
+retention. Native Windows/Docker acceptance passed on 2026-10-18.
+
+Assistant Linux checks passed: 1677 Python tests with -W error, 42 Node tests,
+Ruff, both operator plans and the 33-check CI dry-run. The Windows test-value
+bound remained 5284 characters. The 143 focused backup/CI tests cover corruption,
+locking, ownership, interrupted capture, original-writer resume, changed runtime
+configuration, restored data disagreement and source/target cleanup failures.
+These assistant checks simulate Docker/SQL operations. The native results below
+separately exercised Windows ACLs and actual retained database/PDF restore.
+
+The first native attempt passed all file hashes and Ruff, then stopped at host
+pytest: 1670 passed, 5 known platform skips and 2 failures. A test compared two
+independently generated ZIPs byte-for-byte even though ZIP metadata records the
+creation time. Only tests/test_backup_run.py changed: the restore matrix now
+forces different ZIP timestamps without sleeps, verifies equal member contents,
+and expects the exact retained archive bytes. Transport equality and all
+integrity gates remain. With the old expectation, the forced timestamp case
+reproduced the failure; after correction all local checks passed.
+
+The corrected native run matched all 19 delivery hashes and completed:
+
+| Check | Actual 15-A3 result |
+| --- | --- |
+| Windows Python with -W error | 1672 passed, 5 known platform skips; 193.22 seconds |
+| Docker Python | 1677 passed, no skips; 53.50 seconds |
+| Node | 42 passed on each platform |
+| Ruff | Passed on each platform |
+| Isolated CI | 33 checks, 18 smokes, two host recovery gates and separate cleanup; all exit 0 |
+| CI schema | 0016_document_embeddings, no drift |
+| Synthetic workload | 2/2 at concurrency 2; scoped cleanup completed |
+| Original recovery drill | Two-tenant PDF/vector/API checks and cleanup passed |
+| Retained-backup synthetic gate | Capture, original-container resume, isolated restore, receipt and both cleanups passed |
+| Private Windows store | Initialized; component verification passed |
+| Normal-data capture | Retained backup, integrity verified, source_resume=completed |
+| Retained normal-data restore | 20 database rows and 2 PDFs matched; target API ready |
+| Restore completion | Target cleanup completed; restore receipt created; source bundle retained |
+| Retention | Plan passed; executed=false; no deletion |
+| Final normal stack | API/DB/two extraction workers/embedding/Ollama healthy; both queues empty |
+
+The normal capture intentionally paused its original application writers and
+resumed the same containers. Isolated restore reported normal_stack_touched=false.
+The normal source bundle remains in the separate private host store. Its source
+.env was retained privately and was not injected into the generated target.
+The original temporary recovery drill took 107688.692 ms including its full
+lifecycle; this is not a production RTO or a timing for retained normal-data
+restore. Models were not invoked.
+
+After reviewing these results, only documentation was updated for the checkpoint;
+runtime code and tests remain the native-verified versions. Scoped feature/test
+commits are the next recording step. Keep private backup contents out of Git.
+
 ## Evidence boundaries
 
 14-B3 passed its worker-startup acceptance. Each cost comparison uses three calls
@@ -144,8 +202,9 @@ per worker; cold/warm state was not controlled. Sampled container CPU maxima
 cannot show a sustained busy loop; PID 1 and child timings are separate measures.
 Live inference was not repeated in this stage. Earlier 14-B2 model results remain
 the available live-model evidence. Full API live-model workflows, wider corpus
-quality, hosted CI, final frontend browser QA, production deployment and
-normal-data restore remain separate work.
-15-A2 passed its native synthetic recovery rehearsal.
-Retained real-data backups, operational restore and retention remain separate
-from this temporary drill. See recovery.md for exact guarantees and exclusions.
+quality, hosted CI, final frontend browser QA and production deployment remain
+separate work. 15-A2 passed its native synthetic recovery rehearsal; 15-A3 also
+passed retained normal-data capture and isolated restore. Actual redeployment of
+the normal environment, encrypted/offsite copies and measured RPO/RTO remain
+separate release work. Native retention deletion was not executed. See
+recovery.md and backups.md for exact guarantees and exclusions.

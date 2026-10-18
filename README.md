@@ -33,8 +33,17 @@ skips, Docker 1596 without skips, Node 42 and Ruff in both environments. All 32 
 checks, 18 smokes and separate cleanup passed, including coordinated DB/PDF
 recovery into a second fresh synthetic stack. Two tenant PDFs, exact fixture
 vectors, authenticated downloads, lexical retrieval and tenant isolation were
-verified. The normal stack remained healthy with empty queues. Scoped 15-A2
-commits are pending; retained backups of normal application data remain later work.
+verified. The normal stack remained healthy with empty queues. 15-A2 is committed
+as ffe34dd/0777895. 15-A3 adds private retained DB/PDF/config capture with original
+writer resume, fresh isolated restore and explicit verified retention. Its
+native acceptance passed on 2026-10-18: Windows 1672 tests with 5 known platform
+skips, Docker 1677 without skips, Node 42 and Ruff in both environments. All
+33 CI checks, 18 smokes, both recovery gates and separate cleanup passed. One
+private normal-data backup was retained and restored into a fresh isolated
+target: 20 database rows and 2 PDFs matched, the target API was ready, cleanup
+completed and a restore receipt was created. Original source containers resumed
+healthy and both queues were empty. Retention ran as a plan without deletion.
+See docs/backups.md for private storage and operational boundaries.
 
 ## Verify
 
@@ -56,6 +65,7 @@ out of Git and delivery archives. Personal recovery documents stay outside Git.
 - [Operations](docs/operations.md)
 - [Incident runbook](docs/operations-runbook.md)
 - [Recovery rehearsal](docs/recovery.md)
+- [Retained private backups](docs/backups.md)
 - [Retrieval](docs/retrieval.md)
 - [Semantic retrieval](docs/semantic.md)
 - [Grounded explanations](docs/explanations.md)

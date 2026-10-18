@@ -4,8 +4,10 @@ Actual source, Git and latest user output take precedence over snapshots.
 UI 13-A is committed through b604ec6/92c23fd; 14-A through 31b7730/f8286de;
 14-B1 through 822c4c2/78987f4; 14-B2 through 09f232e/e2b42e9.
 14-B3 was accepted and committed as 955ac94/c7d66c2. The latest observed main
-is c7d66c22a43336c2cd8069a082d3e1725fec5939 and was clean at the 15-A1 inventory.
-15-A2 native acceptance passed; its 15 scoped files await feature/test commits.
+is 07778952be9ff9a6fd86064a3fa2c7dcd048c824, following feature
+ffe34dda4dac44aa92840345ffe122cfb4706e2c; 15-A2 is accepted/committed and main
+was clean at the 15-A3 preflight. Native 15-A3 acceptance subsequently passed on
+2026-10-18 from that baseline. New scoped commit hashes are recorded when observed.
 
 | Stage | State | Remaining work/acceptance |
 | --- | --- | --- |
@@ -17,8 +19,9 @@ is c7d66c22a43336c2cd8069a082d3e1725fec5939 and was clean at the 15-A1 inventory
 |14-B2|Accepted and committed|31 checks/18 smokes/cleanup, four workflows and both live models passed|
 |14-B3|Accepted and committed|Windows 1541+5 skips, Docker 1546 and measured healthcheck CPU improvement verified|
 |15-A1|Accepted read-only inventory|PostgreSQL tools/server 18.6, vector 0.8.6, two PDF objects and empty queues observed|
-|15-A2|Native acceptance passed; commits pending|Windows 1591+5 skips, Docker 1596; all 32 checks/18 smokes and two-stack recovery/cleanup passed|
-|15|In progress|Retained private backups, operational restore/retention, release and migration rollout, free hosting decision|
+|15-A2|Accepted and committed ffe34dd/0777895|Windows 1591+5 skips, Docker 1596; all 32 checks/18 smokes and two-stack recovery/cleanup passed|
+|15-A3|Native acceptance passed|Windows 1672+5 skips, Docker 1677; all 33 checks/18 smokes/cleanup; retained normal-data capture, original-writer resume and isolated restore passed; retention plan only|
+|15|In progress|Record scoped 15-A3 commits, encrypted/offsite retention decisions, release and migration rollout, free hosting decision|
 |Final frontend|Starts on explicit user instruction|English-first bilingual design, LTR/RTL and real browser QA|
 
 14-B2 uses synthetic PDFs through real HTTP/extraction/chunk/retrieval, plus a
@@ -40,7 +43,14 @@ not establish production capacity or guarantee identical savings elsewhere.
 
 No dependency, migration, model, resource quota, production flag or UI changes
 are included. Roles/invites, token refresh/revocation, distributed rate limiting,
-OCR, malware scanning and backup retention remain explicit future decisions.
+OCR, malware scanning and offsite backup policy remain explicit future decisions.
 Scores are evidence relevance, never hiring probability. Paid services are out
 of scope. Redis, agents, LangGraph, MCP or Temporal need a concrete workflow
 reason. Full teaching remains deferred until final delivery.
+
+15-A3 retained one private normal-data bundle and verified an isolated restore
+of 20 database rows and 2 PDFs. The restored target API became ready, owned
+cleanup completed and a restore receipt was recorded. Original source containers
+resumed healthy and both queues were empty. The Windows private-store checks
+passed; retention ran without deletion. This does not establish encrypted/offsite
+protection, normal-environment redeployment, whole-cluster recovery or an RPO/RTO.

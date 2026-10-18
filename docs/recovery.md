@@ -3,7 +3,8 @@
 15-A2 implements a logical database/PDF snapshot and restores it into a second
 fresh synthetic stack. It is a release verification gate, not a retained backup
 of the normal application's data. Native Windows/Docker acceptance passed on
-2026-10-18; scoped 15-A2 commits are pending.
+2026-10-18; 15-A2 is committed as ffe34dd/0777895. Retained operator backups and
+their separate acceptance are documented in [backups.md](backups.md).
 
 ## Observed baseline
 
@@ -51,8 +52,9 @@ cleanup ownership. An occupied namespace aborts without build/start/cleanup.
 Inherited AGENTHIRE_/COMPOSE_ settings are replaced by separate generated test
 credentials and env files. The normal .env, project and volumes are not reused.
 
-The full scripts.ci_verify plan now has 32 checks: its existing 18 smokes plus a
-host recovery-drill gate, with separate outer cleanup. The drill performs its
+The 15-A2 plan had 32 checks: its existing 18 smokes plus a host recovery-drill
+gate, with separate outer cleanup. 15-A3 adds a separate retained-backup gate
+for 33 checks; this original drill remains. The drill performs its
 own cleanup of both fresh projects, including on failure. It never accepts an
 operator-supplied source/target project or an arbitrary archive to restore.
 
@@ -105,8 +107,9 @@ checks do not establish recovery-time/recovery-point objectives, a power-loss
 durability guarantee, offsite retention or real-data disaster recovery. PostgreSQL
 cluster roles/tablespaces, .env/secrets and model weights are outside this bundle.
 Checksums detect changes within this run; they are not a signature or encryption.
-Retained private backups, configuration/secret recovery, retention and operational
-restore procedures remain later release work. Restore only trusted own dumps.
+15-A3 separately passed retained private normal-data capture and isolated restore;
+see [backups.md](backups.md). Encrypted/offsite retention and normal-environment
+redeployment remain later release work. Restore only trusted own dumps.
 
 PostgreSQL references: [pg_dump](https://www.postgresql.org/docs/18/app-pgdump.html)
 and [pg_restore](https://www.postgresql.org/docs/18/app-pgrestore.html).

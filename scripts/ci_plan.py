@@ -18,6 +18,8 @@ OPERATIONS_FILES = (
     "scripts/queue_watch.py", "scripts/benchmark_run.py",
     "app/core/recovery_archive.py", "scripts/recovery_objects.py",
     "scripts/recovery_fixture.py", "scripts/recovery_drill.py",
+    "app/core/backup_store.py", "scripts/backup_objects.py", "scripts/backup_runtime.py",
+    "scripts/backup_run.py", "scripts/backup_smoke.py",
 )
 
 SMOKE_MODULES = (
@@ -218,6 +220,7 @@ def verification_plan(prefix: tuple[str, ...]) -> tuple[Step, ...]:
             for name in SMOKE_MODULES
         ),
         Step("recovery-drill", (sys.executable, "-m", "scripts.recovery_drill", "--execute"), 2400),
+        Step("retained-backup-gate", (sys.executable, "-m", "scripts.backup_smoke", "--execute"), 3000),
     )
 
 
