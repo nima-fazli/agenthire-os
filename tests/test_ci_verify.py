@@ -132,6 +132,7 @@ def test_dry_run_has_no_process_or_file_side_effects(monkeypatch, capsys):
     assert "scripts.operations_failure_smoke" in output
     assert "scripts.workload_smoke" in output
     assert "scripts.recovery_drill --execute" in output
+    assert "scripts.backup_smoke --execute" in output
     assert "--index 2 -T extraction-worker" in output
     assert "tests/recruiter_ui.test.mjs" in output
     assert "--volumes" in output
@@ -139,8 +140,8 @@ def test_dry_run_has_no_process_or_file_side_effects(monkeypatch, capsys):
 
 @pytest.mark.parametrize(
     "failure",
-    [None, "docker-pytest", "docker-ui-tests", "retrieval_evaluation_smoke", "worker", "operations", "recovery", "cleanup"],
-    ids=["pass", "tests", "ui", "quality", "worker", "operations", "recovery", "cleanup"],
+    [None, "docker-pytest", "docker-ui-tests", "retrieval_evaluation_smoke", "worker", "operations", "recovery", "backup", "cleanup"],
+    ids=["pass", "tests", "ui", "quality", "worker", "operations", "recovery", "backup", "cleanup"],
 )
 def test_full_cli_preserves_isolation_failure_and_temporary_cleanup(
     failure, monkeypatch, tmp_path, capsys
@@ -165,6 +166,10 @@ def test_full_cli_preserves_isolation_failure_and_temporary_cleanup(
             assert command[-1] == "--execute"
             assert options["timeout"] == 2400
             return SimpleNamespace(returncode=9 if failure == "recovery" else 0)
+        if "scripts.backup_smoke" in command:
+            assert command[-1] == "--execute"
+            assert options["timeout"] == 3000
+            return SimpleNamespace(returncode=9 if failure == "backup" else 0)
         assert command[command.index("--project-name") + 1] == PROJECT
         env_file = Path(command[command.index("--env-file") + 1])
         assert env_file.is_file()
