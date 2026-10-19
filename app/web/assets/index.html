@@ -173,6 +173,8 @@
           <a href="#profiles-panel">معیار و جست‌وجو</a>
           <a href="#applications-panel">درخواست‌های استخدام</a>
           <a href="#candidate-panel">پرونده و شواهد</a>
+          <a href="#access-panel">اعضا و دسترسی‌ها</a>
+          <a href="#account-panel">امنیت حساب و نشست‌ها</a>
         </nav>
 
         <p class="sidebar-note">سازمان جاری، محدودهٔ تمام پرونده‌های این صفحه است.</p>
@@ -442,6 +444,79 @@
             </fieldset>
           </section>
         </div>
+
+        <section id="access-panel" class="panel" aria-labelledby="access-title">
+          <div class="panel-title">
+            <h2 id="access-title">اعضا و دسترسی‌های سازمان</h2>
+            <button id="access-refresh" class="button secondary" type="button" disabled>تازه‌سازی دسترسی‌ها</button>
+          </div>
+          <p id="access-role" class="summary-note" role="status" aria-live="polite"></p>
+          <div id="access-owner" hidden>
+            <p class="small muted">دعوت، تغییر نقش و حذف عضو به رمز فعلی و تأیید شما نیاز دارند. آخرین مالک فعال حفظ می‌شود.</p>
+            <fieldset id="access-owner-fields" disabled>
+              <label class="field">رمز فعلی برای تأیید تغییر دسترسی
+                <input id="access-password" type="password" autocomplete="current-password" maxlength="128" dir="ltr">
+              </label>
+              <form id="invitation-form" class="form-grid">
+                <label class="field">ایمیل دریافت‌کننده<input id="invitation-email" type="email" maxlength="320" dir="ltr" required></label>
+                <label class="field">نقش دعوت‌شده
+                  <select id="invitation-role"><option value="recruiter">استخدام‌کننده</option><option value="viewer">فقط مشاهده</option></select>
+                </label>
+                <button class="button primary" type="submit">ساخت دعوت</button>
+              </form>
+              <label class="field">کد دعوت؛ فقط این‌بار نمایش داده می‌شود
+                <input id="invitation-secret" readonly autocomplete="off" dir="ltr">
+              </label>
+              <p class="small muted">کد ۴۸ ساعت معتبر است و فقط با حساب همان ایمیل پذیرفته می‌شود. آن را مستقیم به همان فرد بدهید؛ پس از تغییر سازمان یا خروج، از این صفحه پاک می‌شود.</p>
+              <div id="access-invitations"></div>
+              <h3>اعضا</h3>
+              <div id="access-members"></div>
+            </fieldset>
+            <div class="pager">
+              <button id="access-previous" class="button quiet" type="button" disabled>اعضای قبلی</button>
+              <button id="access-next" class="button quiet" type="button" disabled>اعضای بعدی</button>
+            </div>
+            <h3>۲۰ رویداد اخیر دسترسی</h3>
+            <div id="access-events"></div>
+          </div>
+          <p id="access-page-info" class="small muted" role="status" aria-live="polite"></p>
+        </section>
+
+        <section id="account-panel" class="panel" aria-labelledby="account-title">
+          <div class="panel-title"><h2 id="account-title">امنیت حساب و نشست‌ها</h2></div>
+          <p id="session-expiry" class="small muted"></p>
+          <p class="small muted">خروج، نشست همین صفحه را در سرور باطل می‌کند. بستن یا تازه‌سازی صفحه، رمز ورود ذخیره نمی‌کند؛ نشست قبلی تا انقضا یا ابطال در فهرست باقی می‌ماند.</p>
+          <fieldset id="account-fields" disabled>
+            <label class="field">رمز فعلی برای تغییر رمز یا ابطال نشست‌های دیگر
+              <input id="account-password" type="password" autocomplete="current-password" maxlength="128" dir="ltr">
+            </label>
+            <div class="actions">
+              <button id="sessions-refresh" class="button secondary" type="button">خواندن نشست‌های فعال</button>
+              <button id="sessions-revoke-others" class="button danger" type="button">ابطال همهٔ نشست‌های دیگر</button>
+            </div>
+            <div id="sessions-list"></div>
+            <form id="password-form" class="form-grid">
+              <label class="field">رمز جدید؛ حداقل ۱۵ کاراکتر
+                <input id="account-new-password" type="password" autocomplete="new-password" minlength="15" maxlength="128" dir="ltr" required>
+              </label>
+              <label class="field">تکرار رمز جدید
+                <input id="account-confirm-password" type="password" autocomplete="new-password" minlength="15" maxlength="128" dir="ltr" required>
+              </label>
+              <button class="button primary" type="submit">تغییر رمز و ابطال همهٔ نشست‌ها</button>
+            </form>
+          </fieldset>
+          <details class="disclosure">
+            <summary>پذیرفتن دعوت یک سازمان</summary>
+            <form id="invitation-accept-form">
+              <fieldset id="invitation-accept-fields" disabled>
+                <label class="field">کد دعوت؛ با حساب ایمیل دریافت‌کننده وارد شوید
+                  <input id="invitation-token" type="password" autocomplete="off" minlength="43" maxlength="43" dir="ltr" required>
+                </label>
+                <button class="button secondary" type="submit">پذیرفتن دعوت</button>
+              </fieldset>
+            </form>
+          </details>
+        </section>
       </div>
     </section>
 

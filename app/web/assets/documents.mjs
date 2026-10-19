@@ -10,6 +10,13 @@ export function createDocuments(ctx, validatePdf) {
   const base = () => ctx.session.candidate
     ? `${candidatePath(ctx.session.organization.id, ctx.session.candidate.id)}/documents` : null;
 
+  function writeButton(text, work, className) {
+    const control = button(text, work, className);
+    control.requiresWrite = true;
+    control.disabled = !ctx.access.canWrite;
+    return control;
+  }
+
   function download(blob, filename) {
     const url = URL.createObjectURL(blob);
     urls.add(url);
@@ -57,10 +64,10 @@ export function createDocuments(ctx, validatePdf) {
               if (error.code === "EXTRACTION_NOT_FOUND") return { status: "not_requested" };
               throw error;
             }), value => { state.textContent = states[value.status] ?? "استخراج درخواست نشده است."; })),
-          button("شروع / تکرار استخراج", () => action(path,
+          writeButton("شروع / تکرار استخراج", () => action(path,
             signal => ctx.api.request(`${path}/extraction`, { method: "POST", data: { retry: true }, signal }),
             value => { state.textContent = states[value.status]; clearEmbedding(); notice("درخواست استخراج ثبت شد؛ وضعیت را تازه‌سازی کنید."); }, true)),
-          button("ساخت بخش‌های جست‌وجو", () => action(path,
+          writeButton("ساخت بخش‌های جست‌وجو", () => action(path,
             signal => ctx.api.request(`${path}/chunks`, { method: "POST", data: {}, signal }),
             () => { state.textContent = "بخش‌های جست‌وجو آماده شد."; clearEmbedding(); ctx.profileChanged(); }, true)),
           button("دانلود PDF", () => action(path,
@@ -90,12 +97,12 @@ export function createDocuments(ctx, validatePdf) {
         }
         if (jobs.has(item.id)) showEmbedding(jobs.get(item.id));
         actions.append(
-          button("شروع / مشاهدهٔ بردار معنایی", () => action(path,
+          writeButton("شروع / مشاهدهٔ بردار معنایی", () => action(path,
             signal => ctx.api.request(`${path}/embedding-jobs`, {
               method: "POST", data: { retry: jobs.get(item.id)?.status === "failed" }, signal,
             }), value => { showEmbedding(value); notice("وضعیت بردار دریافت شد؛ برای پیگیری، وضعیت را تازه‌سازی کنید."); }, true)),
           refresh,
-          button("حذف PDF", async () => {
+          writeButton("حذف PDF", async () => {
             const accepted = await ctx.confirm.ask({ title: "حذف رزومه",
               message: `فایل «${item.filename}» و داده‌های استخراج و جست‌وجوی وابسته به آن حذف می‌شوند.`,
               requiredText: item.filename });

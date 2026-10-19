@@ -51,6 +51,7 @@ class OrganizationService:
             await self._membership_repository.create(
                 organization_id=organization.id,
                 user_id=owner_user_id,
+                role="owner",
             )
 
             await self._session.commit()

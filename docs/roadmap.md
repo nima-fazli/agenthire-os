@@ -1,7 +1,7 @@
 # Roadmap
 
 Observed source, Git and user results take precedence over older recovery notes.
-The accepted base is main 3b58176505d4b6d85d6d908cd268a03256f6e53c.
+The accepted base is main 1865a7bae5815a083cfd6ad03a00ad202f08ebc6.
 Personal recovery stays outside Git.
 
 ## Accepted history
@@ -17,12 +17,18 @@ Personal recovery stays outside Git.
 | Isolated recovery 15-A2 | ffe34dd/0777895 |
 | Retained private backup/restore 15-A3 | c5e93e7/66de496 |
 | Completion stage 1 stabilization | 8e4d7fa/3b58176 |
+| Completion stage 2 recruiting workflow | ea1c46a/1865a7b |
 
-Stage 1 native acceptance on 2026-10-18 passed Windows Python 1720 with 5
-known platform skips, Docker Python 1725, Node 46, Ruff, all 33 isolated CI
-checks and cleanup, the normal workload and stack health. Its source export
-contained 363 files with an independently checked archive hash. Explanations
-were disabled, so live v2 model acceptance was recorded as not run.
+Stage 1 native acceptance passed Windows Python 1720 with 5 known platform skips,
+Docker Python 1725, Node 46, Ruff, all 33 isolated CI checks and owned cleanup.
+Its 363-file export was independently hash-verified. Live explanations were off.
+
+Stage 2 native acceptance passed Windows Python 1763 with 5 known platform skips,
+Docker Python 1768, Node 59, Ruff, all 33 isolated CI checks and owned cleanup,
+normal workload, recruiting HTTP contracts, API health and two healthy extraction
+workers. The 381-file export and each file hash were independently verified.
+The SHA-256 is 5505ca7d68fe13c00a9cf497ed7547ea4021f54905a9a7d3b3943d4958ff2ddf.
+These checks did not establish live model quality or comprehensive browser QA.
 
 ## Seven-stage completion plan
 
@@ -30,17 +36,20 @@ Each stage is delivered and accepted as one coherent unit.
 
 | Stage | State and completion condition |
 | --- | --- |
-| 1 Stabilize | Accepted: context-preserving citations, regression gates, client errors, complete source distribution and recovery |
-| 2 Recruiting workflow | Source delivered; native acceptance pending: applications/transitions, versioned editing, confirmed PDF deletion, embedding controls, server pages/search and stale-context handling |
-| 3 Access and sessions | Pending: needed roles/invites, session lifecycle and sensitive-operation controls |
-| 4 AI quality | Pending: diverse reference data, adversarial/negative cases and reproducible model evidence |
+| 1 Stabilize | Accepted: citations, regression gates, errors, source distribution and recovery |
+| 2 Recruiting workflow | Accepted: pages/search, versioned editing, applications/transitions, confirmed PDF deletion, embeddings and stale-context controls |
+| 3 Access and sessions | Source implementation: owner/recruiter/viewer roles, one-use email-bound invitations, current-password confirmations, last-owner protection, revocable sessions, password changes and backed-up migration; native acceptance pending |
+| 4 AI quality | Pending: diverse reference data, adversarial/negative cases and reproducible local model evidence |
 | 5 Final product design | Pending: English-first/Farsi-second translation, LTR/RTL, responsive layout and comprehensive browser/keyboard QA |
 | 6 Release acceptance | Pending: hosted CI, HTTPS, deployment, load evidence and repeatable installation/migration/recovery |
 | 7 Hiring portfolio | Pending: usable demo, synthetic data, short video, clear architecture and tradeoff explanation |
 
-Six stages remain until stage 2 is natively accepted; five remain afterward.
-Stage 2 retains schema 0016, pinned dependencies, models and encoding. See
-[recruiting-workflow.md](recruiting-workflow.md) for its contract and gate.
+Five stages remain until stage 3 is natively accepted; four remain afterward.
+Stage 3 intentionally adds migration 0017 over 0016. It keeps pinned dependencies,
+models, dimensions, encoding and feature flags. Its native gate is
+scripts.access_acceptance, with the 40-file manifest in
+scripts/fixtures/access_stage3_manifest.json. See the README for operational
+boundaries, invitation handling and pre-migration backup compatibility.
 
 Paid services remain out of scope. Hosting is not selected. Scores do not
 represent hiring probability. A tool-using agent with human approval remains

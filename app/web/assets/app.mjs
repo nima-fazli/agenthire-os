@@ -10,6 +10,7 @@ import { createNotifications } from "./notifications.mjs";
 import { createConfirmation } from "./confirmation.mjs";
 import { createApplications } from "./applications.mjs";
 import { createEditors } from "./editors.mjs";
+import { createAccess } from "./access.mjs";
 
 setupNotices(createNotifications({
   region: $("notification"),
@@ -35,11 +36,13 @@ const ctx = {
     () => logout("نشست پایان یافته است؛ دوباره وارد شوید."),
   ),
 };
+ctx.isPending = key => pending.has(key);
 
 ctx.sync = () => {
   const org = session.organization;
   const job = session.job;
   const candidate = session.candidate;
+  const writable = ctx.access?.canWrite === true;
 
   const state = (id, blocked, key) => {
     $(id).disabled = Boolean(blocked || pending.has(key));
@@ -48,26 +51,26 @@ ctx.sync = () => {
   state("auth-fields", pending.has("identity"), "authentication");
   state("auth-mode", $("auth-fields").disabled);
   state("workspace-refresh", !org, "organization");
-  state("job-create", !org, "job-create");
-  state("candidate-create", !org, "candidate-create");
+  state("job-create", !org || !writable, "job-create");
+  state("candidate-create", !org || !writable, "candidate-create");
   state("organization-create", false, "organization-create");
   state("organization-browser-fields", !session.token, "organization-page");
   state("job-browser-fields", !org, "job-page");
   state("candidate-browser-fields", !org, "candidate-page");
-  state("job-edit-fields", !job, "edit-job");
-  state("candidate-edit-fields", !candidate, "edit-candidate");
+  state("job-edit-fields", !job || !writable, "edit-job");
+  state("candidate-edit-fields", !candidate || !writable, "edit-candidate");
   state("job-edit-refresh", !job, "refresh-job");
   state("candidate-edit-refresh", !candidate, "refresh-candidate");
   state("application-fields", !job || pending.has("application-create") || pending.has("application-transition"), "application-page");
-  state("application-create", !job || !candidate, "application-create");
+  state("application-create", !job || !candidate || !writable, "application-create");
   state("document-tools", !candidate, "document-write");
   $("application-context").textContent = job && candidate
     ? `${candidate.full_name} ← ${job.title}`
     : "برای ثبت درخواست، یک شغل و یک داوطلب انتخاب کنید.";
 
-  state("profiles-fields", !job || !ctx.profilesReady, "profiles");
-  state("search-save", !job || !ctx.profilesReady, "search-save");
-  state("match-save", !job || !ctx.profilesReady, "profile-save");
+  state("profiles-fields", !job || !ctx.profilesReady || !writable, "profiles");
+  state("search-save", !job || !ctx.profilesReady || !writable, "search-save");
+  state("match-save", !job || !ctx.profilesReady || !writable, "profile-save");
 
   state("retrieval-run", !job || !ctx.profilesReady, "retrieval");
   state("retrieval-cancel", !pending.has("retrieval"));
@@ -77,9 +80,15 @@ ctx.sync = () => {
   state("explanation-run", !job || !candidate, "explanation");
   state("explanation-cancel", !pending.has("explanation"));
 
-  state("document-upload", !candidate, "upload");
+  state("document-upload", !candidate || !writable, "upload");
   state("documents-refresh", !candidate, "documents");
 
+  const apply = element => {
+    if (element.requiresWrite) element.disabled = !writable || element.canAct?.() === false;
+    for (const child of element.children) apply(child);
+  };
+  apply($("document-tools")); apply($("application-list"));
+  ctx.access?.sync();
   for (const item of pending.values()) {
     if (item.control) item.control.disabled = true;
   }
@@ -109,6 +118,11 @@ ctx.perform = async (
   control = null,
   mutation = false,
 ) => {
+  const accountActions = new Set(["authentication", "organization-create", "access-write", "account-write", "invitation-accept"]);
+  if (mutation && !accountActions.has(key) && !ctx.access.canWrite) {
+    notice("نقش شما اجازهٔ این تغییر را نمی‌دهد.", true);
+    return false;
+  }
   if (mutation && (pending.has(key) || gate.has(key))) return null;
 
   ctx.cancel(key);
@@ -167,6 +181,7 @@ ctx.selectOrganization = async item => {
   ctx.confirm.cancel();
   ctx.cancelAll();
   session.selectOrganization(item);
+  ctx.access.resetOrganization();
 
   ctx.applications.reset();
   ctx.editors.reset();
@@ -182,7 +197,11 @@ ctx.selectOrganization = async item => {
       : "برای شروع، سازمان بسازید یا انتخاب کنید.",
   );
 
-  if (item) return ctx.workspace.loadOrganization();
+  if (item) {
+    const allowed = await ctx.access.load();
+    if (allowed !== true || session.organization?.id !== item.id) return allowed;
+    return ctx.workspace.loadOrganization();
+  }
   return true;
 };
 
@@ -249,6 +268,7 @@ ctx.candidates = createCandidates(ctx);
 ctx.evidence = createEvidence(ctx);
 ctx.applications = createApplications(ctx);
 ctx.editors = createEditors(ctx);
+ctx.access = createAccess(ctx, message => logout(message));
 
 function setAuthMode(value) {
   registering = value;
@@ -274,6 +294,8 @@ function logout(message = "از حساب خارج شدید.") {
   authAttempt += 1;
   ctx.cancelAll();
   session.clear();
+  ctx.access.resetOrganization();
+  ctx.access.clearSession();
 
   ctx.applications.reset();
   ctx.editors.reset();
@@ -297,9 +319,16 @@ $("auth-mode").addEventListener("click", () => {
   setAuthMode(!registering);
 });
 
-$("logout").addEventListener("click", () => {
+$("logout").addEventListener("click", async () => {
+  const revocation = ctx.api.request("/auth/logout", { method: "POST", timeout: 5000 });
   logout();
+  const attempt = authAttempt;
   $("auth-email").focus();
+  try { await revocation; }
+  catch {
+    if (attempt === authAttempt && !session.token)
+      notice("خروج از صفحه انجام شد؛ ابطال نشست در سرور تأیید نشد. از بخش نشست‌ها آن را بررسی کنید.", true);
+  }
 });
 
 $("auth-form").addEventListener("submit", async event => {
@@ -333,6 +362,7 @@ $("auth-form").addEventListener("submit", async event => {
         return;
       }
 
+      ctx.access.startSession(result);
       session.authenticate(result.access_token);
 
       const identified = await ctx.perform(

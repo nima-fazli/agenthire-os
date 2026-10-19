@@ -11,6 +11,7 @@ import zipfile
 import asyncpg
 
 from app.core.config import get_settings
+from app.core.readiness import expected_migration_heads
 from app.core.recovery_archive import (
     MAX_ARCHIVE,
     catalog,
@@ -45,7 +46,7 @@ async def read_catalog():
                      + (SELECT count(*) FROM document_embedding_jobs WHERE status IN ('queued', 'running'))
                      + (SELECT count(*) FROM candidate_documents WHERE status <> 'ready')
             """)
-            if {row["version_num"] for row in heads} != {"0016_document_embeddings"} or not 180000 <= version < 190000 or pending:
+            if {row["version_num"] for row in heads} != expected_migration_heads() or not 180000 <= version < 190000 or pending:
                 raise ValueError("Recovery source is not settled on the expected schema.")
             rows = await database.fetch("""
                 SELECT storage_key AS key, size_bytes AS size, sha256

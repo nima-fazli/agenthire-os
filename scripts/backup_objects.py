@@ -13,6 +13,7 @@ import zipfile
 import asyncpg
 
 from app.core.config import get_settings
+from app.core.readiness import expected_migration_heads
 from app.core.recovery_archive import (
     MAX_ARCHIVE,
     export_objects,
@@ -57,7 +58,7 @@ async def database_audit():
             size = await database.fetchval("SELECT pg_database_size(current_database())")
             if size > 256 * 1024 * 1024:
                 raise ValueError("Logical backup database limit exceeded.")
-            result = {"schema": "0016_document_embeddings", "postgres_major": 18,
+            result = {"schema": ",".join(sorted(expected_migration_heads())), "postgres_major": 18,
                       "vector_version": await database.fetchval("SELECT extversion FROM pg_extension WHERE extname='vector'"),
                       "tables": [], "sequences": []}
             names = await database.fetch("""

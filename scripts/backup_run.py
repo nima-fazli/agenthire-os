@@ -16,6 +16,7 @@ from app.core.backup_store import (
     read_json,
     write_json,
 )
+from app.core.readiness import expected_migration_heads
 from scripts.backup_runtime import (
     IDENTITY_CODE,
     BackupFailure,
@@ -42,13 +43,14 @@ def normal_runtime(root, *, runner=subprocess.run):
     return Runtime(root, "agenthire-os", prefix, environment, runner=runner)
 
 
-def capture(store, source, environment_file, revision, source_kind, report):
+def capture(store, source, environment_file, revision, source_kind, report, *, prepare=True):
     if source_kind not in {"normal", "synthetic"} or not re.fullmatch(r"[0-9a-f]{40}", revision):
         raise ValueError("Invalid backup provenance.")
     if (source_kind == "normal") != (source.project == "agenthire-os"):
         raise ValueError("Backup source scope mismatch.")
     before_env = file_digest(environment_file, 65536)
-    source.call(("--profile", "smoke", "build", "smoke"), timeout=1200)
+    if prepare:
+        source.call(("--profile", "smoke", "build", "smoke"), timeout=1200)
     records = source.writers()
     observed = source.call(("exec", "-T", "api", "python", "-c", IDENTITY_CODE)).strip()
     if not re.fullmatch(r"[0-9a-f]{64}", observed):
@@ -145,7 +147,7 @@ def restore(store, identity, root, report, *, runner=subprocess.run, fixture_see
                 raise ValueError("Restored database contents disagree.")
             for action in ("current", "check"):
                 value = target.call(("run", "--rm", "--no-deps", "migrate", "alembic", action))
-                if action == "current" and "0016_document_embeddings" not in value:
+                if action == "current" and not all(head in value for head in expected_migration_heads()):
                     raise ValueError("Restored schema mismatch.")
             objects = target.helper("verify")
             target.call(("up", "--detach", "--no-build", "--no-deps", "--wait", "--wait-timeout", "90", "api"))

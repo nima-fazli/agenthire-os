@@ -114,6 +114,68 @@ def verify_workflow(owner, outsider, slug):
         call("GET", path, foreign_token, status=404)
     call("PUT", f"{root}/recruiting/jobs/{job['id']}", foreign_token, job_edit, 404)
     log_ok("Recruiting pages, literal search, versioned edits, transitions and tenant denial")
+    verify_access(call, root, owner, outsider, token, foreign_token)
+
+def verify_access(call, root, owner, outsider, token, foreign_token):
+    password = {"current_password": SMOKE_PASSWORD}
+    info = call("GET", root + "/access", token)
+    if info["role"] != "owner" or not info["can_manage"] or len(info["members"]) != 1:
+        raise SmokeFailure("Creator ownership or member visibility failed.")
+    call("POST", root + "/access/invitations", token,
+         {"email": outsider, "role": "owner", **password}, 422)
+    created = call("POST", root + "/access/invitations", token,
+                   {"email": outsider, "role": "viewer", **password}, 201)
+    if "token" in str(call("GET", root + "/access", token)):
+        raise SmokeFailure("Invitation secret leaked into access reads.")
+    call("POST", "/access/invitations/accept", token, {"token": created["token"]}, 404)
+    accepted = call("POST", "/access/invitations/accept", foreign_token, {"token": created["token"]})
+    if accepted["role"] != "viewer":
+        raise SmokeFailure("Invitation role changed.")
+    call("POST", "/access/invitations/accept", foreign_token, {"token": created["token"]}, 404)
+    view = call("GET", root + "/access", foreign_token)
+    if view["members"] or view["events"] or view["can_write"]:
+        raise SmokeFailure("Viewer received owner metadata or mutation capability.")
+    call("POST", root + "/jobs", foreign_token, {"title": "Denied", "description": "Synthetic"}, 403)
+    call("POST", root + "/access/invitations", foreign_token,
+         {"email": owner, "role": "recruiter", **password}, 403)
+    members = call("GET", root + "/access", token)["members"]
+    own = next(item for item in members if item["email"] == owner)
+    member = next(item for item in members if item["email"] == outsider)
+    own_path, member_path = root + "/access/members/" + own["id"], root + "/access/members/" + member["id"]
+    call("DELETE", own_path, token, {"expected_role": "owner", **password}, 409)
+    call("PUT", member_path, token, {"role": "recruiter", "expected_role": "viewer", **password})
+    call("PUT", member_path, token, {"role": "owner", "expected_role": "viewer", **password}, 409)
+    call("POST", root + "/jobs", foreign_token, {"title": "Recruiter write", "description": "Synthetic"}, 201)
+    call("POST", root + "/access/invitations", foreign_token,
+         {"email": owner, "role": "viewer", **password}, 403)
+    call("DELETE", member_path, token, {"expected_role": "recruiter", **password})
+    call("GET", root + "/jobs", foreign_token, status=404)
+    revoked = call("POST", root + "/access/invitations", token,
+                   {"email": outsider, "role": "recruiter", **password}, 201)
+    call("DELETE", root + "/access/invitations/" + revoked["id"], token, password, 204)
+    call("POST", "/access/invitations/accept", foreign_token, {"token": revoked["token"]}, 404)
+    events = call("GET", root + "/access", token)["events"]
+    if not {"role_changed", "member_removed", "invitation_accepted", "invitation_revoked"} <= {e["action"] for e in events}:
+        raise SmokeFailure("Access audit trail is incomplete.")
+    second = call("POST", "/auth/login", payload={"email": owner, "password": SMOKE_PASSWORD})
+    third = call("POST", "/auth/login", payload={"email": owner, "password": SMOKE_PASSWORD})
+    sessions = call("GET", "/auth/sessions", token)
+    if len(sessions) != 3 or sum(item["current"] for item in sessions) != 1:
+        raise SmokeFailure("Active session cap or current-session identity failed.")
+    call("DELETE", "/auth/sessions/" + second["session_id"], token, password, 204)
+    call("GET", "/users/me", second["access_token"], status=401)
+    call("GET", "/users/me", third["access_token"])
+    call("POST", "/auth/sessions/revoke-others", token, password, 204)
+    call("GET", "/users/me", third["access_token"], status=401)
+    call("POST", "/auth/logout", foreign_token, status=204)
+    call("GET", "/users/me", foreign_token, status=401)
+    changed = "synthetic-replacement-password-123"
+    call("PUT", "/auth/password", token, {"current_password": SMOKE_PASSWORD, "new_password": changed}, 204)
+    call("GET", "/users/me", token, status=401)
+    replacement = call("POST", "/auth/login", payload={"email": owner, "password": changed})
+    call("POST", "/auth/logout", replacement["access_token"], status=204)
+    call("GET", "/users/me", replacement["access_token"], status=401)
+    log_ok("Owner backfill/create, email-bound invites, viewer/recruiter boundaries, access audit and session revocation")
 
 
 async def main():

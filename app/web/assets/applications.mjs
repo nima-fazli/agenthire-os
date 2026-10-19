@@ -31,6 +31,7 @@ export function createApplications(ctx) {
         if (item.allowed_statuses.length) {
           const select = field("وضعیت بعدی", { value: "",
             options: [["", "انتخاب وضعیت"], ...item.allowed_statuses.map(value => [value, applicationLabels[value]])] });
+          select.input.requiresWrite = true;
           const save = button("ثبت تغییر وضعیت", async () => {
             const target = select.input.value;
             if (!item.allowed_statuses.includes(target)) return;
@@ -48,8 +49,10 @@ export function createApplications(ctx) {
               if (owned()) mutationNotice("وضعیت ثبت شد", refreshed);
             }, save, true);
           });
+          save.requiresWrite = true;
+          save.canAct = () => item.allowed_statuses.includes(select.input.value);
           save.disabled = true;
-          select.input.addEventListener("change", () => { save.disabled = !item.allowed_statuses.includes(select.input.value); });
+          select.input.addEventListener("change", () => { save.disabled = !ctx.access.canWrite || !save.canAct(); });
           card.append(select.wrapper, save);
         } else card.append(node("p", "این درخواست در وضعیت نهایی است.", "small muted"));
         content.append(card);

@@ -7,66 +7,112 @@ Hiring decisions remain human; retrieval scores are not hiring probabilities.
 
 ## Engineering foundation
 
-- Modular services own authorization and transaction boundaries.
 - Tenant-scoped queries and relational constraints protect related records.
 - Extraction and embedding workers use leases, bounded attempts and fencing.
 - Versioned provenance retains exact Unicode source offsets and hashes.
-- Literal server search and bounded pages use a consistent database snapshot.
+- Literal server search and bounded pages use consistent database snapshots.
 - Version-checked edits prevent silent overwrites of another recruiter's work.
 - Explicit transitions and confirmed PDF deletion remain human actions.
-- Operational and recovery gates run on isolated, owned synthetic resources.
+- Revocable bearer sessions and server-enforced roles protect every tenant route.
+- Owner actions require the current password and serialize per organization.
+- Operational and recovery gates use isolated, owned synthetic resources.
 
 ## Current checkpoint
 
-The accepted stage 1 checkpoint is main
-3b58176505d4b6d85d6d908cd268a03256f6e53c, with feature commit 8e4d7fa.
-Observed native acceptance passed Windows Python 1720 plus 5 known platform
-skips, Docker Python 1725, Node 46, Ruff, 33 CI checks and owned cleanup.
-The normal stack and workload passed. The 363-file source ZIP was independently
-hash-verified. Live v2 inference was not run because explanations were disabled.
-See [stabilization](docs/stabilization.md) for the exact evidence boundary.
+The accepted stage 2 checkpoint is main
+1865a7bae5815a083cfd6ad03a00ad202f08ebc6, with feature commit
+ea1c46acde2eeaa13c4c0c19b4c0bde9dc01fcc3. Observed native acceptance passed
+Windows Python 1763 plus 5 known platform skips, Docker Python 1768, Node 59,
+Ruff, 33 isolated CI checks and owned cleanup, the normal workload, recruiting
+HTTP smoke and healthy API plus two extraction workers. Its 381-file source
+ZIP and every file hash were independently verified. The archive SHA-256 was
+5505ca7d68fe13c00a9cf497ed7547ea4021f54905a9a7d3b3943d4958ff2ddf.
 
-Stage 2 source completes the recruiting workflow and is delivered for native
-acceptance. It includes paged organization/job/candidate/application search,
-versioned editing, application transitions, confirmed PDF deletion and local
-embedding controls. Full assigned citations up to 4000 Unicode code points now
-render consistently with the v2 API. Native stage 2 results remain pending.
+Stage 3 source adds access and sessions. Native acceptance of this source remains
+pending. The migration advances 0016_document_embeddings to 0017_access_sessions.
+Existing organizations give ownership to their earliest active member, or
+earliest member if none is active. Other existing members become recruiters.
+A new organization grants its creator ownership. Review owners after upgrading.
 
-Schema remains 0016_document_embeddings. The dependency lock, local models,
-embedding dimensions/encoding and feature flags retain their existing contracts.
-The final bilingual design, access/session work and release remain later stages.
+| Role | Read records/evidence | Edit recruiting data | Manage access |
+| --- | --- | --- | --- |
+| owner | Yes | Yes | Yes, with current password |
+| recruiter | Yes | Yes | No |
+| viewer | Yes | No | No |
+
+Viewers can request read-only semantic retrieval and grounded explanations.
+The owner panel lists 20 members per page and the latest 20 access events.
+Invitations grant recruiter/viewer access, are bound to the recipient email,
+expire after 48 hours, and are consumed once. Only the SHA-256 token digest is
+stored. Send the code manually; this project does not send invitation emails.
+Promotion to owner is an explicit, confirmed role change. The last active
+owner cannot be demoted or removed.
+
+Login creates a database session and a signed token with its session ID and
+expiry. Every authenticated request checks the active user and unrevoked,
+unexpired session. Each user has at most 10 active sessions; a new login
+revokes the oldest excess sessions. Logout revokes only its own session.
+Revoking other sessions and changing passwords require the current password;
+password changes revoke every session, including the current one.
+Five failed login/confirmation attempts per normalized email in 15 minutes
+return a generic throttle response. Password work has two process-local slots.
+This is not an edge-level rate limiter; deployment controls remain a release gate.
+
+Pre-stage-3 tokens require a new login. The UI keeps tokens in memory and clears
+private state on logout/expiry. Closing/reloading a page does not revoke its
+server session; revoke it from another login or let it expire. A request already
+accepted before a revocation may finish. UI role changes appear on refresh;
+the server checks current roles on each new request.
+
+Pinned dependencies, local model settings, encoding/dimensions and feature flags
+retain their existing contracts. Live model quality, final bilingual design,
+comprehensive browser QA and release deployment remain later stages.
 
 ## Run and verify
 
-Initial setup is documented in [development](docs/development.md). Keep the
-existing development checkout and Git history for operational recovery tools.
-The recruiter workspace is served at `/workspace/` by the normal API.
+Initial setup is in [development](docs/development.md). The workspace is served
+at /workspace/ by the API. Keep the existing checkout and Git history.
 
     uv sync --locked --no-install-project
     uv run --locked --no-sync ruff check .
     uv run --locked --no-sync pytest -rs -W error
     node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs tests/recruiter_api_errors.test.mjs tests/recruiter_workflow.test.mjs
 
-The stage 2 acceptance driver validates copied source against its manifest.
-Its default is a plan; execution runs native checks, isolated Docker CI and
-normal-stack workflow checks. Finalization happens only after those checks pass:
+The stage 3 driver validates all 40 complete delivered files against its manifest.
+Default invocation only prints a plan. Execution runs native checks and isolated
+CI, retains a private normal-data backup before building new normal images,
+then migrates, checks drift and runs the real-stack access/recruiting HTTP smoke.
 
-    uv run --locked --no-sync python -m scripts.recruiting_acceptance
-    uv run --locked --no-sync python -m scripts.recruiting_acceptance --execute --finalize
+    uv run --locked --no-sync python -m scripts.access_acceptance
+    uv run --locked --no-sync python -m scripts.access_acceptance --execute --finalize
 
-Finalization expects the accepted stage 1 main checkpoint, creates two scoped
-local commits, exports their committed source and appends the observed receipt
-to `AgentHire_OS_Recovery_Current.md` beside the repository. It does not push.
-This pinned driver belongs to stage 2; later source changes require their own gate.
+Use accepted stage 2 main and the existing healthy normal stack. The driver
+requires AgentHire_OS_Recovery_Current.md beside the repository. It creates or
+uses the private AgentHire_OS_Backups directory beside the repository, preserves
+the normal environment and two extraction replicas, and does not reset volumes.
+The pre-migration capture deliberately uses the accepted stage 2 smoke image.
+Keep that image until capture succeeds. A retry on schema 0017 requires the
+verified retained 0016 backup receipt and unchanged environment.
+
+The pre-migration backup is schema 0016: restore it with the accepted stage 2
+source in a separate recovery checkout using the existing isolated restore
+procedure. Keep the accepted stage 2 source ZIP and Git history. The stage 3
+restore tool expects schema 0017; it does not automatically downgrade/migrate an
+old backup or overwrite the normal database. See [backups](docs/backups.md).
+
+Only after checks pass does finalization create two scoped local commits,
+export committed source and append the native receipt to the personal recovery
+file. Interrupted finalization can recognize its exact scoped commits. It does
+not push. Historical stage 1/2 acceptance drivers remain pinned to their stages.
 
 ## Source and operational data
 
     uv run --locked --no-sync python -m scripts.source_bundle
     uv run --locked --no-sync python -m scripts.source_bundle --execute
 
-Source exports include CI and a per-file hash manifest. They exclude private
-configuration, PDFs, Git history and personal recovery files. A source ZIP is
-not a database/document or Git-history backup. See [source distribution](docs/source-distribution.md),
+Source exports include CI and per-file hashes; they exclude private configuration,
+PDFs, Git history and personal recovery files. A source ZIP does not back up the
+database, documents or Git history. See [source distribution](docs/source-distribution.md),
 [backups](docs/backups.md) and [recovery](docs/recovery.md).
 
 ## Documentation

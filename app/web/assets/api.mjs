@@ -5,6 +5,20 @@ const messages = Object.freeze({
   INVALID_RESPONSE: "پاسخ سرور قابل استفاده نبود؛ وضعیت را تازه‌سازی کنید.",
   INVALID_CREDENTIALS: "ایمیل یا رمز عبور صحیح نیست.",
   INVALID_ACCESS_TOKEN: "نشست پایان یافته است؛ دوباره وارد شوید.",
+  AUTH_THROTTLED: "تعداد تلاش‌های ناموفق زیاد است؛ ۱۵ دقیقه بعد دوباره امتحان کنید.",
+  AUTH_BUSY: "بررسی رمز فعلاً مشغول است؛ کمی بعد دوباره درخواست کنید.",
+  INVALID_CURRENT_PASSWORD: "رمز فعلی صحیح نیست؛ عملیات ثبت نشد.",
+  REAUTHENTICATION_REQUIRED: "اطلاعات ورود تغییر کرده است؛ رمز فعلی را دوباره بررسی کنید.",
+  PASSWORD_UNCHANGED: "رمز جدید باید با رمز فعلی متفاوت باشد.",
+  PERMISSION_DENIED: "نقش شما اجازهٔ این تغییر را نمی‌دهد.",
+  LAST_OWNER: "حداقل یک مالک فعال باید در سازمان باقی بماند.",
+  ACCESS_CHANGED: "نقش عضو هم‌زمان تغییر کرده است؛ فهرست اعضا را تازه‌سازی کنید.",
+  ACCESS_BUSY: "تغییر دسترسی دیگری در حال ثبت است؛ کمی بعد فهرست را تازه‌سازی کنید.",
+  MEMBER_NOT_FOUND: "این عضو دیگر در دسترس نیست.",
+  MEMBER_ALREADY_EXISTS: "این حساب از قبل عضو سازمان است؛ تغییر نقش را جداگانه انجام دهید.",
+  INVITATION_ALREADY_EXISTS: "دعوت فعال برای این ایمیل وجود دارد.",
+  INVITATION_LIMIT: "ظرفیت ۲۰ دعوت فعال پر شده است؛ دعوت‌های قبلی را بررسی کنید.",
+  INVITATION_INVALID: "کد دعوت برای این حساب معتبر نیست، منقضی شده یا قبلاً استفاده شده است.",
   VALIDATION_ERROR: "اطلاعات واردشده معتبر نیست؛ ورودی‌ها را بررسی کنید.",
   USER_EMAIL_ALREADY_EXISTS: "این ایمیل قبلاً ثبت شده است.",
   EMAIL_ALREADY_EXISTS: "این ایمیل قبلاً ثبت شده است.",
@@ -56,7 +70,7 @@ export class ApiError extends Error {
 
 function validPath(path) {
   if (typeof path !== "string" || /[\u0000-\u0020\u007f\\#]/u.test(path)
-      || !/^\/(?:auth\/login|users\/(?:register|me)|organizations(?:\/[A-Za-z0-9/_-]+)?)(?:\?[^#]*)?$/.test(path))
+      || !/^\/(?:auth\/(?:login|logout|password|sessions(?:\/[A-Za-z0-9_-]+)?)|access\/invitations\/accept|users\/(?:register|me)|organizations(?:\/[A-Za-z0-9/_-]+)?)(?:\?[^#]*)?$/.test(path))
     throw new Error("INVALID_API_PATH");
 }
 

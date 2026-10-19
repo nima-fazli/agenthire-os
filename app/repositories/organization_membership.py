@@ -18,10 +18,12 @@ class OrganizationMembershipRepository:
         *,
         organization_id: UUID,
         user_id: UUID,
+        role: str = "recruiter",
     ) -> OrganizationMembership:
         membership = OrganizationMembership(
             organization_id=organization_id,
             user_id=user_id,
+            role=role,
         )
 
         self._session.add(

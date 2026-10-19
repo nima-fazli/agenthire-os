@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
@@ -14,6 +15,7 @@ class InvalidAccessTokenError(Exception):
 def create_access_token(
     *,
     subject: UUID,
+    session_id: UUID | None = None,
     settings: Settings | None = None,
     now: datetime | None = None,
 ) -> str:
@@ -30,6 +32,8 @@ def create_access_token(
         "iat": issued_at,
         "exp": expires_at,
     }
+    if session_id is not None:
+        payload.update(sid=str(session_id), purpose="access", iss="agenthire-os", aud="agenthire-os")
 
     return jwt.encode(
         payload,
@@ -53,6 +57,7 @@ def decode_access_token(
                 resolved_settings.jwt_algorithm,
             ],
             options={
+                "verify_aud": False,
                 "require": [
                     "sub",
                     "iat",
@@ -74,3 +79,26 @@ def decode_access_token(
         raise InvalidAccessTokenError(
             "Invalid access token."
         ) from error
+
+
+@dataclass(frozen=True)
+class SessionClaims:
+    user_id: UUID
+    session_id: UUID
+    expires_at: datetime
+
+
+def decode_session_token(token: str, *, settings: Settings | None = None) -> SessionClaims:
+    """Runtime authentication requires a tracked session; pre-stage-3 tokens fail closed."""
+    resolved = settings or get_settings()
+    try:
+        payload = jwt.decode(
+            token, resolved.jwt_secret.get_secret_value(), algorithms=[resolved.jwt_algorithm],
+            issuer="agenthire-os", audience="agenthire-os",
+            options={"require": ["sub", "sid", "iat", "exp", "iss", "aud", "purpose"], "strict_aud": True},
+        )
+        if payload["purpose"] != "access" or type(payload["exp"]) is not int or type(payload["iat"]) is not int:
+            raise ValueError("Invalid token purpose or expiry.")
+        return SessionClaims(UUID(payload["sub"]), UUID(payload["sid"]), datetime.fromtimestamp(payload["exp"], UTC))
+    except (PyJWTInvalidTokenError, KeyError, TypeError, ValueError, OverflowError) as error:
+        raise InvalidAccessTokenError("Invalid access token.") from error

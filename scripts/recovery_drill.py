@@ -11,6 +11,7 @@ import time
 import zipfile
 from pathlib import Path
 
+from app.core.readiness import expected_migration_heads
 from app.core.recovery_archive import MAX_ARCHIVE, validate_archive
 from scripts.ci_plan import (
     cleanup_step,
@@ -46,7 +47,7 @@ def seal(directory):
             raise ValueError("Expected PostgreSQL custom archive.")
     with (directory / "documents.zip").open("rb") as handle:
         rows = validate_archive(handle)
-    report = {"version": 1, "postgres_major": 18, "schema": "0016_document_embeddings",
+    report = {"version": 1, "postgres_major": 18, "schema": ",".join(sorted(expected_migration_heads())),
               "consistency": "owned_stack_writers_stopped", "synthetic_only": True,
               "objects": len(rows), "files": {name: digest(directory / name) for name in FILES}}
     path = directory / "manifest.json"
@@ -192,7 +193,7 @@ def execute(root, runner=subprocess.run):
                 report["phase"] = "verify"
                 for action in ("current", "check"):
                     value = call(dst, dst_env, ("run", "--rm", "--no-deps", "migrate", "alembic", action))
-                    if action == "current" and "0016_document_embeddings" not in value:
+                    if action == "current" and not all(head in value for head in expected_migration_heads()):
                         raise RecoveryFailure("recovery_schema_changed")
                 smoke(dst, dst_env, target, "scripts.recovery_objects", "verify")
                 call(dst, dst_env, up, timeout=360)
