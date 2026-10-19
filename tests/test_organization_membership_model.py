@@ -22,6 +22,7 @@ def test_organization_membership_has_expected_columns() -> None:
         "id",
         "organization_id",
         "user_id",
+        "role",
         "created_at",
         "updated_at",
     }

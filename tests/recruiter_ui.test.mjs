@@ -27,7 +27,7 @@ test("public login sends JSON without authorization", async () => {
     assert.equal(options.headers.Authorization, undefined);
     assert.equal(options.headers["Content-Type"], "application/json");
     assert.deepEqual(JSON.parse(options.body), { email: "a@example.com", password: "private" });
-    return json({ access_token: "a.b.c" });
+    return json({ access_token: "a.b.c", session_id: "99999999-9999-4999-8999-999999999999", expires_at: new Date(Date.now() + 1800000).toISOString() });
   });
   await client.request("/auth/login", { method: "POST", data: { email: "a@example.com", password: "private" } });
 });
@@ -179,9 +179,15 @@ test("controller handles stale selections, cancelled writes, failed profiles and
   const pending = deferred(), saving = deferred(), reading = deferred();
   let expired = false, started = false, saveStarted = false, readStarted = false;
   globalThis.fetch = async (path, options) => {
-    if (path === "/auth/login") return json({ access_token: "a.b.c" });
+    if (path === "/auth/login") return json({ access_token: "a.b.c",
+      session_id: "99999999-9999-4999-8999-999999999999", expires_at: new Date(Date.now() + 1800000).toISOString() });
     assert.equal(options.headers.Authorization, "Bearer a.b.c");
     if (expired) return json({ error: { code: "EXPIRED" } }, 401);
+    if (path === "/auth/logout") return new Response(null, { status: 204 });
+    if (path.includes("/access?")) return json({
+      organization_id: path.split("/")[2], role: "owner", can_write: true, can_manage: true,
+      members: [], invitations: [], events: [], offset: 0, has_more: false,
+    });
     if (path === "/users/me") return json({ id, email: "fixture@example.com" });
     if (path.startsWith("/organizations/page?")) return pageResponse([{ id, name: "سازمان الف" }, { id: foreign, name: "سازمان ب" }], path);
     if (path.startsWith(`${orgPath(id)}/recruiting/jobs?`)) return pageResponse([job, nextJob, failedJob].map(value => ({ id: value, organization_id: id, title: "Backend", description: "Synthetic" })), path);

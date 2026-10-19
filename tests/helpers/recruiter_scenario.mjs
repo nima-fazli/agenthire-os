@@ -8,13 +8,17 @@ export const ids = Object.freeze({
   document: "44444444-4444-4444-8444-444444444444",
   application: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
   embedding: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb",
+  session: "cccccccc-cccc-4ccc-8ccc-cccccccccccc",
+  membership: "dddddddd-dddd-4ddd-8ddd-dddddddddddd",
+  teammate: "eeeeeeee-eeee-4eee-8eee-eeeeeeeeeeee",
+  invitation: "ffffffff-ffff-4fff-8fff-ffffffffffff",
 });
 const date = "2026-01-01T00:00:00Z";
 const nextStatuses = { applied: ["screening", "rejected"], screening: ["interview", "rejected"],
   interview: ["offer", "rejected"], offer: ["hired", "rejected"], hired: [], rejected: [] };
 let instance = 0;
 
-export async function scenario({ count = 24 } = {}) {
+export async function scenario({ count = 24, role = "owner" } = {}) {
   const dom = installDOM(), { elements, wait } = dom;
   const state = {
     jobs: [{ id: ids.job, organization_id: ids.org, title: "Backend", description: "Synthetic", status: "draft", updated_at: date }],
@@ -24,7 +28,15 @@ export async function scenario({ count = 24 } = {}) {
       location: "Synthetic", summary: null, updated_at: date,
     })),
     applications: [], documents: [], embedding: null, calls: [], unexpected: [],
-    expired: false, semanticDisabled: false, intercept: null,
+    expired: false, semanticDisabled: false, intercept: null, role, password: "synthetic-password",
+    members: [
+      { id: ids.membership, user_id: ids.org, email: "fixture@example.com", is_active: true, role },
+      { id: ids.teammate, user_id: ids.other, email: "teammate@example.com", is_active: true, role: "viewer" },
+    ],
+    invitations: [], events: [],
+    sessions: [ids.session, ids.embedding].map((id, i) => ({
+      id, current: i === 0, created_at: new Date().toISOString(), expires_at: new Date(Date.now() + 1800000).toISOString(),
+    })),
   };
   state.documents = [{ id: ids.document, organization_id: ids.org,
     candidate_id: state.candidates[0].id, filename: "synthetic.pdf", size_bytes: 1024 }];
@@ -38,9 +50,55 @@ export async function scenario({ count = 24 } = {}) {
       const intercepted = state.intercept(path, options, data);
       if (intercepted !== undefined) return await intercepted;
     }
-    if (resource === "/auth/login") return json({ access_token: "a.b.c" });
+    if (resource === "/auth/login") return json({ access_token: "a.b.c", session_id: ids.session, expires_at: new Date(Date.now() + 1800000).toISOString() });
     assert.equal(options.headers.Authorization, "Bearer a.b.c");
     if (state.expired) return error("INVALID_ACCESS_TOKEN", 401);
+    if (resource === "/auth/logout") { state.expired = true; return new Response(null, { status: 204 }); }
+    if (resource === "/auth/sessions" && method === "GET") return json(state.sessions);
+    if (resource === "/auth/password" || resource.startsWith("/auth/sessions/")) {
+      if (data.current_password !== state.password) return error("INVALID_CURRENT_PASSWORD", 403);
+      if (resource === "/auth/password") { state.password = data.new_password; state.expired = true; }
+      else state.sessions = state.sessions.filter(item => resource.endsWith("revoke-others")
+        ? item.current : !resource.endsWith(item.id));
+      return new Response(null, { status: 204 });
+    }
+    if (resource === "/access/invitations/accept") return json({ organization_id: ids.other, role: "viewer" });
+    if (resource.endsWith("/access")) {
+      if (!state.role) return error("ORGANIZATION_NOT_FOUND", 404);
+      const offset = Number(url.searchParams.get("offset") ?? 0);
+      const owner = state.role === "owner";
+      return json({ organization_id: resource.split("/")[2], role: state.role,
+        can_write: state.role !== "viewer", can_manage: owner,
+        members: owner ? state.members.slice(offset, offset + 20) : [], offset,
+        invitations: owner ? state.invitations : [], events: owner ? state.events : [],
+        has_more: owner && offset + 20 < state.members.length });
+    }
+    if (resource.includes("/access/")) {
+      if (state.role !== "owner") return error("PERMISSION_DENIED", 403);
+      if (data.current_password !== state.password) return error("INVALID_CURRENT_PASSWORD", 403);
+      if (resource.endsWith("/invitations")) {
+        const invitation = { id: ids.invitation, email: data.email, role: data.role,
+          expires_at: new Date(Date.now() + 172800000).toISOString() };
+        state.invitations.push(invitation);
+        return json({ ...invitation, organization_id: ids.org, token: "a".repeat(43) }, 201);
+      }
+      if (resource.includes("/invitations/")) {
+        state.invitations = []; return new Response(null, { status: 204 });
+      }
+      const member = state.members.find(item => resource.endsWith(item.id));
+      if (!member) return error("MEMBER_NOT_FOUND", 404);
+      if (member.role !== data.expected_role) return error("ACCESS_CHANGED");
+      if (member.role === "owner" && data.role !== "owner"
+          && state.members.filter(item => item.role === "owner").length === 1) return error("LAST_OWNER");
+      if (method === "DELETE") {
+        state.members = state.members.filter(item => item !== member);
+        if (member.user_id === ids.org) state.role = null;
+      } else {
+        member.role = data.role;
+        if (member.user_id === ids.org) state.role = data.role;
+      }
+      return json({ removed_self: method === "DELETE" && member.user_id === ids.org });
+    }
     if (resource === "/users/me") return json({ id: ids.org, email: "fixture@example.com" });
     const page = values => {
       const q = (url.searchParams.get("q") ?? "").toLowerCase();
@@ -116,7 +174,7 @@ export async function scenario({ count = 24 } = {}) {
   elements.get("auth-password").value = "synthetic-password";
   elements.get("auth-form").emit("submit");
   await wait(() => elements.get("candidate-list").textContent.includes("Candidate 0")
-    && !elements.get("profiles-fields").disabled && !elements.get("job-browser-fields").disabled);
+    && !elements.get("retrieval-run").disabled && !elements.get("job-browser-fields").disabled);
   return {
     state, elements, wait,
     button(root, text) { return visit(elements.get(root)).find(item => item.tag === "button" && item.textContent === text); },

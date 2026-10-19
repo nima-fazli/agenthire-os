@@ -206,3 +206,205 @@ test("page envelopes reject malformed totals and mismatched requested offsets", 
     { items: [], total: 0, limit: 100, offset: 0 }, { items: [], total: 0, limit: 20, offset: 20 }])
     assert.throws(() => validatePage(page, 0));
 });
+
+test("viewer keeps reading controls and cannot send recruiting mutations", async () => {
+  const f = await scenario({ role: "viewer" });
+  try {
+    const { elements: e, state } = f;
+    assert.equal(e.get("access-owner").hidden, true);
+    assert.equal(e.get("job-create").disabled, true);
+    assert.equal(e.get("job-edit-fields").disabled, true);
+    assert.equal(e.get("profiles-fields").disabled, true);
+    assert.equal(e.get("retrieval-run").disabled, false);
+    await f.selectCandidate();
+    assert.equal(e.get("document-upload").disabled, true);
+    assert.equal(f.button("documents-list", "حذف PDF").disabled, true);
+    assert.equal(f.button("documents-list", "شروع / مشاهدهٔ بردار معنایی").disabled, true);
+    assert.equal(f.button("documents-list", "دانلود PDF").disabled, false);
+    e.get("candidate-edit-form").emit("submit");
+    e.get("application-create").click();
+    await new Promise(resolve => setTimeout(resolve, 5));
+    assert.equal(state.calls.some(item => ["PUT", "DELETE"].includes(item.method)), false);
+    assert.equal(e.get("shell").hidden, false);
+  } finally { await f.close(); }
+});
+
+test("recruiter can edit without receiving the owner's member and invitation lists", async () => {
+  const f = await scenario({ role: "recruiter" });
+  try {
+    const { elements: e, state, wait } = f;
+    assert.equal(e.get("access-owner").hidden, true);
+    assert.equal(e.get("access-members").textContent, "");
+    e.get("job-edit-title").value = "Authorized edit"; e.get("job-edit-form").emit("submit");
+    await wait(() => state.jobs[0].title === "Authorized edit");
+    assert.equal(e.get("job-edit-fields").disabled, true);
+    await wait(() => !e.get("job-edit-fields").disabled);
+  } finally { await f.close(); }
+});
+
+test("invitation creation clears the password, waits for confirmation and exposes the code once", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    e.get("invitation-email").value = "invited@example.com"; e.get("invitation-role").value = "viewer";
+    e.get("access-password").value = state.password; e.get("invitation-form").emit("submit");
+    await wait(() => e.get("confirm-dialog").open);
+    assert.equal(e.get("access-password").value, "");
+    assert.equal(state.invitations.length, 0);
+    e.get("confirm-form").emit("submit");
+    await wait(() => e.get("invitation-secret").value.length === 43 && !e.get("access-owner-fields").disabled);
+    assert.equal(state.invitations[0].role, "viewer");
+    assert.equal(state.calls.some(item => item.path.includes("a".repeat(43))), false);
+    e.get("access-password").value = state.password; f.button("access-invitations", "لغو دعوت").click();
+    await wait(() => e.get("confirm-dialog").open); e.get("confirm-form").emit("submit");
+    await wait(() => state.invitations.length === 0 && !e.get("access-owner-fields").disabled);
+    e.get("organization-select").value = ids.other; e.get("organization-select").emit("change");
+    await wait(() => e.get("organization-heading").textContent === "Other organization");
+    assert.equal(e.get("invitation-secret").value, "");
+  } finally { await f.close(); }
+});
+
+test("owner role changes use a confirmed expected role and stale roles are not overwritten", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    const card = e.get("access-members").children[0].children[1];
+    const choice = card.children.find(item => item.tag === "label").children[1];
+    choice.value = "recruiter"; choice.emit("change");
+    e.get("access-password").value = state.password;
+    card.children.find(item => item.tag === "button" && item.textContent === "تغییر نقش").click();
+    await wait(() => e.get("confirm-dialog").open);
+    state.members[1].role = "owner";
+    e.get("confirm-form").emit("submit");
+    await wait(() => e.get("notice").textContent.includes("تغییر کرده"));
+    const write = state.calls.find(item => item.method === "PUT" && item.path.includes("/access/members/"));
+    assert.equal(write.data.expected_role, "viewer");
+    assert.equal(write.data.role, "recruiter");
+    assert.equal(state.members[1].role, "owner");
+    assert.equal(e.get("shell").hidden, false);
+  } finally { await f.close(); }
+});
+
+test("wrong confirmation password does not log out a valid session or expose server text", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    e.get("sessions-refresh").click();
+    await wait(() => Boolean(f.button("sessions-list", "باطل‌کردن نشست")));
+    e.get("account-password").value = "wrong";
+    f.button("sessions-list", "باطل‌کردن نشست").click();
+    await wait(() => e.get("confirm-dialog").open); e.get("confirm-form").emit("submit");
+    await wait(() => e.get("notice").textContent.includes("رمز فعلی"));
+    assert.equal(state.sessions.length, 2);
+    assert.equal(e.get("shell").hidden, false);
+    assert.equal(e.get("account-password").value, "");
+    assert.equal(e.get("notice").textContent.includes("PRIVATE_SERVER_TEXT"), false);
+  } finally { await f.close(); }
+});
+
+test("session revocation is scoped, confirmed and refreshes active session metadata", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    e.get("sessions-refresh").click();
+    await wait(() => Boolean(f.button("sessions-list", "باطل‌کردن نشست")));
+    e.get("account-password").value = state.password;
+    e.get("sessions-revoke-others").click();
+    await wait(() => e.get("confirm-dialog").open);
+    e.get("confirm-cancel").click(); await new Promise(resolve => setTimeout(resolve, 0));
+    assert.equal(state.sessions.length, 2);
+    e.get("account-password").value = state.password;
+    f.button("sessions-list", "باطل‌کردن نشست").click();
+    await wait(() => e.get("confirm-dialog").open); e.get("confirm-form").emit("submit");
+    await wait(() => state.sessions.length === 1 && !e.get("account-fields").disabled);
+    assert.equal(state.sessions[0].current, true);
+    assert.equal(f.button("sessions-list", "باطل‌کردن نشست"), undefined);
+    assert.equal(e.get("account-password").value, "");
+  } finally { await f.close(); }
+});
+
+test("password change confirms, sends secrets only in the body and clears the workspace", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    await f.selectCandidate();
+    e.get("account-password").value = state.password;
+    e.get("account-new-password").value = e.get("account-confirm-password").value = "new-synthetic-password";
+    e.get("password-form").emit("submit");
+    await wait(() => e.get("confirm-dialog").open);
+    assert.equal(e.get("account-new-password").value, "");
+    assert.equal(e.get("account-confirm-password").value, "");
+    assert.equal(state.password, "synthetic-password");
+    e.get("confirm-form").emit("submit");
+    await wait(() => e.get("shell").hidden);
+    assert.equal(state.password, "new-synthetic-password");
+    assert.equal(e.get("documents-list").textContent, "");
+    assert.equal(e.get("access-members").textContent, "");
+    assert.equal(e.get("account-password").value, "");
+    const call = state.calls.find(item => item.path === "/auth/password");
+    assert.equal(call.data.new_password, "new-synthetic-password");
+    assert.equal(state.calls.some(item => item.path.includes("synthetic-password")), false);
+  } finally { await f.close(); }
+});
+
+test("logout submits server revocation and clears a selected private record immediately", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    await f.selectCandidate();
+    let finish;
+    state.intercept = path => path === "/auth/logout" ? new Promise(resolve => { finish = resolve; }) : undefined;
+    e.get("logout").click();
+    assert.equal(e.get("shell").hidden, true);
+    assert.equal(e.get("candidate-edit-email").value, "");
+    assert.equal(e.get("access-members").textContent, "");
+    await wait(() => Boolean(finish));
+    assert.equal(state.calls.filter(item => item.path === "/auth/logout").length, 1);
+    finish(new Response(null, { status: 204 }));
+  } finally { await f.close(); }
+});
+
+test("a late owner access response cannot fill a different organization's member list", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    let finish;
+    state.intercept = path => path.startsWith("/organizations/" + ids.org + "/access?")
+      ? new Promise(resolve => { finish = resolve; }) : undefined;
+    e.get("access-refresh").click(); await wait(() => Boolean(finish));
+    e.get("organization-select").value = ids.other; e.get("organization-select").emit("change");
+    await wait(() => e.get("organization-heading").textContent === "Other organization");
+    finish(json({ organization_id: ids.org, role: "owner", can_write: true, can_manage: true,
+      members: [{ ...state.members[0], email: "LATE_PRIVATE" }], invitations: [], events: [], offset: 0, has_more: false }));
+    await new Promise(resolve => setTimeout(resolve, 10));
+    assert.equal(e.get("access-members").textContent.includes("LATE_PRIVATE"), false);
+  } finally { await f.close(); }
+});
+
+test("invitation acceptance clears its secret and never includes it in a request URL", async () => {
+  const f = await scenario({ role: "viewer" });
+  try {
+    const { elements: e, state, wait } = f;
+    e.get("invitation-token").value = "z".repeat(43); e.get("invitation-accept-form").emit("submit");
+    await wait(() => e.get("notice").textContent.includes("دعوت پذیرفته شد"));
+    assert.equal(e.get("invitation-token").value, "");
+    assert.equal(state.calls.find(item => item.path === "/access/invitations/accept").data.token, "z".repeat(43));
+    assert.equal(state.calls.some(item => item.path.includes("z".repeat(43))), false);
+  } finally { await f.close(); }
+});
+
+
+test("session expiry clears the account even when no API request is in flight", async () => {
+  const { installDOM } = await import("./helpers/recruiter_dom.mjs");
+  const { createAccess } = await import("../app/web/assets/access.mjs");
+  const dom = installDOM();
+  let message = "";
+  const access = createAccess({ session: {}, isPending: () => false }, value => {
+    message = value; access.clearSession();
+  });
+  try {
+    access.startSession({ session_id: ids.session, expires_at: new Date(Date.now() + 40).toISOString() });
+    await dom.wait(() => Boolean(message));
+    assert.equal(dom.elements.get("session-expiry").textContent, "");
+  } finally { access.clearSession(); await dom.restore(); }
+});

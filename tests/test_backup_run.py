@@ -96,7 +96,7 @@ class Runner:
                 assert "--single-transaction" in command and "--exit-on-error" in command
                 assert "--clean" not in command and "--create" not in command
             elif "alembic" in command and "current" in command:
-                value = b"0016_document_embeddings (head)"
+                value = b"0017_access_sessions (head)"
             elif "scripts.recovery_fixture" in command:
                 value = b'{"status":"passed"}'
             elif "down" in command:
@@ -242,3 +242,109 @@ def test_dump_uses_the_api_database_role_and_name(setup, capsys):
     assert "sh" not in dumped and "-c" not in dumped
     text = capsys.readouterr().out
     assert "app-user" not in text and "app-db" not in text
+
+
+def test_pre_upgrade_capture_uses_the_accepted_helper_image_without_build(setup):
+    repository, store, archive = setup
+    runner = Runner(archive, source="agenthire-os")
+    source = module.normal_runtime(repository, runner=runner)
+    identity = module.capture(store, source, repository / ".env", module.BASELINE, "normal", {}, prepare=False)
+    assert store.verify(identity)["backup_id"] == identity
+    assert not any("build" in command for command in runner.calls)
+    assert set(runner.started) == {row["id"] for row in runner.records}
+
+
+@pytest.mark.parametrize("failure", [None, "build", "stop", "migration", "drift"])
+def test_stage3_upgrade_resumes_the_right_schema_and_never_resets_normal_data(tmp_path, monkeypatch, failure):
+    from scripts import access_acceptance as stage
+
+    class Source:
+        def __init__(self):
+            self.head, self.calls, self.resumed = stage.OLD_HEAD, [], False
+        def writers(self):
+            return [{"service": service} for service in ("api", "extraction-worker", "extraction-worker")]
+        def stopped(self, records):
+            assert len(records) == 3
+        def resume(self, records):
+            assert self.head == stage.OLD_HEAD and len(records) == 3
+            self.resumed = True
+        def call(self, command, **options):
+            self.calls.append(command)
+            if failure == "build" and "build" in command:
+                raise stage.BackupFailure("build_failed")
+            if failure == "stop" and "stop" in command:
+                raise stage.BackupFailure("stop_failed")
+            if "upgrade" in command:
+                if failure == "migration":
+                    raise stage.BackupFailure("migration_failed")
+                self.head = stage.HEAD
+            if failure == "drift" and "check" in command:
+                raise stage.BackupFailure("drift_failed")
+            return ""
+    source = Source()
+    monkeypatch.setattr(stage, "database_head", lambda source: source.head)
+    monkeypatch.setattr(stage, "database_query", lambda source, sql: "0")
+    monkeypatch.setattr(stage, "run", lambda *args: None)
+    receipt = {"writers": source.writers()}
+    if failure:
+        with pytest.raises(stage.BackupFailure):
+            stage.normal_upgrade(tmp_path, source, receipt, stage.OLD_HEAD)
+    else:
+        stage.normal_upgrade(tmp_path, source, receipt, stage.OLD_HEAD)
+    assert not any("down" in command or "--volumes" in command or "downgrade" in command for command in source.calls)
+    started = [command for command in source.calls if "up" in command]
+    if failure in {"stop", "migration"}:
+        assert source.resumed and not started
+    elif failure == "build":
+        assert not source.resumed and not started
+    else:
+        assert source.head == stage.HEAD and not source.resumed
+        assert len(started) == 1 and "extraction-worker=2" in started[0]
+
+
+def test_stage3_retry_requires_a_verified_pre_migration_receipt_before_building(setup, monkeypatch):
+    from scripts import access_acceptance as stage
+    repository, store, _ = setup
+    monkeypatch.setattr(stage, "database_head", lambda source: stage.HEAD)
+    with pytest.raises(FileNotFoundError):
+        stage.pre_migration_backup(repository, SimpleNamespace(), store)
+    assert store.inventories() == []
+
+
+def stage3_source_fixture(root):
+    from scripts import access_acceptance as stage
+    names = [f"app/fixture_{number}.py" for number in range(39)] + [stage.MANIFEST]
+    for name in names[:-1]:
+        path = root / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("value = 1\n", encoding="utf-8")
+    manifest = {"version": "access-stage-3-v1", "base_commit": stage.BASE,
+                "feature_files": names[:30], "test_files": names[30:],
+                "sha256": {name: stage.digest(root / name) for name in names[:-1]}}
+    target = root / stage.MANIFEST
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(manifest), encoding="utf-8")
+    return stage, manifest, target
+
+
+def test_stage3_plan_validates_complete_copied_source_without_launching_commands(tmp_path, monkeypatch, capsys):
+    stage, manifest, _ = stage3_source_fixture(tmp_path)
+    monkeypatch.setattr(stage, "__file__", str(tmp_path / "scripts/access_acceptance.py"))
+    monkeypatch.setattr(stage, "run", lambda *_: pytest.fail("plan launched a process"))
+    monkeypatch.setattr(stage, "capture", lambda *_: pytest.fail("plan inspected native state"))
+    assert stage.main([]) == 0
+    assert json.loads(capsys.readouterr().out)["executed"] is False
+    (tmp_path / manifest["feature_files"][0]).write_text("wrong code\n")
+    assert stage.main([]) == 2
+    assert "file_content_mismatch" in capsys.readouterr().out
+
+
+def test_stage3_manifest_rejects_private_files_before_reading_them(tmp_path):
+    stage, manifest, target = stage3_source_fixture(tmp_path)
+    replaced = manifest["feature_files"].pop()
+    manifest["feature_files"].append(".env")
+    del manifest["sha256"][replaced]
+    manifest["sha256"][".env"] = "a" * 64
+    target.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="private_tracked_file"):
+        stage.load_manifest(tmp_path)

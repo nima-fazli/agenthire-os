@@ -74,6 +74,7 @@ def test_create_organization_creates_owner_membership_and_commits() -> None:
     membership_repository.create.assert_awaited_once_with(
         organization_id=organization_id,
         user_id=owner_user_id,
+        role="owner",
     )
 
     session.commit.assert_awaited_once()

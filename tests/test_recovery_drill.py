@@ -64,7 +64,7 @@ class Runner:
                                 "tenant_isolation_verified": self.failure != "api",
                                 "embedding_vectors_verified": 2}).encode()
         elif "alembic" in command and "current" in command:
-            value = b"0016_document_embeddings (head)\n"
+            value = b"0017_access_sessions (head)\n"
         return SimpleNamespace(returncode=0, stdout=value, stderr=b"")
 
 

@@ -1,162 +1,74 @@
 import asyncio
+from datetime import UTC, datetime, timedelta
+from types import SimpleNamespace
 from unittest.mock import AsyncMock, patch
 from uuid import uuid4
 
 import pytest
+from fastapi import Response
 from fastapi.security import HTTPAuthorizationCredentials
+from starlette.requests import Request
 
 from app.api.dependencies import get_current_user
 from app.core.errors import UnauthorizedError
-from app.core.tokens import InvalidAccessTokenError
-from app.models.user import User
-from app.services.user import UserService
+from app.core.tokens import InvalidAccessTokenError, SessionClaims
+from app.services.sessions import SessionService
 
 
-def build_credentials() -> HTTPAuthorizationCredentials:
-    return HTTPAuthorizationCredentials(
-        scheme="Bearer",
-        credentials="test-access-token",
-    )
+def fixture():
+    claims = SessionClaims(uuid4(), uuid4(), datetime.now(UTC) + timedelta(minutes=30))
+    service = AsyncMock(spec=SessionService)
+    service.session = object()
+    service.validate.return_value = SimpleNamespace(id=claims.user_id, is_active=True)
+    request = Request({"type": "http", "method": "GET", "path": "/users/me", "headers": []})
+    return request, service, claims
 
 
-def test_get_current_user_returns_active_user() -> None:
-    user_id = uuid4()
-
-    user = User(
-        id=user_id,
-        email="nima@example.com",
-        password_hash="hashed-secret",
-        is_active=True,
-    )
-
-    service = AsyncMock(
-        spec=UserService
-    )
-    service.get_by_id.return_value = user
-
-    with patch(
-        "app.api.dependencies.decode_access_token",
-        return_value=user_id,
-    ) as token_decoder:
-        result = asyncio.run(
-            get_current_user(
-                credentials=build_credentials(),
-                service=service,
-            )
-        )
-
-    assert result is user
-
-    token_decoder.assert_called_once_with(
-        "test-access-token"
-    )
-    service.get_by_id.assert_awaited_once_with(
-        user_id
-    )
+def test_get_current_user_returns_only_a_valid_tracked_session():
+    request, service, claims = fixture()
+    response = Response()
+    with patch("app.api.dependencies.decode_session_token", return_value=claims) as decoder:
+        result = asyncio.run(get_current_user(request, response,
+            HTTPAuthorizationCredentials(scheme="Bearer", credentials="test-token"), service))
+    assert result is service.validate.return_value
+    decoder.assert_called_once_with("test-token")
+    service.validate.assert_awaited_once_with(claims)
+    assert request.state.session_id == claims.session_id
+    assert response.headers["cache-control"] == "private, no-store"
 
 
-def test_get_current_user_rejects_missing_credentials() -> None:
-    service = AsyncMock(
-        spec=UserService
-    )
-
-    with pytest.raises(
-        UnauthorizedError
-    ) as error:
-        asyncio.run(
-            get_current_user(
-                credentials=None,
-                service=service,
-            )
-        )
-
-    assert error.value.status_code == 401
+def test_missing_credentials_never_query_session_data():
+    request, service, _ = fixture()
+    with pytest.raises(UnauthorizedError) as error:
+        asyncio.run(get_current_user(request, Response(), None, service))
     assert error.value.code == "INVALID_ACCESS_TOKEN"
-
-    service.get_by_id.assert_not_awaited()
-
-
-def test_get_current_user_rejects_invalid_token() -> None:
-    service = AsyncMock(
-        spec=UserService
-    )
-
-    with (
-        patch(
-            "app.api.dependencies.decode_access_token",
-            side_effect=InvalidAccessTokenError(
-                "Invalid access token."
-            ),
-        ),
-        pytest.raises(UnauthorizedError) as error,
-    ):
-        asyncio.run(
-            get_current_user(
-                credentials=build_credentials(),
-                service=service,
-            )
-        )
-
-    assert error.value.status_code == 401
-    assert error.value.code == "INVALID_ACCESS_TOKEN"
-
-    service.get_by_id.assert_not_awaited()
+    service.validate.assert_not_awaited()
 
 
-def test_get_current_user_rejects_missing_user() -> None:
-    user_id = uuid4()
-
-    service = AsyncMock(
-        spec=UserService
-    )
-    service.get_by_id.return_value = None
-
-    with (
-        patch(
-            "app.api.dependencies.decode_access_token",
-            return_value=user_id,
-        ),
-        pytest.raises(UnauthorizedError) as error,
-    ):
-        asyncio.run(
-            get_current_user(
-                credentials=build_credentials(),
-                service=service,
-            )
-        )
-
-    assert error.value.status_code == 401
-    assert error.value.code == "INVALID_ACCESS_TOKEN"
+def test_invalid_or_legacy_token_never_queries_session_data():
+    request, service, _ = fixture()
+    with patch("app.api.dependencies.decode_session_token", side_effect=InvalidAccessTokenError()), pytest.raises(UnauthorizedError):
+        asyncio.run(get_current_user(request, Response(),
+            HTTPAuthorizationCredentials(scheme="Bearer", credentials="invalid"), service))
+    service.validate.assert_not_awaited()
 
 
-def test_get_current_user_rejects_inactive_user() -> None:
-    user_id = uuid4()
+def test_revoked_expired_or_missing_session_is_rejected():
+    request, service, claims = fixture()
+    service.validate.side_effect = UnauthorizedError(code="INVALID_ACCESS_TOKEN", message="Invalid")
+    with patch("app.api.dependencies.decode_session_token", return_value=claims), pytest.raises(UnauthorizedError):
+        asyncio.run(get_current_user(request, Response(),
+            HTTPAuthorizationCredentials(scheme="Bearer", credentials="token"), service))
 
-    user = User(
-        id=user_id,
-        email="nima@example.com",
-        password_hash="hashed-secret",
-        is_active=False,
-    )
 
-    service = AsyncMock(
-        spec=UserService
-    )
-    service.get_by_id.return_value = user
-
-    with (
-        patch(
-            "app.api.dependencies.decode_access_token",
-            return_value=user_id,
-        ),
-        pytest.raises(UnauthorizedError) as error,
-    ):
-        asyncio.run(
-            get_current_user(
-                credentials=build_credentials(),
-                service=service,
-            )
-        )
-
-    assert error.value.status_code == 401
-    assert error.value.code == "INVALID_ACCESS_TOKEN"
+def test_every_tenant_request_passes_through_the_current_role_gate():
+    request, service, claims = fixture()
+    org = uuid4()
+    request.scope.update(path=f"/organizations/{org}/jobs", method="POST",
+                         path_params={"organization_id": str(org)})
+    authorization = AsyncMock()
+    with patch("app.api.dependencies.decode_session_token", return_value=claims), patch(
+        "app.api.dependencies.AccessService", return_value=authorization):
+        asyncio.run(get_current_user(request, Response(),
+            HTTPAuthorizationCredentials(scheme="Bearer", credentials="token"), service))
+    authorization.authorize.assert_awaited_once_with(org, claims.user_id, "POST", request.url.path)

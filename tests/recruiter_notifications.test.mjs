@@ -144,9 +144,14 @@ test("actual controllers show feedback after registration and record creation", 
     }
 
     if (path === "/auth/login") {
-      return json({ access_token: "a.b.c" });
+      return json({ access_token: "a.b.c", session_id: "99999999-9999-4999-8999-999999999999", expires_at: new Date(Date.now() + 1800000).toISOString() });
     }
 
+    if (path === "/auth/logout") return new Response(null, { status: 204 });
+    if (path.includes("/access?")) return json({
+      organization_id: path.split("/")[2], role: "owner", can_write: true, can_manage: true,
+      members: [], invitations: [], events: [], offset: 0, has_more: false,
+    });
     if (path === "/users/me") {
       return json({ id: org, email: "fixture@example.com" });
     }

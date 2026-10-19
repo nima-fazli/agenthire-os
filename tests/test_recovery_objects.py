@@ -39,7 +39,7 @@ def test_catalog_uses_read_only_snapshot_and_always_closes(monkeypatch, failure)
             return (190000 if failure == "version" else 180006) if "server_version_num" in query else int(failure == "pending")
         async def fetch(self, query):
             if "alembic_version" in query:
-                return [{"version_num": "wrong" if failure == "schema" else "0016_document_embeddings"}]
+                return [{"version_num": "wrong" if failure == "schema" else "0017_access_sessions"}]
             if failure == "query":
                 raise RuntimeError("private detail")
             assert "LIMIT 1001" in query
