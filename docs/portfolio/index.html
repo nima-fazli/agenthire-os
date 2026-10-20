@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="AgentHire OS: a private recruiting workspace with source-backed evidence, durable PDF processing, and recorded local verification.">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'none'; style-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="color-scheme" content="light">
+  <title>AgentHire OS — Engineering case study</title>
+  <style>
+    :root{--ink:#192c26;--muted:#53645c;--green:#164c3b;--line:#d9dfd6;--paper:#f5f5ef;--white:#fff;--soft:#e8efe5}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}
+    body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    a{color:inherit;text-underline-offset:4px}a:focus-visible{outline:3px solid #a35b08;outline-offset:5px}
+    .skip{position:absolute;left:16px;top:-100px;padding:12px;background:white;z-index:2}.skip:focus{top:12px}
+    .wrap{width:min(1160px,calc(100% - 48px));margin-inline:auto}
+    header{border-bottom:1px solid var(--line)}.header-row{display:flex;align-items:center;justify-content:space-between;gap:24px;min-height:88px}
+    .brand{display:inline-flex;align-items:center;gap:12px;min-height:44px;font-size:18px;font-weight:750;text-decoration:none;letter-spacing:-.6px}
+    .mark{display:grid;place-items:center;width:38px;height:38px;background:var(--green);color:white;border-radius:11px;font-size:22px}
+    nav{display:flex;flex-wrap:wrap;gap:6px 24px}nav a{display:inline-flex;align-items:center;min-height:44px;text-decoration:none;font-size:14px;font-weight:600}
+    .hero{display:grid;grid-template-columns:1.3fr 1fr;gap:64px;align-items:center;padding-block:88px 72px}
+    .eyebrow{margin:0 0 18px;color:var(--green);font-size:12px;font-weight:750;letter-spacing:1.8px;text-transform:uppercase}
+    h1,h2,h3,p{margin-top:0}h1{font-size:clamp(2.5rem,5vw,4.65rem);line-height:1.06;letter-spacing:-.055em;margin-bottom:26px;font-weight:720;max-width:760px}
+    .lead{font-size:19px;line-height:1.65;color:var(--muted);max-width:630px;margin-bottom:28px}
+    .actions{display:flex;flex-wrap:wrap;gap:12px}.button{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:11px 20px;border:1px solid var(--green);border-radius:8px;text-decoration:none;font-size:14px;font-weight:700}
+    .primary{background:var(--green);color:white}.secondary{background:transparent}.note{font-size:13px;color:var(--muted);margin:18px 0 0;max-width:640px}
+    .preview-card{background:var(--green);color:#fff;border-radius:18px;padding:30px;box-shadow:0 24px 60px #173b2412}
+    .preview-card .eyebrow{color:#cbdcc4}.preview-card h2{font-size:25px;line-height:1.3;letter-spacing:-.7px}
+    .evidence-step{display:flex;align-items:center;gap:16px;padding:17px 0;border-top:1px solid #ffffff30}
+    .step-index{flex:none;font-size:12px;color:#cbdcc4;font-variant-numeric:tabular-nums}.evidence-step strong{display:block;font-size:15px}.evidence-step small{color:#d7e6d7;font-size:13px}
+    .status{display:inline-flex;padding:5px 10px;border:1px solid #ffffff50;border-radius:20px;font-size:11px;letter-spacing:.6px;margin-bottom:24px}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);border:1px solid var(--line);border-radius:12px;background:white}
+    .stat{padding:25px 30px}.stat+.stat{border-left:1px solid var(--line)}.stat strong{display:block;font-size:35px;line-height:1.2;letter-spacing:-1.4px;font-variant-numeric:tabular-nums}.stat span{display:block;font-size:13px;color:var(--muted);margin-top:7px}
+    section{padding-block:76px;border-bottom:1px solid var(--line)}.section-head{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;margin-bottom:34px}
+    h2{font-size:clamp(1.8rem,3vw,2.6rem);line-height:1.15;letter-spacing:-1.2px;margin-bottom:15px}h3{font-size:18px;line-height:1.35;letter-spacing:-.35px;margin-bottom:12px}.section-head p{color:var(--muted);margin-bottom:0}
+    .grid{display:grid;gap:18px}.four{grid-template-columns:repeat(4,1fr)}.three{grid-template-columns:repeat(3,1fr)}
+    .card{background:white;border:1px solid var(--line);border-radius:12px;padding:25px}.card p{font-size:14px;color:var(--muted);margin-bottom:0}.number{display:block;font-size:12px;letter-spacing:1px;color:var(--green);margin-bottom:24px;font-weight:750}
+    .architecture{background:#e9eee5;border:1px solid #d5ddcf;border-radius:14px;padding:24px}.architecture .card{border-color:transparent}.architecture h3{font-size:16px}.architecture .flow{margin:18px 0 0;color:var(--muted);font-size:14px}
+    .callout{border-left:3px solid var(--green);padding:18px 22px;background:var(--soft);margin-top:26px;font-size:14px}.callout p{margin:0}.callout strong{font-weight:750}
+    .table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:white}table{border-collapse:collapse;width:100%;font-size:14px}th,td{text-align:left;padding:17px 22px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:12px;letter-spacing:.5px;background:#edf1e9}tr:last-child td{border-bottom:0}td:last-child{color:var(--muted)}
+    .decision{display:grid;grid-template-columns:240px 1fr;gap:30px;padding:25px 0;border-top:1px solid var(--line)}.decision p{margin:0;color:var(--muted);font-size:15px}.decision h3{margin:0}.decision:first-of-type{border-top:0}
+    .closing{display:flex;justify-content:space-between;align-items:center;gap:30px;padding-block:44px}.closing p{color:var(--muted);font-size:14px;margin:8px 0 0}.closing h2{font-size:25px;margin:0}
+    footer{padding-block:28px 42px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}footer p{margin:0 0 10px}code{font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;overflow-wrap:anywhere}.footer-links{display:flex;flex-wrap:wrap;gap:22px;margin-top:20px}.footer-links a{display:inline-flex;align-items:center;min-height:44px}
+    @media(max-width:1000px){.hero{gap:32px;padding-block:60px}.four{grid-template-columns:repeat(2,1fr)}.three{grid-template-columns:1fr}.section-head{gap:30px}.decision{grid-template-columns:200px 1fr}}
+    @media(max-width:640px){.wrap{width:calc(100% - 32px)}.header-row{align-items:flex-start;flex-direction:column;gap:6px;padding-block:20px}nav{gap:4px 18px}.hero{grid-template-columns:1fr;gap:32px;padding-block:44px}.lead{font-size:17px}.preview-card{padding:24px}.stats{grid-template-columns:1fr}.stat{padding:20px 24px}.stat+.stat{border-left:0;border-top:1px solid var(--line)}.stat strong{font-size:29px}.four,.section-head{grid-template-columns:1fr}.section-head{gap:8px}section{padding-block:48px}.decision{grid-template-columns:1fr;gap:10px}.closing{align-items:flex-start;flex-direction:column}.actions,.actions .button{width:100%}.architecture{padding:16px}th,td{padding:14px}.card{padding:22px}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+    @media print{body{background:white}header nav,.actions,.closing,.skip{display:none}.hero{padding-block:28px;gap:28px}section{padding-block:28px}.preview-card{box-shadow:none}.card,.decision,.architecture{break-inside:avoid}a{color:inherit}.wrap{width:100%}}
+  </style>
+</head>
+<body>
+  <a class="skip" href="#product">Skip to content</a>
+  <header><div class="wrap header-row">
+    <a class="brand" href="#product" aria-label="AgentHire OS overview"><span class="mark" aria-hidden="true">A</span>AgentHire OS</a>
+    <nav aria-label="Case study"><a href="#workflow">Workflow</a><a href="#architecture">Architecture</a><a href="#verification">Verification</a><a href="#decisions">Decisions</a></nav>
+  </div></header>
+  <main id="product" class="wrap" tabindex="-1">
+    <div class="hero">
+      <div>
+        <p class="eyebrow">Engineering case study · Recruiting workspace</p>
+        <h1>Recruiting decisions need evidence.</h1>
+        <p class="lead">A private workspace that connects jobs, candidates and applications to original resume text. Built with FastAPI, PostgreSQL and durable document workers.</p>
+        <div class="actions"><a class="button primary" href="workspace.html">Explore the workspace</a><a class="button secondary" href="#decisions">Read the engineering decisions</a></div>
+        <p class="note">The interactive preview uses synthetic records and a simulated transport. It demonstrates navigation and review states. Live backend behavior is covered separately by the recorded local verification.</p>
+      </div>
+      <aside class="preview-card" aria-label="Evidence review approach">
+        <span class="status">LOCAL VERIFICATION RECORDED</span>
+        <p class="eyebrow">Source first</p><h2>From private document to reviewable evidence.</h2>
+        <div class="evidence-step"><span class="step-index">01</span><div><strong>Original PDF</strong><small>Authenticated access and tenant ownership</small></div></div>
+        <div class="evidence-step"><span class="step-index">02</span><div><strong>Immutable text chunks</strong><small>Source versions, hashes and Unicode offsets</small></div></div>
+        <div class="evidence-step"><span class="step-index">03</span><div><strong>Criterion evidence</strong><small>Inspect the source; keep the decision human</small></div></div>
+      </aside>
+    </div>
+    <div class="stats" aria-label="Recorded local verification highlights">
+      <div class="stat"><strong>1,948</strong><span>Python tests passed in Docker</span></div>
+      <div class="stat"><strong>35</strong><span>Isolated CI checks passed</span></div>
+      <div class="stat"><strong>22</strong><span>Chromium design checks passed</span></div>
+    </div>
+    <section id="workflow" aria-labelledby="workflow-heading">
+      <div class="section-head"><div><p class="eyebrow">Product capabilities</p><h2 id="workflow-heading">A focused recruiting workflow.</h2></div><p>The application keeps organization and job context explicit. Source review, workflow changes and access management have separate responsibilities.</p></div>
+      <div class="grid four">
+        <article class="card"><span class="number">01 / CONTEXT</span><h3>Choose the scope</h3><p>Server-paged jobs and candidates stay inside an organization. Switching context clears the private dossier.</p></article>
+        <article class="card"><span class="number">02 / DOCUMENTS</span><h3>Process the source</h3><p>Private PDFs pass through leased extraction jobs. Conditional completion rejects stale worker results.</p></article>
+        <article class="card"><span class="number">03 / REVIEW</span><h3>Inspect the evidence</h3><p>Review criterion matches against immutable chunks. Optional local-model briefs must satisfy the citation contract.</p></article>
+        <article class="card"><span class="number">04 / WORKFLOW</span><h3>Make an explicit change</h3><p>Version checks protect edits. Application transitions and owner, recruiter and viewer roles are enforced on the server.</p></article>
+      </div>
+    </section>
+    <section id="architecture" aria-labelledby="architecture-heading">
+      <div class="section-head"><div><p class="eyebrow">System design</p><h2 id="architecture-heading">Clear boundaries before more services.</h2></div><p>A modular monolith owns the HTTP workflow. PostgreSQL enforces tenant relationships and concurrency invariants; workers handle bounded document processing.</p></div>
+      <div class="architecture">
+        <div class="grid three">
+          <article class="card"><span class="number">INTERFACE</span><h3>Browser workspace</h3><p>English modules, explicit context, keyboard navigation and in-memory credentials call the authenticated API.</p></article>
+          <article class="card"><span class="number">APPLICATION</span><h3>FastAPI services</h3><p>Routes resolve dependencies. Services authorize and own transactions. Repositories issue scoped SQL.</p></article>
+          <article class="card"><span class="number">PERSISTENCE</span><h3>PostgreSQL / pgvector</h3><p>Composite foreign keys, row locks, durable leases and versioned source metadata preserve invariants.</p></article>
+        </div>
+        <p class="flow"><strong>Document path:</strong> API upload → private PDF volume → extraction worker → immutable chunks. Optional local Ollama models support semantic retrieval and grounded briefs.</p>
+      </div>
+      <div class="callout"><p><strong>Recovery is part of the design.</strong> Coordinated database and document snapshots are exercised through isolated restore gates. The source repository is separate from private operational backups.</p></div>
+    </section>
+    <section id="verification" aria-labelledby="verification-heading">
+      <div class="section-head"><div><p class="eyebrow">Recorded evidence</p><h2 id="verification-heading">Claims tied to a specific source.</h2></div><p>These results belong to the owner's Windows and Docker acceptance run for the product checkpoint shown below. They describe local verification.</p></div>
+      <div class="table-wrap" role="region" aria-label="Recorded verification results" tabindex="0"><table>
+        <thead><tr><th scope="col">Layer</th><th scope="col">Recorded result</th><th scope="col">What it establishes</th></tr></thead>
+        <tbody>
+          <tr><td>Windows regression</td><td>1,943 passed; 5 platform skips</td><td>Native Python regression and known platform boundaries</td></tr>
+          <tr><td>Docker regression</td><td>1,948 passed</td><td>Linux execution with real PDF tools</td></tr>
+          <tr><td>Client regression</td><td>80 passed</td><td>Workspace state, errors, sessions and navigation</td></tr>
+          <tr><td>Isolated real stack</td><td>35 checks passed</td><td>Migrations, tenant boundaries, HTTP/PDF/worker flows and cleanup</td></tr>
+          <tr><td>Browser design</td><td>22 checks passed</td><td>Chromium navigation, focus, responsive states and safe feedback</td></tr>
+          <tr><td>Recovery and local workload</td><td>Both recovery gates; 4 PDFs at concurrency 2</td><td>Isolated restore integrity and bounded worker-backed execution</td></tr>
+        </tbody>
+      </table></div>
+      <div class="callout"><p><strong>Scope matters.</strong> CI model checks use fixtures. This run does not repeat live-model quality evaluation. Hosted CI, public HTTPS, hosted workload and host installation/migration/recovery acceptance remain pending.</p></div>
+    </section>
+    <section id="decisions" aria-labelledby="decisions-heading">
+      <div class="section-head"><div><p class="eyebrow">Engineering tradeoffs</p><h2 id="decisions-heading">Decisions with practical costs.</h2></div><p>The design favors inspectable behavior and explicit failure handling. Each boundary carries a cost that should stay visible during review.</p></div>
+      <article class="decision"><h3>Modular monolith</h3><p>One application keeps authorization and transaction ownership close. Module boundaries and tests carry the discipline that separate services would otherwise enforce operationally.</p></article>
+      <article class="decision"><h3>Database-backed leases</h3><p>Durable extraction jobs avoid introducing a separate broker. Lease ownership, heartbeat checks and conditional completion add database logic that requires real concurrency tests.</p></article>
+      <article class="decision"><h3>Grounded local models</h3><p>Optional local inference reduces reliance on an external model service. Model resources, latency and output quality still need independent measurement; retrieval scores are not hiring probabilities.</p></article>
+      <article class="decision"><h3>Coordinated storage recovery</h3><p>Database commits and filesystem writes are not one atomic transaction. Reconciliation guards and coordinated backups address ambiguous outcomes and need rehearsed restore procedures.</p></article>
+    </section>
+    <div class="closing"><div><h2>Review the behavior. Follow the evidence.</h2><p>Explore the synthetic workspace, then inspect the verification ledger.</p></div><a class="button primary" href="workspace.html">Open the interactive preview</a></div>
+  </main>
+  <footer><div class="wrap">
+    <p>Product checkpoint: <code>e331343bdd0384e2e246db4c0770636a1532f064</code></p>
+    <p>Local readiness verified. Hosted release acceptance remains pending. All preview identities and records are synthetic.</p>
+    <div class="footer-links"><a href="README.md">Reviewer guide</a><a href="evidence.json">Verification ledger</a><a href="manifest.json">Artifact manifest</a></div>
+  </div></footer>
+</body>
+</html>
