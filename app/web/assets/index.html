@@ -4,9 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
+  <meta name="description" content="A private recruiting workspace for candidate review, job criteria, and traceable source evidence.">
   <title>AgentHire OS — Recruiting Workspace</title>
   <link rel="stylesheet" href="/workspace/assets/styles.css">
   <script type="module" src="/workspace/assets/app.mjs"></script>
+  <script type="module" src="/workspace/assets/design.mjs"></script>
 </head>
 <body>
   <a class="skip" href="#main-content">Skip to main content</a>
@@ -22,7 +24,10 @@
       <button id="logout" class="button quiet" type="button">Sign out</button>
     </div>
 
-    <span id="public-label" class="muted">Recruiting workspace</span>
+    <div class="topbar-tools">
+      <span id="public-label" class="muted">Recruiting workspace</span>
+      <button id="workspace-help" class="button quiet" type="button" aria-haspopup="dialog">Workspace guide</button>
+    </div>
   </header>
 
   <main id="main-content" tabindex="-1">
@@ -35,9 +40,9 @@
 
     <section id="auth-view" class="auth-grid" aria-labelledby="auth-title">
       <div class="auth-story">
-        <p class="eyebrow"><bdi>HUMAN DECISIONS. TRACEABLE EVIDENCE.</bdi></p>
-        <h1>From resumes,<br>to evidence you can verify.</h1>
-        <p>Search, independent criteria, and source-backed quotes in one recruiting workspace.</p>
+        <p class="eyebrow">THE EVIDENCE WORKSPACE</p>
+        <h1>A clearer view.<br>A better-informed decision.</h1>
+        <p>Bring candidates, job criteria, and original resume evidence into one focused review.</p>
 
         <div class="story-flow" aria-hidden="true">
           <span>Resume</span>
@@ -47,7 +52,12 @@
           <span>Evidence</span>
         </div>
 
-        <p class="story-note">Search results are the starting point for human review.</p>
+        <div class="story-proof">
+          <p><strong>01</strong> Keep each organization separate.</p>
+          <p><strong>02</strong> Review criteria against original sources.</p>
+          <p><strong>03</strong> Keep hiring decisions with people.</p>
+        </div>
+        <p class="story-note">Trace the source. Keep the context. Make your own assessment.</p>
       </div>
 
       <div class="auth-card">
@@ -55,11 +65,11 @@
         <h2 id="auth-title">Sign in to your workspace</h2>
         <p id="auth-description" class="muted">Sign in to access your organizations and recruiting records.</p>
 
-        <form id="auth-form">
+        <form id="auth-form" aria-describedby="auth-session-note">
           <fieldset id="auth-fields">
             <label class="field">
               Email
-              <input id="auth-email" type="email" dir="ltr" autocomplete="username" maxlength="320" required>
+              <input id="auth-email" placeholder="you@company.com" type="email" dir="ltr" autocomplete="username" maxlength="320" required>
             </label>
 
             <label class="field">
@@ -72,13 +82,23 @@
         </form>
 
         <button id="auth-mode" class="button quiet full" type="button">New here? Create an account</button>
-        <p class="small muted">You will need to sign in again after refreshing, signing out, or closing this page.</p>
+        <p id="auth-session-note" class="small muted">Your sign-in stays in this page only. Refreshing or closing it requires a new sign-in.</p>
       </div>
     </section>
 
     <section id="shell" class="workspace-grid" hidden aria-label="Recruiting workspace">
       <aside class="sidebar">
-        <p class="eyebrow">Workspace</p>
+        <p class="eyebrow">YOUR WORKSPACE</p>
+        <nav class="sidebar-nav" aria-label="Workspace sections">
+          <a href="#candidates-panel" data-workspace-view="review" aria-current="page"><span class="nav-index" aria-hidden="true">01</span> Candidate review</a>
+          <a href="#profiles-panel" data-workspace-view="setup"><span class="nav-index" aria-hidden="true">02</span> Job setup</a>
+          <a href="#applications-panel" data-workspace-view="applications"><span class="nav-index" aria-hidden="true">03</span> Applications</a>
+          <a href="#access-panel" data-workspace-view="access"><span class="nav-index" aria-hidden="true">04</span> Members &amp; access</a>
+          <a href="#account-panel" data-workspace-view="account"><span class="nav-index" aria-hidden="true">05</span> Account security</a>
+        </nav>
+        <details id="context-switcher" class="context-switcher" open>
+          <summary>Organization &amp; job</summary>
+          <p class="small sidebar-hint">Choose the records you want to work with.</p>
 
         <fieldset id="organization-browser-fields" disabled>
         <label class="field">
@@ -168,14 +188,7 @@
           </form>
         </details>
 
-        <nav class="sidebar-nav" aria-label="Workspace sections">
-          <a href="#candidates-panel">Candidates</a>
-          <a href="#profiles-panel">Criteria and search</a>
-          <a href="#applications-panel">Applications</a>
-          <a href="#candidate-panel">Candidate and evidence</a>
-          <a href="#access-panel">Members and access</a>
-          <a href="#account-panel">Account security and sessions</a>
-        </nav>
+        </details>
 
         <p class="sidebar-note">All records on this page belong to the selected organization.</p>
       </aside>
@@ -183,31 +196,39 @@
       <div class="workspace-main">
         <div class="workspace-heading">
           <div>
-            <p class="eyebrow">Evidence workspace</p>
+            <p class="eyebrow" id="workspace-view-label">CANDIDATE REVIEW</p>
             <h1 id="organization-heading">Workspace</h1>
           </div>
 
-          <button id="workspace-refresh" class="button secondary" type="button">Refresh lists</button>
+          <div class="heading-actions">
+            <button id="context-open" class="button quiet" type="button">Choose context</button>
+            <button id="workspace-refresh" class="button secondary" type="button">Refresh lists</button>
+          </div>
         </div>
 
+        <p id="selection-context" class="selection-context" role="status" aria-live="polite">Choose an organization and job to begin.</p>
+        <div id="workspace-start" class="start-card">
+          <span class="start-number" aria-hidden="true">01</span>
+          <div><h2>Start with your organization</h2><p>Choose or create an organization in the context menu. Then add a job and the candidates you want to review.</p></div>
+        </div>
         <div class="metrics">
           <article>
-            <span>Matching jobs</span>
+            <span>Jobs in this result</span>
             <strong id="jobs-count">—</strong>
           </article>
 
           <article>
-            <span>Matching candidates</span>
+            <span>Candidates in this result</span>
             <strong id="candidates-count">—</strong>
           </article>
 
-          <article class="metric-note">Each piece of evidence includes the original text and its source.</article>
+          <article class="metric-note"><span class="evidence-symbol" aria-hidden="true">↗</span><span>Evidence stays connected to its original source.<small>Review the context before making a decision.</small></span></article>
         </div>
 
-        <section id="profiles-panel" class="panel" aria-labelledby="profiles-title">
+        <section id="profiles-panel" class="panel" data-view-panel="setup" tabindex="-1" aria-labelledby="profiles-title">
           <div class="panel-title">
-            <h2 id="profiles-title">Job, criteria, and search</h2>
-            <span class="badge">Saved profile</span>
+            <h2 id="profiles-title">Define the role. Set the criteria.</h2>
+            <span class="badge">Job configuration</span>
           </div>
 
           <div id="job-description-view"></div>
@@ -262,7 +283,7 @@
           </details>
         </section>
 
-        <section id="applications-panel" class="panel" aria-labelledby="applications-title">
+        <section id="applications-panel" class="panel" data-view-panel="applications" tabindex="-1" aria-labelledby="applications-title">
           <div class="panel-title"><h2 id="applications-title">Applications for the current job</h2></div>
           <fieldset id="application-fields" disabled>
             <p id="application-context" class="summary-note"></p>
@@ -294,8 +315,8 @@
           </fieldset>
         </section>
 
-        <div class="review-grid">
-          <section id="candidates-panel" class="panel" aria-labelledby="candidates-title">
+        <div class="review-grid" data-view-panel="review">
+          <section id="candidates-panel" class="panel" tabindex="-1" aria-labelledby="candidates-title">
             <div class="panel-title">
               <h2 id="candidates-title">Candidates</h2>
               <span id="candidate-list-count" class="small muted"></span>
@@ -304,7 +325,7 @@
             <fieldset id="candidate-browser-fields" disabled>
             <form id="candidate-search-form" class="record-search" aria-label="Search candidates">
               <label class="field">Name, email, headline, or location
-                <input id="candidate-filter" type="search" maxlength="120">
+                <input id="candidate-filter" type="search" placeholder="Search your candidates" maxlength="120">
               </label>
               <button class="button secondary" type="submit">Search</button>
             </form>
@@ -376,10 +397,10 @@
             </details>
           </section>
 
-          <section id="candidate-panel" class="panel dossier" aria-labelledby="candidate-title">
+          <section id="candidate-panel" class="panel dossier" tabindex="-1" aria-labelledby="candidate-title">
             <div class="panel-title">
-              <h2 id="candidate-title">Candidate and evidence</h2>
-              <span class="badge">Source-backed</span>
+              <h2 id="candidate-title">Candidate dossier</h2>
+              <span class="badge">Original source context</span>
             </div>
 
             <div id="candidate-heading"></div>
@@ -445,7 +466,7 @@
           </section>
         </div>
 
-        <section id="access-panel" class="panel" aria-labelledby="access-title">
+        <section id="access-panel" class="panel" data-view-panel="access" tabindex="-1" aria-labelledby="access-title">
           <div class="panel-title">
             <h2 id="access-title">Organization members and access</h2>
             <button id="access-refresh" class="button secondary" type="button" disabled>Refresh access</button>
@@ -482,7 +503,7 @@
           <p id="access-page-info" class="small muted" role="status" aria-live="polite"></p>
         </section>
 
-        <section id="account-panel" class="panel" aria-labelledby="account-title">
+        <section id="account-panel" class="panel" data-view-panel="account" tabindex="-1" aria-labelledby="account-title">
           <div class="panel-title"><h2 id="account-title">Account security and sessions</h2></div>
           <p id="session-expiry" class="small muted"></p>
           <p class="small muted">Signing out revokes this page's server session. Refreshing or closing the page stores no credentials; the previous session remains listed until expiry or revocation.</p>
@@ -520,7 +541,21 @@
       </div>
     </section>
 
-    <dialog id="confirm-dialog" class="confirmation" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <dialog id="help-dialog" class="confirmation help-dialog" aria-labelledby="help-title" aria-describedby="help-description">
+    <p class="eyebrow">WORKSPACE GUIDE</p>
+    <h2 id="help-title">A focused path from role to evidence</h2>
+    <p id="help-description">Choose your organization and job first. Each section keeps that working context.</p>
+    <ol class="guide-steps">
+      <li><strong>Set up the job.</strong> Save a retrieval query and the criteria you want to examine.</li>
+      <li><strong>Review candidates.</strong> Add resumes, check processing status, and inspect original source text.</li>
+      <li><strong>Manage applications.</strong> Track explicit status changes for the current job.</li>
+    </ol>
+    <p class="summary-note">Semantic retrieval and grounded briefs depend on the server's enabled local-model features. Search scores are not hiring probabilities.</p>
+    <p class="small muted">Use Tab and Shift+Tab to move between controls, Enter to follow a section link, and Escape to close a dialog. Moving between sections keeps the current selection.</p>
+    <form method="dialog"><button id="help-close" class="button primary" type="submit">Got it</button></form>
+  </dialog>
+
+  <dialog id="confirm-dialog" class="confirmation" aria-labelledby="confirm-title" aria-describedby="confirm-message">
       <form id="confirm-form">
         <h2 id="confirm-title"></h2>
         <p id="confirm-message"></p>

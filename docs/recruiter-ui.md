@@ -1,47 +1,57 @@
 # Recruiter workspace
 
-`/workspace/` is an English, left-to-right workspace using local HTML/CSS and native ES modules. Token and application
-state stay in memory. Reload/logout requires login. There is no browser
-storage, cookie, service worker, CDN or npm build step.
+The public shell is served at `/workspace/`; private records require a tracked
+bearer session and server-side organization authorization. HTML, CSS, and native
+ES modules are served locally with no-store and a restrictive CSP. There is no
+frontend build, CDN, cookie authentication, persistent browser token storage,
+service worker, or third-party telemetry.
 
-The workspace covers organizations/jobs, candidates, saved search/match
-profiles, applications and transitions, private PDFs, extraction/chunking,
-embedding controls, lexical/semantic/hybrid retrieval and grounded evidence.
+## Working context
 
-Organization, job, candidate and application lists now use bounded server
-pages. Search applies to the whole authorized collection. Current selections
-stay pinned when pages or filters change. Count labels refer to the current
-search. Empty, loading and failed states are explicit.
+Choose an organization and job from the context menu. The sidebar has five
+sections: Candidate review, Job setup, Applications, Members and access, and
+Account security. On narrow screens the context menu starts collapsed and
+navigation wraps into touch-sized rows. Native links remain useful if the
+design enhancement fails; record and request ownership lives in app.mjs.
 
-Editing uses full replacement with the exact server `updated_at` version.
-Blank optional candidate fields clear their old values. Conflicts preserve the
-local draft until the user reads the new version or changes selection. Form
-copy explains that those actions replace unsaved input.
+Section changes show the relevant panel and move keyboard focus to it. They do
+not clear selected records or drafts. Opening a candidate from Applications
+moves to the candidate dossier after the real controller updates the heading.
+Organization/job changes retain the existing cancellation, authorization,
+source invalidation, and confirmation-closing contracts. Browser back/forward
+is not used as a private record history.
 
-Application choices come from the existing server state machine. A recruiter
-selects a target and confirms it. Final states offer no further transitions.
-PDF deletion requires its exact filename in a native confirmation dialog.
-Context changes close the dialog and invalidate old request ownership.
+## Recruiting and evidence
 
-Document controls request extraction/chunking/embedding explicitly. Embedding
-status is refreshed with a read; retry is an explicit action. The client neither
-downloads models nor changes feature flags. A disabled service has a safe English
-error, with no automatic retry or search fallback.
+Lists use server pagination and literal search. Metrics report the current
+filtered result totals. They do not count unseen records locally. Job/candidate
+edits submit the exact loaded updated_at value and preserve the draft on a
+conflict. Loading a newer version or switching records replaces that draft.
 
-Feedback remains visible while the workspace scrolls. Success expires after
-eight seconds and pauses on hover/focus; errors persist and use an assertive
-alert. Server response text is not echoed. Text rendering uses safe DOM APIs.
-Exact source identity, hashes and Unicode code-point offsets remain checked;
-complete assigned quotes support the v2 maximum of 4000 code points.
+Application transitions are explicit and confirmed. PDF deletion requires the
+exact filename. Extraction and embedding actions retain bounded progress and
+explicit refresh. Local-model features can be disabled by server configuration;
+the interface does not silently switch providers or reinterpret search scores
+as hiring probabilities. Source text is rendered as text nodes, including
+Unicode offsets, original context, qualifications, and provenance.
 
-Late responses cannot replace a different selection. Cancellation does not
-undo an accepted write or stop a server model thread; refresh before repeating
-an uncertain mutation. See [recruiting-workflow.md](recruiting-workflow.md).
+## Focus, feedback, and sessions
 
-Completion stages 1-3 have native acceptance receipts. Stage 4 acceptance is
-pending after the English copy and Docker packaging correction. Node controller tests use a DOM fixture; the expanded
-HTTP smoke exercises real authenticated APIs and SQL. Neither is a complete
-browser automation suite. Final English design and broad viewport/keyboard browser QA remain stage 5.
-The shell declares lang=en and dir=ltr; dates use en-US. Grounded briefs are
-requested explicitly in English. Source text retains its original language and
-uses automatic direction only within source/user-data elements.
+A skip link reaches main content. Each input has a label; sections and dialogs
+have accessible names. Navigation marks exactly one current section. Focus is
+visible, dialogs use native modality, and Escape cancels confirmations. The
+workspace guide restores focus to a visible connected trigger. Private focus
+is moved back to sign-in when the shell becomes hidden.
+
+Status and error notifications keep their existing polite/assertive live
+regions. Unknown server text is not echoed. Native disabled controls remain
+disabled for permissions and pending requests; disabled is not presented as
+proof that a request is running. Keyboard navigation and reduced-motion/forced-
+colors styles complement responsive layouts; they do not establish a formal
+accessibility certification.
+
+Signing out clears page state and requests revocation. Closing/reloading clears
+page credentials but does not itself revoke the old tracked server session.
+Cancellation stops waiting UI ownership, not an already accepted write or a
+running model thread. Comprehensive real-stack and browser evidence have
+separate acceptance gates; see product-design.md.

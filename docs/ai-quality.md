@@ -107,5 +107,17 @@ After native/CI/live checks and owned cleanup pass, acceptance rebuilds the norm
 API/smoke images and verifies the English HTTP workspace. Finalization creates
 two local commits, a hash-checked source ZIP, and English recovery receipts.
 It updates the complete recovery file when present. There is no push/deployment.
-Native acceptance of this corrected source is pending. Three stages remain
-after it passes: final product design, release acceptance, and hiring portfolio.
+Native acceptance passed on 2026-10-20, with feature commit
+`9f99e7ccee33d5732cef70cec7e318c113901784` and main/test commit
+`160fc05fe506caf47da0dcdbca525a0e5df93de5`. The supplied console receipt records
+quality_status=passed and source SHA-256
+`f7daab229e669d61715b452870f2a0a2c2872f5beafb9166f002f79dc0901c8c`.
+The saved live report SHA-256 is
+`15c0387c6a17deba739d6a8173c3277ed701e70ceb1c5548b6ae5682ab3a7137`.
+Its detailed metrics were not independently re-opened during stage 5 design.
+
+The stage 4 manifest and driver remain historical gates. Stage 5 deliberately
+changes workspace files, so its delivery uses design_stage5_manifest.json and
+design_acceptance.py. The stage 4 loader still rejects changed historical hashes;
+regression tests exercise its integrity contract with an explicit test fixture.
+No production hash checks or live quality thresholds are bypassed.

@@ -2,65 +2,60 @@
 
 A private recruiting workspace built with FastAPI, PostgreSQL/pgvector, and local
 Ollama models. Manage jobs, candidates, applications, and private PDFs, then
-review criterion evidence with exact source text, Unicode offsets, and hashes.
-Recruiters retain responsibility for hiring decisions.
+review criterion evidence against original source text, Unicode offsets, and
+hashes. Recruiters retain responsibility for hiring decisions.
 
 ## Capabilities
 
-- Organization-scoped records and database-enforced tenant relationships.
+- Organization-scoped records with database-enforced tenant relationships.
 - Owner, recruiter, and viewer roles with revocable server-side sessions.
 - One-use, email-bound invitations and current-password confirmations.
-- Searchable lists, version-checked edits, and explicit application transitions.
-- Private PDF storage, leased extraction workers, and immutable source chunks.
+- Server-paged lists, version-checked edits, and explicit application transitions.
+- Private PDFs, leased extraction workers, and immutable source chunks.
 - Optional local semantic retrieval, hybrid ranking, and grounded evidence briefs.
-- Source-bound citations, independent quality evaluation, and retained recovery tools.
+- Independent AI quality checks and retained backup/isolated restore tools.
+- Five focused workspace sections, responsive layouts, and keyboard navigation.
 
-The workspace, product messages, documentation, and generated operator receipts
-use English. The workspace uses left-to-right layout and Gregorian dates.
-Resume content remains Unicode-capable and is displayed without translation.
-Grounded briefs default to English; the explicit legacy API language option is
-preserved for compatibility. Multilingual test fixtures are evaluation data.
+The product, documentation, comments, and new operational receipts use English.
+The workspace is left-to-right. Resume content remains Unicode-capable and is
+not translated. Credentials remain in page memory only.
 
-## Current checkpoint
+## Checkpoint and design delivery
 
-The latest accepted main commit is
-`261dd607b740a8d91d0bafabe2cb268c276c1c75` (completion stage 3).
-The database head is `0017_access_sessions`.
+The accepted stage 4 main is `160fc05fe506caf47da0dcdbca525a0e5df93de5`.
+Its native acceptance log records isolated CI, recovery, live local-model
+quality, normal workspace refresh, and cleanup. Schema remains
+`0017_access_sessions`. A source ZIP is not a database or document backup.
 
-Stage 4 adds broader AI quality evaluation and English workspace copy. Its
-first native attempt passed Ruff, 1,879 Windows Python tests with five known
-platform skips, and 70 Node tests. Docker then reported three failures because
-its test image omitted source files required by acceptance checks. The test
-image now includes those inputs and has a regression test reproducing the
-three reported checks. Native Docker and live-model acceptance remain pending.
+Stage 5 builds on this checkpoint. Its source delivery is separate from native
+acceptance: only a successful stage 5 receipt with matching source/report hashes
+establishes acceptance. See [product design](docs/product-design.md).
 
-## Development
+## Development and verification
 
-See [development](docs/development.md) for initial setup. The workspace is served
-by the API at `/workspace/`. Keep the existing checkout and Git history.
+The API serves the workspace at `/workspace/`. Keep the existing checkout,
+private environment, Git history, database, and locked dependencies.
 
 ```powershell
 uv sync --locked --no-install-project
 uv run --locked --no-sync ruff check .
 uv run --locked --no-sync pytest -rs -W error
-node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs tests/recruiter_api_errors.test.mjs tests/recruiter_workflow.test.mjs
+node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs tests/recruiter_api_errors.test.mjs tests/recruiter_workflow.test.mjs tests/recruiter_design.test.mjs
+uv run --locked --no-sync python -m scripts.design_acceptance
+uv run --locked --no-sync python -m scripts.design_acceptance --execute --finalize
 ```
 
-Stage 4 acceptance verifies its cumulative source manifest, native checks,
-isolated CI, live local models, cleanup, and the normal English workspace.
-Without `--execute`, it prints a plan only.
+Native design acceptance also requires an installed Chrome or Edge and Node 24.
+The browser runner uses an isolated temporary profile and synthetic transport;
+it does not open an existing browser profile or connect to the normal database.
+Set `AGENTHIRE_BROWSER_BINARY` to an installed Chromium executable if automatic
+location fails. No npm install or frontend build is required.
 
-```powershell
-uv run --locked --no-sync python -m scripts.ai_quality_acceptance
-uv run --locked --no-sync python -m scripts.ai_quality_acceptance --execute --finalize
-```
-
-Execution requires the accepted stage 3 main history, schema 0017, a healthy
-normal stack, and `AgentHire_OS_Recovery_Current.md` beside the repository.
-After all gates pass, it rebuilds the normal API/smoke images, checks the English
-HTTP shell, creates two scoped local commits, exports source, and appends a
-receipt. It also updates `AgentHire_OS_Recovery_Complete.md` when that file exists.
-It does not push or deploy to an external host.
+The stage 4 acceptance driver remains bound to its historical delivery hashes.
+Use the stage 5 driver for this source. Its finalization runs native regression,
+real-stack CI, browser checks, normal English HTTP smoke, and health checks
+before creating two scoped commits, a source ZIP, and outside-Git receipts.
+Nothing is pushed or deployed externally.
 
 ## AI quality and operations
 
@@ -70,21 +65,18 @@ uv run --locked --no-sync python -m scripts.ai_quality_run --execute
 uv run --locked --no-sync python -m scripts.source_bundle --execute
 ```
 
-The quality runner owns a fresh isolated Compose project, publishes no host
-ports, downloads the existing free local model tags into its own volume, and
-removes only its resources. Normal model volumes and feature flags are retained.
-The quality report remains outside Git even when evaluation fails.
-
-A source ZIP excludes private configuration, PDFs, database contents, and Git
-history. It is not a data backup. The retained stage 3 pre-migration backup uses
-schema 0016 and must be restored with the accepted stage 2 source in an isolated
-recovery checkout. Current backup/restore tooling expects schema 0017.
+Quality execution owns a generated isolated Compose project and removes only
+its resources. Normal model flags remain false by default. Design work does not
+change model tags, inference settings, migrations, or dependency pins.
+The pre-stage-3 schema 0016 backup requires accepted stage 2 source for an
+isolated restore; current tools expect schema 0017.
 
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Recruiting workflow](docs/recruiting-workflow.md)
-- [Recruiter workspace](docs/recruiter-ui.md)
+- [Workspace behavior](docs/recruiter-ui.md)
+- [Product design and acceptance](docs/product-design.md)
 - [Semantic retrieval](docs/semantic.md)
 - [Grounded briefs](docs/explanations.md)
 - [AI quality](docs/ai-quality.md)

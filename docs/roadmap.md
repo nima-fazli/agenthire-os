@@ -2,7 +2,7 @@
 
 Observed source, Git history, and execution receipts take precedence over older
 notes. The latest accepted main base is
-`261dd607b740a8d91d0bafabe2cb268c276c1c75`. Personal recovery files stay outside Git.
+`160fc05fe506caf47da0dcdbca525a0e5df93de5` (completion stage 4). Personal recovery files stay outside Git.
 
 ## Accepted history
 
@@ -19,12 +19,13 @@ notes. The latest accepted main base is
 | Completion stage 1 | 8e4d7fa / 3b58176 |
 | Completion stage 2 | ea1c46a / 1865a7b |
 | Completion stage 3 | f680e83 / 261dd60 |
+| Completion stage 4 | 9f99e7c / 160fc05 |
 
 Stage 3 native acceptance passed 1,806 Windows Python tests with five known
 platform skips, 1,811 Docker Python tests, 70 native Node tests, Ruff, 33 CI steps
 plus cleanup, the normal recruiting/access workflow, migration 0017, and health
 checks for the API and two extraction workers. Its reported source ZIP contains
-389 files; that ZIP has not been independently inspected in this session.
+389 files; the supplied archive and all manifest hashes have been verified.
 
 ## Seven-stage completion plan
 
@@ -33,18 +34,20 @@ checks for the API and two extraction workers. Its reported source ZIP contains
 | 1 Stabilization | Accepted: citation context, regression/error gates, source distribution, recovery |
 | 2 Recruiting workflow | Accepted: server pages/search, versioned editing, applications/transitions, confirmed PDF deletion, embeddings, stale-context controls |
 | 3 Access and sessions | Accepted: owner/recruiter/viewer roles, invitations, current-password confirmations, last-owner protection, revocable sessions, backed-up migration |
-| 4 AI quality | Corrected source ready for verification: diverse reference, independent scoring, adversarial/negative cases, isolated live evaluation, English product copy, complete Docker test inputs; native acceptance pending |
-| 5 Final product design | Remaining: polished English LTR experience, responsive layouts, accessibility, comprehensive real-browser and keyboard QA |
+| 4 AI quality | Accepted: independent quality protocol, isolated live evaluation, restore correction, English copy, normal stack checks and cleanup |
+| 5 Final product design | Current source delivery: focused English sections, responsive layouts, accessible navigation, synthetic Chromium checks and a separate native acceptance driver |
 | 6 Release acceptance | Remaining: hosted CI, HTTPS, deployment, load evidence, repeatable installation/migration/recovery |
 | 7 Hiring portfolio | Remaining: usable demo, synthetic data, short video, clear architecture and engineering tradeoffs |
 
-Four stages remain including stage 4; three remain after native stage 4 acceptance.
+Three stages remain including stage 5. After native design acceptance, two remain.
 
-The first stage 4 native attempt passed Ruff, 1,879 Windows Python tests with
-five known skips, and 70 Node tests. Docker stopped with 1,881 passed and three
-packaging failures. Cleanup succeeded; no stage 4 acceptance or commits were
-recorded. Correcting the missing test-image inputs does not itself certify live
-model quality. The full native gate must be rerun.
+Stage 4 native acceptance is recorded in the supplied 2026-10-20 console log:
+34 isolated CI checks and cleanup passed, both recovery gates passed, live
+quality passed, the normal English workspace was refreshed, and main was clean.
+The 412-file source archive SHA-256 is
+`f7daab229e669d61715b452870f2a0a2c2872f5beafb9166f002f79dc0901c8c`.
+Stage 5 has not acquired native acceptance merely by adding source or tests.
+See product-design.md for its evidence boundaries and exact verification flow.
 
 Project copy, documentation, comments, and generated operational receipts use
 English. Conversational implementation guidance for the owner is Persian.

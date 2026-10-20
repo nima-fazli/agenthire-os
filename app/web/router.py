@@ -12,7 +12,7 @@ ASSETS = {
         "app", "api", "session", "requests", "dom", "workspace",
         "profiles", "candidates", "evidence", "notifications",
         "paging", "confirmation", "editors", "applications", "documents",
-        "access",
+        "access", "design",
     )},
 }
 UI_HEADERS = {
