@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 from scripts import ci_verify
-from scripts.ci_plan import OPERATIONS_FILES, SMOKE_MODULES, UI_ASSETS
+from scripts.ci_plan import CLIENT_TESTS, OPERATIONS_FILES, SMOKE_MODULES, UI_ASSETS
 
 PROJECT = "agenthire-ci-" + "b" * 32
 
@@ -25,8 +25,7 @@ def complete_checkout(tmp_path, monkeypatch):
         *OPERATIONS_FILES,
         ".github/workflows/verify.yml",
         ".github/dependabot.yml",
-        "tests/recruiter_ui.test.mjs",
-        "tests/recruiter_notifications.test.mjs",
+        *CLIENT_TESTS,
         *(f"scripts/{name}.py" for name in SMOKE_MODULES),
     ):
         path = tmp_path / name

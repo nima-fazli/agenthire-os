@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 
 from scripts.ci_plan import repository_root
-from scripts.design_contract import BASE, load_manifest
+from scripts.release_contract import BASE, load_manifest
 
 
 def copy_test_context(root, destination):
@@ -52,8 +52,8 @@ def test_test_image_inputs_include_all_acceptance_sources(context):
 
 def test_missing_design_module_is_a_packaging_failure(context):
     (context / "app/web/assets/design.mjs").unlink()
-    with pytest.raises(ValueError, match="missing_or_unsafe_design_source"):
-        load_manifest(context)
+    with pytest.raises(ValueError, match="complete"):
+        repository_root(context)
 
 
 def test_the_three_reported_docker_failures_pass_with_test_copy_inputs(context):

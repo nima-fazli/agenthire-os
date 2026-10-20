@@ -7,7 +7,11 @@ from uuid import uuid4
 
 UI_ASSETS = tuple(f"app/web/assets/{name}" for name in (
     "index.html", "styles.css", "app.mjs", "api.mjs", "dom.mjs", "session.mjs",
-    "requests.mjs", "workspace.mjs", "profiles.mjs", "candidates.mjs", "evidence.mjs", "notifications.mjs",
+    "requests.mjs", "workspace.mjs", "profiles.mjs", "candidates.mjs", "evidence.mjs", "notifications.mjs", "design.mjs",
+))
+
+CLIENT_TESTS = tuple(f"tests/{name}.test.mjs" for name in (
+    "recruiter_ui", "recruiter_notifications", "recruiter_api_errors", "recruiter_workflow", "recruiter_design",
 ))
 
 OPERATIONS_FILES = (
@@ -68,8 +72,7 @@ def repository_root(path: Path) -> Path:
         *OPERATIONS_FILES,
         ".github/workflows/verify.yml",
         ".github/dependabot.yml",
-        "tests/recruiter_ui.test.mjs",
-        "tests/recruiter_notifications.test.mjs",
+        *CLIENT_TESTS,
         *(f"scripts/{name}.py" for name in SMOKE_MODULES),
     )
     if not all((root / name).is_file() for name in required):
@@ -125,6 +128,8 @@ def verification_plan(prefix: tuple[str, ...]) -> tuple[Step, ...]:
                 "test",
                 "pytest",
                 "-rs",
+                "-W",
+                "error",
             ),
         ),
         Step(
@@ -143,7 +148,7 @@ def verification_plan(prefix: tuple[str, ...]) -> tuple[Step, ...]:
         ),
         Step(
             "docker-ui-tests",
-            prefix + ("--profile", "test", "run", "--rm", "test", "node", "--test", "tests/recruiter_ui.test.mjs", "tests/recruiter_notifications.test.mjs"),
+            prefix + ("--profile", "test", "run", "--rm", "test", "node", "--test", *CLIENT_TESTS),
         ),
         Step(
             "runtime-images",

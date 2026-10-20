@@ -20,16 +20,17 @@ The product, documentation, comments, and new operational receipts use English.
 The workspace is left-to-right. Resume content remains Unicode-capable and is
 not translated. Credentials remain in page memory only.
 
-## Checkpoint and design delivery
+## Checkpoint and release readiness
 
-The accepted stage 4 main is `160fc05fe506caf47da0dcdbca525a0e5df93de5`.
-Its native acceptance log records isolated CI, recovery, live local-model
-quality, normal workspace refresh, and cleanup. Schema remains
-`0017_access_sessions`. A source ZIP is not a database or document backup.
+The accepted stage 5 main is `c22791a48278450905e3361557d37ca06bd53816`.
+Native design acceptance passed regression, isolated CI, both recovery gates,
+22 Chromium checks, normal workspace refresh, and cleanup. Stage 4 separately
+accepted live local-model quality. Schema remains `0017_access_sessions`.
+A source ZIP is not a database or document backup.
 
-Stage 5 builds on this checkpoint. Its source delivery is separate from native
-acceptance: only a successful stage 5 receipt with matching source/report hashes
-establishes acceptance. See [product design](docs/product-design.md).
+Stage 6 currently prepares local release verification and hosted CI. No domain
+or hosting server is provisioned. Local results cannot establish hosted HTTPS,
+deployment, or production capacity. See [release acceptance](docs/release-acceptance.md).
 
 ## Development and verification
 
@@ -41,8 +42,8 @@ uv sync --locked --no-install-project
 uv run --locked --no-sync ruff check .
 uv run --locked --no-sync pytest -rs -W error
 node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs tests/recruiter_api_errors.test.mjs tests/recruiter_workflow.test.mjs tests/recruiter_design.test.mjs
-uv run --locked --no-sync python -m scripts.design_acceptance
-uv run --locked --no-sync python -m scripts.design_acceptance --execute --finalize
+uv run --locked --no-sync python -m scripts.release_acceptance
+uv run --locked --no-sync python -m scripts.release_acceptance --execute
 ```
 
 Native design acceptance also requires an installed Chrome or Edge and Node 24.
@@ -51,11 +52,12 @@ it does not open an existing browser profile or connect to the normal database.
 Set `AGENTHIRE_BROWSER_BINARY` to an installed Chromium executable if automatic
 location fails. No npm install or frontend build is required.
 
-The stage 4 acceptance driver remains bound to its historical delivery hashes.
-Use the stage 5 driver for this source. Its finalization runs native regression,
-real-stack CI, browser checks, normal English HTTP smoke, and health checks
-before creating two scoped commits, a source ZIP, and outside-Git receipts.
-Nothing is pushed or deployed externally.
+Earlier acceptance drivers remain bound to their historical delivery hashes.
+Use the stage 6 local driver for this source. It verifies the complete source,
+native regression, isolated real-stack CI/recovery, browser checks, normal
+English HTTP smoke, bounded workload/resources, and health before/after.
+It writes outside-Git reports and never commits, pushes, deploys, or marks the
+hosted release accepted. The API refresh briefly restarts the local API.
 
 ## AI quality and operations
 
@@ -77,6 +79,7 @@ isolated restore; current tools expect schema 0017.
 - [Recruiting workflow](docs/recruiting-workflow.md)
 - [Workspace behavior](docs/recruiter-ui.md)
 - [Product design and acceptance](docs/product-design.md)
+- [Release readiness and hosted acceptance](docs/release-acceptance.md)
 - [Semantic retrieval](docs/semantic.md)
 - [Grounded briefs](docs/explanations.md)
 - [AI quality](docs/ai-quality.md)

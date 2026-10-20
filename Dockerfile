@@ -80,7 +80,7 @@ FROM foundation AS test
 COPY --from=ui-test-runtime /usr/local/bin/node /usr/local/bin/node
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends poppler-utils util-linux libstdc++6 libatomic1 \
+    && apt-get install -y --no-install-recommends git poppler-utils util-linux libstdc++6 libatomic1 \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTEST_ADDOPTS="-p no:cacheprovider" \

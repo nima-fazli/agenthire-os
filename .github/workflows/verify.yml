@@ -34,12 +34,44 @@ jobs:
           enable-cache: false
       - run: uv sync --locked --no-install-project
       - run: uv run --locked --no-sync ruff check .
-      - run: uv run --locked --no-sync pytest -rs
+      - run: uv run --locked --no-sync pytest -rs -W error
       - run: uv run --locked --no-sync python -m scripts.retrieval_evaluation --example
+      - run: uv run --locked --no-sync python -m scripts.release_acceptance
+
+  client:
+    name: Client (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2025]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: "24"
+          package-manager-cache: false
+      - run: node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs tests/recruiter_api_errors.test.mjs tests/recruiter_workflow.test.mjs tests/recruiter_design.test.mjs
+      - name: Verify synthetic workspace in Chrome
+        if: runner.os == 'Linux'
+        env:
+          AGENTHIRE_BROWSER_BINARY: /usr/bin/google-chrome
+        run: node scripts/design_browser.mjs --report reports/browser.json
+      - name: Retain browser evidence
+        if: always() && runner.os == 'Linux'
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6.0.0
+        with:
+          name: browser-${{ github.sha }}-${{ github.run_attempt }}
+          path: reports/browser.json
+          retention-days: 14
+          if-no-files-found: error
 
   real-stack:
     name: Docker / PostgreSQL / quality
-    needs: unit
+    needs: [unit, client]
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:

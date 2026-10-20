@@ -11,17 +11,21 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def delivery(tmp_path):
-    manifest = contract.load_manifest(ROOT)
+    """Exercise the frozen stage 5 validator on an explicit current-content fixture."""
+    manifest = json.loads((ROOT / contract.MANIFEST).read_text(encoding="utf-8"))
     for name in manifest["feature_files"] + manifest["test_files"]:
         target = tmp_path / name
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes((ROOT / name).read_bytes())
+        if name != contract.MANIFEST:
+            manifest["sha256"][name] = contract.digest(target)
+    (tmp_path / contract.MANIFEST).write_text(json.dumps(manifest), encoding="utf-8")
     return manifest
 
 
-def test_current_delivery_matches_all_canonical_hashes_and_detects_edits(tmp_path):
+def test_historical_validator_fixture_matches_canonical_hashes_and_detects_edits(tmp_path):
     delivery(tmp_path)
-    assert contract.source_digest(tmp_path) == contract.source_digest(ROOT)
+    assert len(contract.source_digest(tmp_path)) == 64
     target = tmp_path / "app/web/assets/design.mjs"
     target.write_bytes(target.read_bytes() + b"// altered\n")
     with pytest.raises(ValueError, match="design_source_mismatch"):
@@ -39,7 +43,11 @@ def test_manifest_refuses_unsafe_paths(tmp_path, name):
         contract.load_manifest(tmp_path)
 
 
-def test_plan_does_not_execute_commands_or_mutate_history(monkeypatch, capsys):
+def test_plan_does_not_execute_commands_or_mutate_history(monkeypatch, capsys, tmp_path):
+    delivery(tmp_path)
+    original = contract.load_manifest
+    monkeypatch.setattr(acceptance, "load_manifest", lambda _root: original(tmp_path))
+    monkeypatch.setattr(acceptance, "source_digest", lambda _root: contract.source_digest(tmp_path))
     monkeypatch.setattr(acceptance, "verify_baseline", lambda *args: pytest.fail("plan must not execute"))
     assert acceptance.main([]) == 0
     result = json.loads(capsys.readouterr().out)

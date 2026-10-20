@@ -4,6 +4,7 @@ from pathlib import Path
 import pytest
 
 from scripts.ci_plan import (
+    CLIENT_TESTS,
     OPERATIONS_FILES,
     SMOKE_MODULES,
     UI_ASSETS,
@@ -33,8 +34,7 @@ def make_checkout(root):
         *OPERATIONS_FILES,
         ".github/workflows/verify.yml",
         ".github/dependabot.yml",
-        "tests/recruiter_ui.test.mjs",
-        "tests/recruiter_notifications.test.mjs",
+        *CLIENT_TESTS,
         *(f"scripts/{name}.py" for name in SMOKE_MODULES),
     ):
         path = root / name
@@ -105,7 +105,7 @@ def test_commands_keep_spaces_as_single_arguments(tmp_path):
     assert len(steps) == 15 + len(SMOKE_MODULES)
     assert SMOKE_MODULES[-4:] == ("recruiter_ui_smoke", "operations_smoke", "operations_failure_smoke", "workload_smoke")
     ui = next(step for step in steps if step.name == "docker-ui-tests")
-    assert ui.command[-4:] == ("node", "--test", "tests/recruiter_ui.test.mjs", "tests/recruiter_notifications.test.mjs")
+    assert ui.command[-(len(CLIENT_TESTS) + 2):] == ("node", "--test", *CLIENT_TESTS)
     for step in (*steps, cleanup_step(prefix)):
         if step.name in {"recovery-drill", "retained-backup-gate"}:
             module, timeout = ("recovery_drill", 2400) if step.name == "recovery-drill" else ("backup_smoke", 3000)
