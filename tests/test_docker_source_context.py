@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from scripts.ai_quality_acceptance import load_manifest
 from scripts.ci_plan import repository_root
+from scripts.design_contract import BASE, load_manifest
 
 
 def copy_test_context(root, destination):
@@ -46,13 +46,13 @@ def context(tmp_path):
 
 def test_test_image_inputs_include_all_acceptance_sources(context):
     assert repository_root(context) == context
-    assert load_manifest(context)["base_commit"] == "261dd607b740a8d91d0bafabe2cb268c276c1c75"
+    assert load_manifest(context)["base_commit"] == BASE
     assert not (context / ".env").exists() and not (context / ".git").exists()
 
 
-def test_missing_readme_is_a_packaging_failure_not_a_skipped_check(context):
-    (context / "README.md").unlink()
-    with pytest.raises(ValueError, match="missing_quality_source: README.md"):
+def test_missing_design_module_is_a_packaging_failure(context):
+    (context / "app/web/assets/design.mjs").unlink()
+    with pytest.raises(ValueError, match="missing_or_unsafe_design_source"):
         load_manifest(context)
 
 

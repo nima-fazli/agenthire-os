@@ -1,0 +1,43 @@
+{
+  "version": "design-stage-5-v1",
+  "base_commit": "160fc05fe506caf47da0dcdbca525a0e5df93de5",
+  "feature_files": [
+    "README.md",
+    "app/web/assets/index.html",
+    "app/web/assets/styles.css",
+    "app/web/assets/design.mjs",
+    "app/web/router.py",
+    "docs/ai-quality.md",
+    "docs/recruiter-ui.md",
+    "docs/roadmap.md",
+    "docs/product-design.md",
+    "scripts/design_contract.py",
+    "scripts/design_browser.mjs",
+    "scripts/design_acceptance.py"
+  ],
+  "test_files": [
+    "scripts/fixtures/design_stage5_manifest.json",
+    "tests/recruiter_design.test.mjs",
+    "tests/test_design_stage5.py",
+    "tests/test_ai_quality_acceptance.py",
+    "tests/test_docker_source_context.py"
+  ],
+  "sha256": {
+    "README.md": "da9faeab3a59d600a8dd1ebcff9ddb893ad9fe28b529bb2e295fec3cf5b0209d",
+    "app/web/assets/design.mjs": "52bae5870e513b2b057ade70a00b2633b0bfc3f1f9cbff0a9a6d9534b191ffce",
+    "app/web/assets/index.html": "8a5e29514965c92d7f0ddffb04ac26b59ab1cebe9dabfb5a4e7aac9c143e2269",
+    "app/web/assets/styles.css": "97ceb65ef5c04c9809835e96edd88a36c4899a40fa21002a639ba2bcfc97c940",
+    "app/web/router.py": "d38f4098c4fcd71a5a1024327ff1369654ccbc676f7f4ee08a4a10687836bfe4",
+    "docs/ai-quality.md": "5183e7b1d6b6eba194223335e4c9abfd354a4211c5a028753def17063c88e24d",
+    "docs/product-design.md": "c66e8a29ae74dc6d1b3f3db41cb161772eac16d9d7e81a31eff912103bb74389",
+    "docs/recruiter-ui.md": "688a1993d6b32bf9a6e263cd6abe0021666b31a5aaf4baa74227721e198f534d",
+    "docs/roadmap.md": "eb806ffcc4a771ebbe44298d882cb8d2577b2af4f5a075dad78a396cf3ec5d34",
+    "scripts/design_acceptance.py": "955a8ab9ddad6d3687c9f110565bf54c32c5d9773bbfd78a32c25341c092821f",
+    "scripts/design_browser.mjs": "60181d85f3c9cfed892fdd95d2261da694c5bb7cb843c271e9fa2469aa7f4909",
+    "scripts/design_contract.py": "8ad8caf2abbac5188429a53579d8b7a54cc0f6528da883e7e98ee4cb6119f229",
+    "tests/recruiter_design.test.mjs": "3b8053997ca3d0d7370f9486ac5731ea0e3db084b9861da0f296470cdbb3157b",
+    "tests/test_ai_quality_acceptance.py": "6aa3caf6d04a90fafa5164050af2de41c9edfb10eb380128c0d18be3d5772a19",
+    "tests/test_design_stage5.py": "6f9bf6094e06a72aa504be183f4fb7216efaaf1863dca445dc2a7cee611857b8",
+    "tests/test_docker_source_context.py": "a78353cd64b130be3d6183139f6656710a04df40e72c158dbe17fba507f99370"
+  }
+}

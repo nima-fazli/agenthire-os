@@ -12,20 +12,31 @@ from scripts.source_bundle import checked_path
 from tests.test_ai_quality_metrics import report
 
 
-def test_delivered_manifest_is_complete_and_detects_modified_code(tmp_path):
+def stage4_fixture(tmp_path):
+    """Exercise the stage 4 gate on a self-contained fixture after later UI changes."""
     root = Path(__file__).resolve().parents[1]
-    manifest = module.load_manifest(root)
+    manifest = json.loads((root / module.MANIFEST).read_text(encoding="utf-8"))
     paths = manifest["feature_files"] + manifest["test_files"]
-    assert 20 <= len(paths) <= module.MAX_STAGE_FILES and len(set(paths)) == len(paths)
-    assert "compose.quality.yaml" in paths and checked_path("compose.quality.yaml")
     for name in paths:
         destination = tmp_path / name
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes((root / name).read_bytes())
-    changed = tmp_path / "scripts/ai_quality_metrics.py"
+        if name != module.MANIFEST:
+            manifest["sha256"][name] = digest(destination)
+    (tmp_path / module.MANIFEST).write_text(json.dumps(manifest), encoding="utf-8")
+    return tmp_path
+
+
+def test_delivered_manifest_is_complete_and_detects_modified_code(tmp_path):
+    root = stage4_fixture(tmp_path)
+    manifest = module.load_manifest(root)
+    paths = manifest["feature_files"] + manifest["test_files"]
+    assert 20 <= len(paths) <= module.MAX_STAGE_FILES and len(set(paths)) == len(paths)
+    assert "compose.quality.yaml" in paths and checked_path("compose.quality.yaml")
+    changed = root / "scripts/ai_quality_metrics.py"
     changed.write_bytes(changed.read_bytes() + b"# changed\n")
     with pytest.raises(ValueError, match="source_mismatch"):
-        module.load_manifest(tmp_path)
+        module.load_manifest(root)
 
 
 def test_manifest_canonical_hash_accepts_windows_newlines_and_bom(tmp_path):
@@ -60,7 +71,10 @@ def test_finalizer_requires_untampered_real_model_receipt(tmp_path, mutation):
             module.verify_saved_quality(root, saved)
 
 
-def test_acceptance_plan_has_no_mutation_or_commits(monkeypatch, capsys):
+def test_acceptance_plan_has_no_mutation_or_commits(monkeypatch, capsys, tmp_path):
+    fixture = stage4_fixture(tmp_path)
+    original = module.load_manifest
+    monkeypatch.setattr(module, "load_manifest", lambda _root: original(fixture))
     monkeypatch.setattr(module, "verify_baseline", lambda *args: pytest.fail("plan must not run"))
     monkeypatch.setattr(module, "live_gate", lambda *args: pytest.fail("plan must not run"))
     assert module.main([]) == 0
