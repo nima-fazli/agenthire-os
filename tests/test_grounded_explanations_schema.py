@@ -18,7 +18,7 @@ def test_explanations_are_opt_in_and_independent_of_embedding_activation(monkeyp
     monkeypatch.setenv("AGENTHIRE_EXPLANATIONS_ENABLED", "true")
     settings = Settings(_env_file=None, semantic_enabled=False)
     assert settings.explanations_enabled and not settings.semantic_enabled
-    assert ExplanationRequest().language == "fa"
+    assert ExplanationRequest().language == "en"
 
 
 @pytest.mark.parametrize("values", [{"chat_timeout_seconds": 4}, {"chat_timeout_seconds": 181},

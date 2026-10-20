@@ -16,7 +16,7 @@ def client():
 def test_public_shell_is_local_and_contains_no_private_data(client, path):
     response = client.get(path)
     assert response.status_code == 200
-    assert '<html lang="fa" dir="rtl">' in response.text
+    assert '<html lang="en" dir="ltr">' in response.text
     assert 'id="shell"' in response.text and 'id="auth-view"' in response.text
     assert '<script type="module" src="/workspace/assets/app.mjs">' in response.text
     assert "https://" not in response.text and "http://" not in response.text
@@ -77,6 +77,21 @@ def test_browser_module_graph_resolves_to_public_assets_only():
             assert "innerHTML" not in text and "insertAdjacentHTML" not in text
             assert "localStorage" not in text and "sessionStorage" not in text
             assert "serviceWorker" not in text
+
+
+def test_workspace_product_copy_and_dates_are_english():
+    for filename in ui.ASSETS:
+        text = (ui.ASSET_ROOT / filename).read_text(encoding="utf-8")
+        assert not re.search(r"[\u0600-\u06ff]", text), filename
+        assert "fa-IR" not in text
+    text = (ui.ASSET_ROOT / "evidence.mjs").read_text(encoding="utf-8")
+    assert 'data: { language: "en" }' in text
+
+
+def test_public_documentation_uses_english_copy():
+    root = ui.ASSET_ROOT.parents[2]
+    for path in (root / "README.md", *(root / "docs").glob("*.md")):
+        assert not re.search(r"[\u0600-\u06ff]", path.read_text(encoding="utf-8")), path.name
 
 
 @pytest.mark.parametrize("filename", ["api.mjs", "dom.mjs"])

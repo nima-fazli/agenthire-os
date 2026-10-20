@@ -11,6 +11,7 @@ from app.core.backup_store import BackupStore, read_json
 from app.core.recovery_archive import export_objects
 from scripts import backup_run as module
 from scripts import backup_smoke
+from scripts.recovery_postgres import CATALOG_QUERY
 from tests.test_backup_store import complete_backup
 from tests.test_recovery_archive import objects
 
@@ -58,6 +59,9 @@ class Runner:
                 assert options["env"]["AGENTHIRE_POSTGRES_PASSWORD"] != "HOST-PRIVATE"
             if self.failure == "build" and project == self.source and "build" in command:
                 return SimpleNamespace(returncode=7, stdout=b"PRIVATE", stderr=b"PRIVATE")
+            if (self.failure == "probe" and "pg_isready" in command
+                    or self.failure == "query" and "psql" in command):
+                return SimpleNamespace(returncode=3, stdout=b"PRIVATE", stderr=b"ERROR: 42601\nPRIVATE")
             if "stop" in command:
                 for row in self.records:
                     row.update(running=False, health="unhealthy")
@@ -89,6 +93,8 @@ class Runner:
                     if action == "import": assert options["stdin"].read() == self.archive
                     value = json.dumps({"status": "passed", "objects": 2, "database_catalog_matches": True}).encode()
             elif "psql" in command:
+                assert options["stdin"].read() == CATALOG_QUERY
+                assert "--command" not in command and "--file=-" in command
                 value = b"1" if self.failure == "target" else b"0"
             elif "pg_restore" in command:
                 if self.failure == "restore": return SimpleNamespace(returncode=7, stdout=b"PRIVATE", stderr=b"PRIVATE")
@@ -167,7 +173,8 @@ def test_plan_does_not_launch_process_or_create_store(setup, action, capsys):
     assert set(repository.parent.iterdir()) == before
 
 
-@pytest.mark.parametrize("failure", [None, "occupied-target", "target", "restore", "fingerprint", "api", "cleanup"])
+@pytest.mark.parametrize("failure", [None, "occupied-target", "target", "restore", "fingerprint", "api", "cleanup",
+                                    "probe", "query"])
 def test_restore_owns_only_fresh_target_and_records_success_after_cleanup(setup, tmp_path, failure, monkeypatch):
     repository, store, archive = setup
     with zipfile.ZipFile(io.BytesIO(archive)) as original:
@@ -187,6 +194,7 @@ def test_restore_owns_only_fresh_target_and_records_success_after_cleanup(setup,
     if failure is None:
         module.restore(store, identity, repository, report, runner=runner)
         assert report["status"] == "passed" and report["cleanup"] == "completed"
+        assert report["target_database_check"] == "passed"
         assert list((store.root / "receipts").iterdir())
     else:
         with pytest.raises((ValueError, module.BackupFailure)):
@@ -195,6 +203,8 @@ def test_restore_owns_only_fresh_target_and_records_success_after_cleanup(setup,
     cleanup = [command for command in runner.calls if "down" in command]
     assert len(cleanup) == (0 if failure == "occupied-target" else 1)
     assert all(TARGET in command for command in cleanup)
+    if failure in {"target", "probe", "query"}:
+        assert not any("pg_restore" in command and "--version" not in command for command in runner.calls)
     assert not any("start" in command or "stop" in command for command in runner.calls)
     assert store.verify(identity)["backup_id"] == identity
 

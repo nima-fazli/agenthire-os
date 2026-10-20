@@ -51,7 +51,7 @@ test("old-token 401 cannot clear a replacement session", async () => {
 test("provider failure is shown without automatic retry or lexical fallback", async () => {
   let calls = 0;
   const client = new ApiClient(() => null, () => {}, async () => { calls++; return json({ error: { code: "EXPLANATION_PROVIDER_BUSY" } }, 503); });
-  await assert.rejects(client.request("/organizations"), error => error.status === 503 && error.message.includes("مشغول"));
+  await assert.rejects(client.request("/organizations"), error => error.status === 503 && error.message.includes("busy"));
   assert.equal(calls, 1);
 });
 test("whole response body obeys cancellation and deadline", async () => {
@@ -93,7 +93,7 @@ test("replaced reads discard late results even when transport ignores abort", as
   const gate = new RequestGate(), old = deferred();
   const first = gate.run("source", () => old.promise);
   const rejected = assert.rejects(first, { name: "AbortError" });
-  assert.equal(await gate.run("source", async () => "current"), "current");
+  assert.equal(await gate.run("source", () => "current"), "current");
   old.resolve("old organization text"); await rejected;
 });
 test("context reset discards late errors as well as successes", async () => {
@@ -165,7 +165,7 @@ test("criterion payload preserves server keys and rejects empty or duplicate row
   for (const rows of [[], [row, row], [{ ...row, q: " " }], [{ ...row, importance: "hire" }]]) assert.throws(() => profilePayload(rows), ApiError);
 });
 test("client PDF bounds reject paths, empty files and oversized content", () => {
-  assert.equal(validatePdf({ name: "رزومه.PDF", size: 5 }).size, 5);
+  assert.equal(validatePdf({ name: "Resume.PDF", size: 5 }).size, 5);
   for (const file of [null, { name: ".pdf", size: 2 }, { name: "x\u202e.pdf", size: 2 }, { name: "x.txt", size: 2 }, { name: "../x.pdf", size: 2 }, { name: "x.pdf", size: 0 }, { name: "x.pdf", size: 10485761 }])
     assert.throws(() => validatePdf(file), ApiError);
 });
@@ -189,7 +189,7 @@ test("controller handles stale selections, cancelled writes, failed profiles and
       members: [], invitations: [], events: [], offset: 0, has_more: false,
     });
     if (path === "/users/me") return json({ id, email: "fixture@example.com" });
-    if (path.startsWith("/organizations/page?")) return pageResponse([{ id, name: "سازمان الف" }, { id: foreign, name: "سازمان ب" }], path);
+    if (path.startsWith("/organizations/page?")) return pageResponse([{ id, name: "Organization الف" }, { id: foreign, name: "Organization ب" }], path);
     if (path.startsWith(`${orgPath(id)}/recruiting/jobs?`)) return pageResponse([job, nextJob, failedJob].map(value => ({ id: value, organization_id: id, title: "Backend", description: "Synthetic" })), path);
     if (path.startsWith(`${orgPath(id)}/recruiting/candidates?`)) return pageResponse([record, otherRecord], path);
     if (path.includes("/recruiting/applications?")) return pageResponse([], path);
@@ -237,7 +237,7 @@ test("controller handles stale selections, cancelled writes, failed profiles and
     await wait(() => elements.get("profiles-fields").disabled === false);
     elements.get("explanation-run").emit("click"); await wait(() => started);
     elements.get("organization-select").value = foreign; elements.get("organization-select").emit("change");
-    await wait(() => elements.get("organization-heading").textContent === "سازمان ب");
+    await wait(() => elements.get("organization-heading").textContent === "Organization ب");
     pending.resolve(json({ job_id: job, candidate_id: candidate, summary_text: "OLD-PRIVATE-TEXT", summary: {}, criteria: [] }));
     await new Promise(resolve => setTimeout(resolve, 5));
     assert.equal(elements.get("evidence-results").textContent.includes("OLD-PRIVATE-TEXT"), false);

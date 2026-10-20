@@ -240,7 +240,7 @@ test("actual controllers show feedback after registration and record creation", 
 
     await wait(
       () => elements.get("notice").textContent ===
-        "حساب ساخته شد؛ با رمز خود وارد شوید.",
+        "Account created. Sign in with your password.",
     );
 
     assert.equal(elements.get("notification").hidden, false);
@@ -255,7 +255,7 @@ test("actual controllers show feedback after registration and record creation", 
     elements.get("organization-form").emit("submit");
 
     await wait(
-      () => elements.get("notice").textContent === "سازمان ثبت شد.",
+      () => elements.get("notice").textContent === "Organization created.",
     );
 
     elements.get("job-title").value = "Backend";
@@ -263,14 +263,14 @@ test("actual controllers show feedback after registration and record creation", 
     elements.get("job-form").emit("submit");
 
     await wait(
-      () => elements.get("notice").textContent === "شغل ثبت شد.",
+      () => elements.get("notice").textContent === "Job created.",
     );
 
     elements.get("candidate-name").value = "Synthetic Candidate";
     elements.get("candidate-form").emit("submit");
 
     await wait(
-      () => elements.get("notice").textContent === "داوطلب ثبت شد.",
+      () => elements.get("notice").textContent === "Candidate created.",
     );
 
     elements.get("document-file").files = [
@@ -284,7 +284,7 @@ test("actual controllers show feedback after registration and record creation", 
     elements.get("document-form").emit("submit");
 
     await wait(
-      () => elements.get("notice").textContent === "رزومه بارگذاری شد.",
+      () => elements.get("notice").textContent === "Resume uploaded.",
     );
 
     elements.get("logout").emit("click");

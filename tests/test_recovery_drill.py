@@ -8,6 +8,7 @@ import pytest
 
 from app.core.recovery_archive import export_objects
 from scripts import recovery_drill as drill
+from scripts.recovery_postgres import CATALOG_QUERY
 from tests.test_recovery_archive import objects
 
 SOURCE = "agenthire-ci-" + "a" * 32
@@ -38,12 +39,17 @@ class Runner:
                   self.failure == "cleanup" and "down" in command)
         if failed:
             return SimpleNamespace(returncode=7, stdout=b"PRIVATE-OUTPUT", stderr=b"PRIVATE-ERROR")
+        if (self.failure == "probe" and "pg_isready" in command
+                or self.failure == "query" and "psql" in command):
+            return SimpleNamespace(returncode=3, stdout=b"PRIVATE-OUTPUT", stderr=b"ERROR: 42601\nPRIVATE-ERROR")
         value = b""
         if "--version" in command:
             value = b"pg_dump (PostgreSQL) 18.6\n"
         elif "ps" in command:
             value = b"still-running" if self.failure == "writers" else b""
         elif "psql" in command:
+            assert options["stdin"].read() == CATALOG_QUERY
+            assert "--command" not in command and "--file=-" in command
             value = b"1\n" if self.failure == "target" else b"0\n"
         elif "pg_dump" in command:
             options["stdout"].write(b"PGDMP-synthetic-archive")
@@ -91,8 +97,8 @@ def test_plan_has_no_process_or_file_side_effects(setup, capsys):
     assert set(root.iterdir()) == before
 
 
-@pytest.mark.parametrize("failure", [None, "occupied", "build", "writers", "target", "restore", "api", "cleanup", "timeout"],
-                         ids=["pass", "occupied", "build", "writers", "target", "restore", "api", "cleanup", "timeout"])
+@pytest.mark.parametrize("failure", [None, "occupied", "build", "writers", "target", "restore", "api", "cleanup", "timeout",
+                                    "probe", "query"])
 def test_owned_lifecycle_failure_and_cleanup_boundaries(setup, failure, capsys):
     root, archive = setup
     runner = Runner(archive, failure)
@@ -108,7 +114,7 @@ def test_owned_lifecycle_failure_and_cleanup_boundaries(setup, failure, capsys):
         assert not cleanup and not any("build" in command for command in runner.calls)
     else:
         assert len(cleanup) == 2 and all("--volumes" in command for command in cleanup)
-    if failure in {"writers", "target", "build", "occupied"}:
+    if failure in {"writers", "target", "build", "occupied", "probe", "query"}:
         assert not any("pg_restore" in command and "--version" not in command for command in runner.calls)
     if failure is None:
         stopped = next(i for i, command in enumerate(runner.calls) if "stop" in command)
@@ -119,6 +125,16 @@ def test_owned_lifecycle_failure_and_cleanup_boundaries(setup, failure, capsys):
         assert verified < target_up
         assert report["cleanup"] == "completed" and report["document_integrity_verified"] is True
         assert report["normal_stack_touched"] is False and report["retained_backup"] is False
+        assert report["target_database_check"] == "passed"
+        probes = [i for i, command in enumerate(runner.calls) if "pg_isready" in command]
+        catalog = next(i for i, command in enumerate(runner.calls) if "psql" in command)
+        assert len(probes) == 1 and probes[0] < catalog
+    if failure in {"probe", "query"}:
+        assert report["diagnostic"] == ("recovery_database_probe_failed" if failure == "probe"
+                                         else "recovery_database_query_failed")
+        assert report["database_failure"]["exit_code"] == 3
+        assert report["last_operation"] == ("pg_isready" if failure == "probe" else "psql")
+        assert report["cleanup"] == "completed"
     if failure == "cleanup":
         assert report["cleanup"] == "attention" and report["diagnostic"] == "recovery_cleanup_failed"
 
@@ -135,3 +151,19 @@ def test_bundle_corruption_stops_before_restore(setup, monkeypatch, capsys):
     assert not any("pg_restore" in command for command in runner.calls)
     assert len([command for command in runner.calls if "down" in command]) == 2
     assert json.loads(capsys.readouterr().out.splitlines()[-1])["status"] == "failed"
+
+
+def test_cleanup_failure_keeps_priority_over_the_catalog_query_failure(setup, capsys):
+    _root, archive = setup
+    original = Runner(archive, "query")
+
+    def runner(command, **options):
+        value = original(command, **options)
+        return SimpleNamespace(returncode=7, stdout=b"PRIVATE", stderr=b"PRIVATE") if "down" in command else value
+
+    assert drill.main(["--execute"], runner=runner) == 1
+    text = capsys.readouterr().out
+    report = json.loads(text.splitlines()[-1])
+    assert report["cleanup"] == "attention" and report["diagnostic"] == "recovery_cleanup_failed"
+    assert report["database_failure"]["sqlstate"] == "42601"
+    assert "PRIVATE" not in text
