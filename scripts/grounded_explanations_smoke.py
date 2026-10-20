@@ -15,7 +15,6 @@ from sqlalchemy import delete, update
 from app.core.config import get_settings
 from app.core.errors import AppError
 from app.core.local_chat import ChatResult, LocalChatGenerator
-from app.core.tokens import create_access_token
 from app.db.session import async_session_factory, engine
 from app.models import (
     Candidate,
@@ -34,6 +33,7 @@ from app.schemas.job_matching import JobMatchProfileWrite
 from app.services.grounded_explanations import GroundedExplanationService
 from app.services.job_matching import JobMatchingService
 from scripts.docker_smoke import SmokeFailure, log_ok
+from scripts.fixture_session import fixture_session
 from scripts.grounded_explanations_evaluation import evaluate, load_reference
 
 
@@ -72,6 +72,8 @@ async def run(live=False):
                 Organization(id=org, name="Brief fixture", slug="brief-" + org.hex),
                 Organization(id=foreign, name="Excluded fixture", slug="brief-" + foreign.hex)])
             await session.flush()
+            access_session, token = fixture_session(user, settings)
+            session.add(access_session)
             session.add(OrganizationMembership(organization_id=org, user_id=user))
             session.add(Job(id=job, organization_id=org, title="Reference role", description="Synthetic role"))
             session.add(Candidate(id=foreign_candidate, organization_id=foreign, full_name="Excluded"))
@@ -135,7 +137,6 @@ async def run(live=False):
         log_ok("English/Persian quotes, explicit missing evidence, injection guard and tenant scope")
 
         if live:
-            token = create_access_token(subject=user, settings=settings)
             url = os.environ.get("AGENTHIRE_API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
             request = urllib.request.Request(url + f"/organizations/{org}/jobs/{job}/candidates/{candidates['english']}/grounded-explanation",
                 data=b'{"language":"en"}', headers={"Authorization": "Bearer " + token, "Content-Type": "application/json"})

@@ -15,15 +15,15 @@ export function profilePayload(rows) {
 export function createProfiles(ctx) {
   let rows = [], nextKey = 1;
   function addRow(item = null) {
-    if (rows.length >= 10) { notice("حداکثر ده معیار می‌توانید تعریف کنید.", true); return; }
+    if (rows.length >= 10) { notice("You can define up to ten criteria.", true); return; }
     let key = item?.key;
     if (!key) do { key = `criterion_${nextKey++}`; } while (rows.some(row => row.key === key));
     const row = node("div", "", "criterion-row");
-    const label = field("عنوان معیار", { value: item?.label, required: true, max: 100 });
-    const query = field("واژه‌های مورد جست‌وجو", { value: item?.q, required: true, max: 256 });
-    const importance = field("اهمیت", { value: item?.importance ?? "required", options: [["required", "ضروری"], ["preferred", "ترجیحی"]] });
+    const label = field("Criterion label", { value: item?.label, required: true, max: 100 });
+    const query = field("Search terms", { value: item?.q, required: true, max: 256 });
+    const importance = field("Importance", { value: item?.importance ?? "required", options: [["required", "Required"], ["preferred", "Preferred"]] });
     const record = { key, row, label, query, importance };
-    const remove = button("حذف معیار", () => { rows = rows.filter(value => value !== record); row.remove(); }, "button quiet");
+    const remove = button("Remove criterion", () => { rows = rows.filter(value => value !== record); row.remove(); }, "button quiet");
     row.append(label.wrapper, query.wrapper, importance.wrapper, remove);
     rows.push(record); $("criteria-list").append(row);
   }
@@ -36,7 +36,7 @@ export function createProfiles(ctx) {
     await ctx.perform("profile-save", signal => ctx.api.request(`${jobPath(org.id, job.id)}/match-profile`, {
       method: "PUT", signal, data: profilePayload(rows.map(row => ({ key: row.key, label: row.label.input.value,
         q: row.query.input.value, importance: row.importance.input.value }))),
-    }), result => { $("match-revision").textContent = `نسخهٔ معیارها: ${result.revision}`; ctx.profileChanged(); }, $("match-save"), true);
+    }), result => { $("match-revision").textContent = `Criteria version: ${result.revision}`; ctx.profileChanged(); }, $("match-save"), true);
   });
   $("search-profile-form").addEventListener("submit", async event => {
     event.preventDefault();
@@ -45,7 +45,7 @@ export function createProfiles(ctx) {
     ctx.invalidateEvidence();
     await ctx.perform("search-save", signal => ctx.api.request(`${jobPath(org.id, job.id)}/search-profile`, {
       method: "PUT", signal, data: { q: $("search-query").value.trim() },
-    }), result => { $("search-revision").textContent = `نسخهٔ جست‌وجو: ${result.revision}`; ctx.profileChanged(); }, $("search-save"), true);
+    }), result => { $("search-revision").textContent = `Search version: ${result.revision}`; ctx.profileChanged(); }, $("search-save"), true);
   });
   async function load() {
     const job = ctx.session.job, org = ctx.session.organization;
@@ -60,8 +60,8 @@ export function createProfiles(ctx) {
       rows = []; $("criteria-list").replaceChildren();
       for (const item of match?.criteria ?? []) addRow(item);
       if (!rows.length) addRow();
-      $("match-revision").textContent = match ? `نسخهٔ معیارها: ${match.revision}` : "معیارها هنوز ذخیره نشده‌اند";
-      $("search-revision").textContent = search ? `نسخهٔ جست‌وجو: ${search.revision}` : "جست‌وجو هنوز ذخیره نشده است";
+      $("match-revision").textContent = match ? `Criteria version: ${match.revision}` : "Criteria have not been saved yet";
+      $("search-revision").textContent = search ? `Search version: ${search.revision}` : "Search has not been saved yet";
       $("search-query").value = search?.q ?? "";
       ctx.profilesReady = true; ctx.sync();
     });
@@ -70,7 +70,7 @@ export function createProfiles(ctx) {
     ctx.profilesReady = false; rows = []; nextKey = 1;
     $("criteria-list").replaceChildren();
     $("search-query").value = "";
-    $("match-revision").textContent = $("search-revision").textContent = "یک شغل انتخاب کنید";
+    $("match-revision").textContent = $("search-revision").textContent = "Select a job";
     $("profiles-fields").disabled = true;
   }
   return { load, reset };

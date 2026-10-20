@@ -33,7 +33,7 @@ const ctx = {
   profilesReady: false,
   api: new ApiClient(
     () => session.token,
-    () => logout("نشست پایان یافته است؛ دوباره وارد شوید."),
+    () => logout("Your session has expired. Sign in again."),
   ),
 };
 ctx.isPending = key => pending.has(key);
@@ -66,7 +66,7 @@ ctx.sync = () => {
   state("document-tools", !candidate, "document-write");
   $("application-context").textContent = job && candidate
     ? `${candidate.full_name} ← ${job.title}`
-    : "برای ثبت درخواست، یک شغل و یک داوطلب انتخاب کنید.";
+    : "Select a job and a candidate to create an application.";
 
   state("profiles-fields", !job || !ctx.profilesReady || !writable, "profiles");
   state("search-save", !job || !ctx.profilesReady || !writable, "search-save");
@@ -120,7 +120,7 @@ ctx.perform = async (
 ) => {
   const accountActions = new Set(["authentication", "organization-create", "access-write", "account-write", "invitation-accept"]);
   if (mutation && !accountActions.has(key) && !ctx.access.canWrite) {
-    notice("نقش شما اجازهٔ این تغییر را نمی‌دهد.", true);
+    notice("Your role does not allow this change.", true);
     return false;
   }
   if (mutation && (pending.has(key) || gate.has(key))) return null;
@@ -152,7 +152,7 @@ ctx.perform = async (
     notice(
       error instanceof ApiError
         ? error.message
-        : "پاسخ قابل استفاده نبود؛ وضعیت را تازه‌سازی کنید.",
+        : "The response could not be used. Refresh the current state.",
       true,
     );
 
@@ -174,7 +174,7 @@ ctx.invalidateEvidence = () => {
 
 ctx.profileChanged = () => {
   ctx.invalidateEvidence();
-  notice("اطلاعات ثبت شد؛ شواهد و بازیابی را دوباره بخوانید.");
+  notice("Changes saved. Reload evidence and retrieval results.");
 };
 
 ctx.selectOrganization = async item => {
@@ -193,8 +193,8 @@ ctx.selectOrganization = async item => {
 
   notice(
     item
-      ? "در حال دریافت فهرست‌های سازمان…"
-      : "برای شروع، سازمان بسازید یا انتخاب کنید.",
+      ? "Loading organization records…"
+      : "Create or select an organization to get started.",
   );
 
   if (item) {
@@ -232,7 +232,7 @@ ctx.selectJob = async item => {
   }
 
   if (!item && !session.job) {
-    notice("یک شغل بسازید یا انتخاب کنید.");
+    notice("Create or select a job.");
   }
   return true;
 };
@@ -274,22 +274,22 @@ function setAuthMode(value) {
   registering = value;
 
   $("auth-title").textContent =
-    value ? "ساخت حساب" : "ورود به فضای کاری";
+    value ? "Create an account" : "Sign in to your workspace";
 
   $("auth-description").textContent = value
-    ? "رمز عبور حساب جدید باید حداقل ۱۵ کاراکتر داشته باشد."
-    : "با حساب خود، سازمان و پرونده‌های در دسترس را انتخاب کنید.";
+    ? "New accounts require a password of at least 15 characters."
+    : "Sign in to access your organizations and recruiting records.";
 
-  $("auth-submit").textContent = value ? "ثبت‌نام" : "ورود";
+  $("auth-submit").textContent = value ? "Create account" : "Sign in";
   $("auth-mode").textContent =
-    value ? "حساب دارم؛ ورود" : "حساب ندارم؛ ثبت‌نام";
+    value ? "Already have an account? Sign in" : "New here? Create an account";
 
   $("auth-password").minLength = value ? 15 : 1;
   $("auth-password").autocomplete =
     value ? "new-password" : "current-password";
 }
 
-function logout(message = "از حساب خارج شدید.") {
+function logout(message = "You have signed out.") {
   ctx.confirm.cancel();
   authAttempt += 1;
   ctx.cancelAll();
@@ -327,7 +327,7 @@ $("logout").addEventListener("click", async () => {
   try { await revocation; }
   catch {
     if (attempt === authAttempt && !session.token)
-      notice("خروج از صفحه انجام شد؛ ابطال نشست در سرور تأیید نشد. از بخش نشست‌ها آن را بررسی کنید.", true);
+      notice("You have signed out of this page, but server revocation was not confirmed. Review your active sessions.", true);
   }
 });
 
@@ -343,7 +343,7 @@ $("auth-form").addEventListener("submit", async event => {
     password: $("auth-password").value,
   };
 
-  notice(mode ? "در حال ساخت حساب…" : "در حال ورود…");
+  notice(mode ? "Creating your account…" : "Signing in…");
 
   await ctx.perform(
     "authentication",
@@ -358,7 +358,7 @@ $("auth-form").addEventListener("submit", async event => {
 
       if (mode) {
         setAuthMode(false);
-        notice("حساب ساخته شد؛ با رمز خود وارد شوید.");
+        notice("Account created. Sign in with your password.");
         return;
       }
 
@@ -378,7 +378,7 @@ $("auth-form").addEventListener("submit", async event => {
       );
 
       if (identified === false && attempt === authAttempt) {
-        logout("ورود کامل نشد؛ دوباره وارد شوید.");
+        logout("Sign-in could not be completed. Sign in again.");
       }
     },
     $("auth-fields"),
@@ -392,10 +392,10 @@ window.addEventListener("pagehide", () => logout(""));
 
 window.addEventListener("offline", () => {
   notice(
-    "اتصال قطع شده است؛ تغییر تازه‌ای به سرور ارسال نکنید.",
+    "You are offline. Reconnect before submitting changes.",
     true,
   );
 });
 
-empty($("job-description-view"), "یک شغل انتخاب کنید.");
+empty($("job-description-view"), "Select a job.");
 logout("");

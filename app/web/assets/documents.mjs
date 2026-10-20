@@ -2,7 +2,7 @@ import { $, node, button, empty, notice } from "./dom.mjs";
 import { candidatePath, uuid } from "./session.mjs";
 import { mutationNotice } from "./paging.mjs";
 
-const states = Object.freeze({ queued: "در صف", running: "در حال پردازش", succeeded: "موفق", failed: "ناموفق" });
+const states = Object.freeze({ queued: "Queued", running: "Running", succeeded: "Succeeded", failed: "Failed" });
 
 export function createDocuments(ctx, validatePdf) {
   let offset = 0;
@@ -38,7 +38,7 @@ export function createDocuments(ctx, validatePdf) {
     if (!root) return null;
     ctx.cancel("document-read");
     $("documents-previous").disabled = $("documents-next").disabled = true;
-    empty($("documents-list"), "در حال دریافت اسناد…");
+    empty($("documents-list"), "Loading documents…");
     return ctx.perform("documents", async signal => {
       let items = await ctx.api.request(`${root}?limit=11&offset=${offset}`, { signal });
       if (!Array.isArray(items) || items.length > 11) throw new Error("INVALID_RESPONSE");
@@ -59,23 +59,23 @@ export function createDocuments(ctx, validatePdf) {
         const state = node("p", `${(item.size_bytes / 1024).toFixed(1)} KiB`, "small muted");
         const actions = node("div", "", "actions");
         actions.append(
-          button("وضعیت استخراج", () => action(path,
+          button("Extraction status", () => action(path,
             signal => ctx.api.request(`${path}/extraction`, { signal }).catch(error => {
               if (error.code === "EXTRACTION_NOT_FOUND") return { status: "not_requested" };
               throw error;
-            }), value => { state.textContent = states[value.status] ?? "استخراج درخواست نشده است."; })),
-          writeButton("شروع / تکرار استخراج", () => action(path,
+            }), value => { state.textContent = states[value.status] ?? "Extraction has not been requested."; })),
+          writeButton("Start / retry extraction", () => action(path,
             signal => ctx.api.request(`${path}/extraction`, { method: "POST", data: { retry: true }, signal }),
-            value => { state.textContent = states[value.status]; clearEmbedding(); notice("درخواست استخراج ثبت شد؛ وضعیت را تازه‌سازی کنید."); }, true)),
-          writeButton("ساخت بخش‌های جست‌وجو", () => action(path,
+            value => { state.textContent = states[value.status]; clearEmbedding(); notice("Extraction requested. Refresh its status to follow progress."); }, true)),
+          writeButton("Build search chunks", () => action(path,
             signal => ctx.api.request(`${path}/chunks`, { method: "POST", data: {}, signal }),
-            () => { state.textContent = "بخش‌های جست‌وجو آماده شد."; clearEmbedding(); ctx.profileChanged(); }, true)),
-          button("دانلود PDF", () => action(path,
+            () => { state.textContent = "Search chunks are ready."; clearEmbedding(); ctx.profileChanged(); }, true)),
+          button("Download PDF", () => action(path,
             signal => ctx.api.request(`${path}/content`, { signal, blob: true }),
             value => download(value, item.filename))),
         );
-        const embedding = node("p", "وضعیت بردار معنایی بررسی نشده است.", "small muted");
-        const refresh = button("تازه‌سازی وضعیت بردار", () => {
+        const embedding = node("p", "Embedding status has not been checked.", "small muted");
+        const refresh = button("Refresh embedding status", () => {
           const job = jobs.get(item.id);
           if (!job) return;
           return action(path, signal => ctx.api.request(`${path}/embedding-jobs/${uuid(job.id)}`, { signal }), showEmbedding);
@@ -83,7 +83,7 @@ export function createDocuments(ctx, validatePdf) {
         refresh.disabled = !jobs.has(item.id);
         function clearEmbedding() {
           jobs.delete(item.id); refresh.disabled = true;
-          embedding.textContent = "پس از آماده‌شدن بخش‌ها، وضعیت پردازش معنایی را دوباره بخوانید.";
+          embedding.textContent = "After chunks are ready, refresh the embedding status.";
         }
         function showEmbedding(job) {
           uuid(job.id);
@@ -92,36 +92,36 @@ export function createDocuments(ctx, validatePdf) {
               || !Number.isSafeInteger(job.attempts) || job.attempts < 0)
             throw new Error("INVALID_RESPONSE");
           jobs.set(item.id, job);
-          embedding.textContent = `بردار معنایی: ${states[job.status]} · ${job.chunk_count} بخش · تلاش ${job.attempts}`;
+          embedding.textContent = `Embeddings: ${states[job.status]} · ${job.chunk_count} chunks · attempt ${job.attempts}`;
           refresh.disabled = false;
         }
         if (jobs.has(item.id)) showEmbedding(jobs.get(item.id));
         actions.append(
-          writeButton("شروع / مشاهدهٔ بردار معنایی", () => action(path,
+          writeButton("Start / view embeddings", () => action(path,
             signal => ctx.api.request(`${path}/embedding-jobs`, {
               method: "POST", data: { retry: jobs.get(item.id)?.status === "failed" }, signal,
-            }), value => { showEmbedding(value); notice("وضعیت بردار دریافت شد؛ برای پیگیری، وضعیت را تازه‌سازی کنید."); }, true)),
+            }), value => { showEmbedding(value); notice("Embedding status loaded. Refresh it to follow progress."); }, true)),
           refresh,
-          writeButton("حذف PDF", async () => {
-            const accepted = await ctx.confirm.ask({ title: "حذف رزومه",
-              message: `فایل «${item.filename}» و داده‌های استخراج و جست‌وجوی وابسته به آن حذف می‌شوند.`,
+          writeButton("Delete PDF", async () => {
+            const accepted = await ctx.confirm.ask({ title: "Delete resume",
+              message: `The file “${item.filename}” and its extracted text and search data will be deleted.`,
               requiredText: item.filename });
             if (!accepted || base() !== root) return;
             await action(path, signal => ctx.api.request(path, { method: "DELETE", signal }),
               async (_value, owned) => {
                 jobs.delete(item.id);
                 const refreshed = await load();
-                if (owned()) mutationNotice("رزومه حذف شد", refreshed);
+                if (owned()) mutationNotice("Resume deleted", refreshed);
               }, true);
           }, "button danger"),
         );
         card.append(title, state, embedding, actions); content.append(card);
       }
       $("documents-list").replaceChildren(content);
-      if (!items.length) empty($("documents-list"), "هنوز رزومه‌ای بارگذاری نشده است.");
+      if (!items.length) empty($("documents-list"), "No resumes have been uploaded yet.");
       $("documents-info").textContent = items.length
-        ? `${offset + 1} تا ${offset + Math.min(10, items.length)}؛ وضعیت پردازش را با دکمه‌های هر سند بررسی کنید.`
-        : "سندی یافت نشد.";
+        ? `${offset + 1} to ${offset + Math.min(10, items.length)}; use each document's controls to check processing status.`
+        : "No documents found.";
       $("documents-previous").disabled = offset === 0;
       $("documents-next").disabled = items.length <= 10 || offset >= 10000;
     }, $("documents-refresh"));
@@ -140,7 +140,7 @@ export function createDocuments(ctx, validatePdf) {
     }, async (_value, owned) => {
       $("document-form").reset(); offset = 0;
       const refreshed = await load();
-      if (owned()) notice(refreshed === false ? "رزومه ثبت شد؛ فهرست اسناد را تازه‌سازی کنید." : "رزومه بارگذاری شد.", refreshed === false);
+      if (owned()) notice(refreshed === false ? "Resume saved. Refresh the document list." : "Resume uploaded.", refreshed === false);
     }, $("document-tools"), true);
   });
   $("documents-refresh").addEventListener("click", load);

@@ -16,7 +16,7 @@ MANIFEST = PREFIX + "SOURCE_MANIFEST.json"
 LIMIT = 50 * 1024 * 1024
 ROOT_FILES = frozenset({
     ".dockerignore", ".env.example", ".gitignore", ".gitattributes", "AGENTS.md",
-    "alembic.ini", "compose.yaml", "compose.ci.yaml", "Dockerfile",
+    "alembic.ini", "compose.yaml", "compose.ci.yaml", "compose.quality.yaml", "Dockerfile",
     "pyproject.toml", "uv.lock", "README.md", "LICENSE", "LICENSE.md", "NOTICE", "CHANGELOG.md",
 })
 SOURCE_DIRS = frozenset({"app", "docs", "migrations", "scripts", "tests", ".github"})

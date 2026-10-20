@@ -12,7 +12,7 @@ export function createWorkspace(ctx) {
     const values = outside ? [selected, ...items] : items;
     for (const item of values) {
       uuid(item.id);
-      const option = node("option", (item.name ?? item.title) + (outside && item.id === selected.id ? " (انتخاب فعلی)" : ""));
+      const option = node("option", (item.name ?? item.title) + (outside && item.id === selected.id ? " (current selection)" : ""));
       option.value = item.id; select.append(option);
     }
     select.value = selected?.id ?? "";
@@ -25,7 +25,7 @@ export function createWorkspace(ctx) {
     async render(page, preferred) {
       organizations = page.items;
       const selected = preferred ?? ctx.session.organization ?? organizations[0] ?? null;
-      options($("organization-select"), organizations, "انتخاب سازمان", selected);
+      options($("organization-select"), organizations, "Select an organization", selected);
       if (!selected || selected.id !== ctx.session.organization?.id) return ctx.selectOrganization(selected);
     },
   });
@@ -39,7 +39,7 @@ export function createWorkspace(ctx) {
       if (page.items.some(item => item.organization_id !== ctx.session.organization?.id)) throw new Error("INVALID_SCOPE");
       jobs = page.items;
       const selected = preferred ?? ctx.session.job ?? jobs[0] ?? null;
-      options($("job-select"), jobs, "انتخاب شغل", selected);
+      options($("job-select"), jobs, "Select a job", selected);
       $("jobs-count").textContent = String(page.total);
       if (!selected || selected.id !== ctx.session.job?.id) return ctx.selectJob(selected);
     },
@@ -63,7 +63,7 @@ export function createWorkspace(ctx) {
       uuid(created.id);
       $("organization-form").reset(); $("organization-filter").value = "";
       const refreshed = await organizationPage.load({ reset: true, preferred: created });
-      if (ctx.session.organization?.id === created.id) mutationNotice("سازمان ثبت شد", refreshed);
+      if (ctx.session.organization?.id === created.id) mutationNotice("Organization created", refreshed);
     }, $("organization-create"), true);
   });
   $("job-form").addEventListener("submit", async event => {
@@ -77,7 +77,7 @@ export function createWorkspace(ctx) {
       if (created.organization_id !== org.id) throw new Error("INVALID_SCOPE");
       $("job-form").reset(); $("job-filter").value = $("job-status-filter").value = "";
       const refreshed = await jobPage.load({ reset: true, preferred: created });
-      if (ctx.session.job?.id === created.id) mutationNotice("شغل ثبت شد", refreshed);
+      if (ctx.session.job?.id === created.id) mutationNotice("Job created", refreshed);
     }, $("job-create"), true);
   });
 
@@ -89,7 +89,7 @@ export function createWorkspace(ctx) {
   $("workspace-refresh").addEventListener("click", loadOrganization);
 
   function showJob(job) {
-    empty($("job-description-view"), "یک شغل بسازید یا انتخاب کنید.");
+    empty($("job-description-view"), "Create or select a job.");
     if (job) {
       const title = node("h3", job.title), description = node("p", job.description, "job-description");
       title.dir = description.dir = "auto";
@@ -98,8 +98,8 @@ export function createWorkspace(ctx) {
   }
   function clearOrganization() {
     jobs = []; jobPage.reset(); $("job-status-filter").value = "";
-    options($("job-select"), [], "انتخاب شغل", null);
-    $("organization-heading").textContent = ctx.session.organization?.name ?? "فضای کاری";
+    options($("job-select"), [], "Select a job", null);
+    $("organization-heading").textContent = ctx.session.organization?.name ?? "Workspace";
     $("jobs-count").textContent = $("candidates-count").textContent = "—";
     $("job-form").reset(); showJob(null);
   }

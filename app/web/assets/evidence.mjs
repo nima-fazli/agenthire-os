@@ -14,10 +14,10 @@ import { ApiError } from "./api.mjs";
 import { createDocuments } from "./documents.mjs";
 
 const sourceStates = {
-  no_documents: "سندی وجود ندارد",
-  not_indexed: "منابع هنوز بخش‌بندی نشده‌اند",
-  partial: "بخشی از منابع آماده است",
-  indexed: "منابع قابل جست‌وجو هستند",
+  no_documents: "No documents",
+  not_indexed: "Sources have not been indexed yet",
+  partial: "Some sources are ready",
+  indexed: "Sources are searchable",
 };
 
 export function validatePdf(file) {
@@ -63,7 +63,7 @@ export function createEvidence(ctx) {
 
     empty(
       $("evidence-results"),
-      "یک داوطلب و شغل انتخاب کنید؛ سپس شواهد یا توضیح مستند را بخوانید.",
+      "Select a candidate and a job, then load evidence or request a grounded brief.",
     );
   }
 
@@ -81,7 +81,7 @@ export function createEvidence(ctx) {
     content.append(
       node(
         "p",
-        `شاهد ضروری: ${summary.required_with_evidence}/${summary.required_total} · ترجیحی: ${summary.preferred_with_evidence}/${summary.preferred_total}`,
+        `Required evidence: ${summary.required_with_evidence}/${summary.required_total} · Preferred: ${summary.preferred_with_evidence}/${summary.preferred_total}`,
         "summary-note",
       ),
     );
@@ -89,7 +89,7 @@ export function createEvidence(ctx) {
     content.append(
       node(
         "p",
-        `${sourceStates[summary.source_status]} · نسخهٔ معیارها ${result.profile_revision}`,
+        `${sourceStates[summary.source_status]} · Criteria version ${result.profile_revision}`,
         "small muted",
       ),
     );
@@ -119,7 +119,7 @@ export function createEvidence(ctx) {
       );
 
       meta.dir = "ltr";
-      content.append(details("زمان و مدل این پاسخ", meta));
+      content.append(details("Response timing and model provenance", meta));
     }
 
     for (const criterion of result.criteria) {
@@ -130,8 +130,8 @@ export function createEvidence(ctx) {
       heading.append(
         badge(
           criterion.importance === "required"
-            ? "ضروری"
-            : "ترجیحی",
+            ? "Required"
+            : "Preferred",
         ),
       );
 
@@ -143,8 +143,8 @@ export function createEvidence(ctx) {
           explanation
             ? criterion.text
             : criterion.evidence
-              ? "شاهد واژگانی مشاهده شد؛ متن اصلی را بررسی کنید."
-              : "شاهدی در منابع فعلی یافت نشد؛ این نتیجه به معنی نداشتن مهارت نیست.",
+              ? "Lexical evidence was found. Review the original source."
+              : "No evidence was found in the current sources. This does not establish a lack of skill.",
           "small muted",
         ),
       );
@@ -195,7 +195,7 @@ export function createEvidence(ctx) {
     const progress = () => {
       if (current === generation) {
         $("explanation-progress").textContent =
-          `در حال بررسی نقل‌قول‌ها؛ ${Math.floor((performance.now() - started) / 1000)} ثانیه انتظار…`;
+          `Validating quotes; waiting ${Math.floor((performance.now() - started) / 1000)} seconds…`;
       }
     };
 
@@ -211,7 +211,7 @@ export function createEvidence(ctx) {
         {
           method: "POST",
           signal,
-          data: { language: "fa" },
+          data: { language: "en" },
           timeout: 185000,
         },
       ),
@@ -224,7 +224,7 @@ export function createEvidence(ctx) {
       timer = null;
       $("explanation-cancel").disabled = true;
       $("explanation-progress").textContent =
-        "انتظار این درخواست پایان یافت.";
+        "This request is no longer being awaited.";
     }
   });
 
@@ -232,7 +232,7 @@ export function createEvidence(ctx) {
     clearGeneration();
 
     $("explanation-progress").textContent =
-      "انتظار لغو شد؛ ممکن است پردازش قبلی روی سرور هنوز ادامه داشته باشد.";
+      "Waiting cancelled. The previous request may still be running on the server.";
   });
 
   async function selectCandidate(item) {
@@ -242,7 +242,7 @@ export function createEvidence(ctx) {
       node("h3", item.full_name),
       node(
         "p",
-        item.headline || "عنوان حرفه‌ای ثبت نشده",
+        item.headline || "No headline provided",
         "muted",
       ),
     );
@@ -261,7 +261,7 @@ export function createEvidence(ctx) {
 
     empty(
       $("candidate-heading"),
-      "برای بررسی، یک داوطلب را از فهرست انتخاب کنید.",
+      "Select a candidate from the list to review their record.",
     );
   }
 

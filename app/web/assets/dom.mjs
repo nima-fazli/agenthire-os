@@ -144,7 +144,7 @@ export function sourceView(hit, citation = null) {
   const parts = sourceParts(hit, citation);
   const value = node("div");
 
-  const title = node("p", hit.filename ?? "منبع رزومه", "small muted");
+  const title = node("p", hit.filename ?? "Resume source", "small muted");
   title.dir = "auto";
 
   const text = node("p", "", "source-text");
@@ -186,7 +186,7 @@ export function sourceView(hit, citation = null) {
   value.append(
     title,
     text,
-    details("مشخصات منبع و محدودهٔ متن", meta),
+    details("Source provenance and text offsets", meta),
   );
 
   return value;

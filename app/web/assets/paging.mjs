@@ -29,8 +29,8 @@ export function createPager(ctx, { name, url, filters = () => ({}), render, clea
     total = 0;
     busy = true;
     controls();
-    clear("در حال دریافت…");
-    info.textContent = "در حال دریافت از سرور…";
+    clear("Loading…");
+    info.textContent = "Loading from the server…";
     const path = value => `${base}?${new URLSearchParams({
       ...Object.fromEntries(Object.entries(query).filter(([, item]) => item !== "" && item != null)),
       limit: 20, offset: value,
@@ -50,14 +50,14 @@ export function createPager(ctx, { name, url, filters = () => ({}), render, clea
         following = await render(page, preferred);
         if (current !== generation) return;
         info.textContent = total
-          ? `${offset + 1} تا ${Math.min(offset + page.items.length, total)} از ${total} نتیجه`
-          : "نتیجه‌ای یافت نشد.";
+          ? `${offset + 1} to ${Math.min(offset + page.items.length, total)} of ${total} results`
+          : "No results found.";
         if (offset + 20 > 10000 && offset + 20 < total)
-          info.textContent += "؛ برای ادامه، جست‌وجو را محدود کنید.";
+          info.textContent += "; narrow your search to continue.";
       });
       if (current === generation && result === false) {
-        clear("دریافت کامل نشد؛ دوباره جست‌وجو کنید.");
-        info.textContent = "دریافت ناموفق";
+        clear("Loading did not complete. Run the search again.");
+        info.textContent = "Loading failed";
       }
       return result === true && following === false ? false : result;
     } finally {
@@ -81,12 +81,12 @@ export function createPager(ctx, { name, url, filters = () => ({}), render, clea
       offset = total = 0;
       $(`${name}-filter`).value = "";
       info.textContent = "";
-      clear("برای شروع، محدودهٔ مربوط را انتخاب کنید.");
+      clear("Select the relevant workspace scope to get started.");
       controls();
     },
   };
 }
 
 export function mutationNotice(label, refreshed) {
-  notice(refreshed === false ? `${label}؛ دریافت فهرست کامل نشد. آن را تازه‌سازی کنید.` : `${label}.`, refreshed === false);
+  notice(refreshed === false ? `${label}; the list could not be refreshed. Refresh it manually.` : `${label}.`, refreshed === false);
 }

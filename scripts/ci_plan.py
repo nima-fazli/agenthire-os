@@ -37,6 +37,7 @@ SMOKE_MODULES = (
     "document_embeddings_smoke",
     "semantic_retrieval_smoke",
     "grounded_explanations_smoke",
+    "ai_quality_smoke",
     "recruiter_ui_smoke",
     "operations_smoke",
     "operations_failure_smoke",

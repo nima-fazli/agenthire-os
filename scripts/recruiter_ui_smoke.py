@@ -25,8 +25,11 @@ def verify_shell():
                 raise SmokeFailure("Recruiter UI asset transport failed.")
             if any(response.headers.get(key) != value for key, value in UI_HEADERS.items()):
                 raise SmokeFailure("Recruiter UI security/cache headers changed.")
-            if not response.read():
+            body = response.read()
+            if not body:
                 raise SmokeFailure("Recruiter UI asset was empty.")
+            if name == "index.html" and b'<html lang="en" dir="ltr">' not in body:
+                raise SmokeFailure("Recruiter workspace must use English and left-to-right layout.")
     unknown = request_json("GET", "/workspace/assets/router.py")
     expect_status(unknown, 404, step="private UI source denial")
     log_ok("Public recruiter shell and all local assets with security/no-store headers")
@@ -49,7 +52,7 @@ def verify_workflow(owner, outsider, slug):
     root = f"/organizations/{org['id']}"
     job = call("POST", f"{root}/jobs", token, {"title": "Backend Engineer", "description": "Synthetic UI acceptance", "status": "draft"}, 201)
     candidate = call("POST", f"{root}/candidates", token, {
-        "full_name": "داوطلب مصنوعی", "headline": "Python Engineer", "email": f"ui-{slug}@example.com",
+        "full_name": "Synthetic Candidate", "headline": "Python Engineer", "email": f"ui-{slug}@example.com",
     }, 201)
     job_path = f"{root}/jobs/{job['id']}"
     candidate_path = f"{root}/candidates/{candidate['id']}"

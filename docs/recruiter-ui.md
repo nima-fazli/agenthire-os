@@ -1,6 +1,6 @@
 # Recruiter workspace
 
-`/workspace/` uses local HTML/CSS and native ES modules. Token and application
+`/workspace/` is an English, left-to-right workspace using local HTML/CSS and native ES modules. Token and application
 state stay in memory. Reload/logout requires login. There is no browser
 storage, cookie, service worker, CDN or npm build step.
 
@@ -25,7 +25,7 @@ Context changes close the dialog and invalidate old request ownership.
 
 Document controls request extraction/chunking/embedding explicitly. Embedding
 status is refreshed with a read; retry is an explicit action. The client neither
-downloads models nor changes feature flags. A disabled service has a localized
+downloads models nor changes feature flags. A disabled service has a safe English
 error, with no automatic retry or search fallback.
 
 Feedback remains visible while the workspace scrolls. Success expires after
@@ -38,8 +38,10 @@ Late responses cannot replace a different selection. Cancellation does not
 undo an accepted write or stop a server model thread; refresh before repeating
 an uncertain mutation. See [recruiting-workflow.md](recruiting-workflow.md).
 
-Stage 1 native acceptance is recorded in stabilization.md. Stage 2 native
-acceptance is pending. Node controller tests use a DOM fixture; the expanded
+Completion stages 1-3 have native acceptance receipts. Stage 4 acceptance is
+pending after the English copy and Docker packaging correction. Node controller tests use a DOM fixture; the expanded
 HTTP smoke exercises real authenticated APIs and SQL. Neither is a complete
-browser automation suite. Final English-first bilingual design and broad
-viewport/keyboard browser QA remain stage 5.
+browser automation suite. Final English design and broad viewport/keyboard browser QA remain stage 5.
+The shell declares lang=en and dir=ltr; dates use en-US. Grounded briefs are
+requested explicitly in English. Source text retains its original language and
+uses automatic direction only within source/user-data elements.

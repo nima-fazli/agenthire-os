@@ -9,7 +9,7 @@ from app.schemas.job_matching import CriterionEvidence, MatchEvidenceSummary
 
 class ExplanationRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    language: Literal["fa", "en"] = "fa"
+    language: Literal["fa", "en"] = "en"
 
 
 class QuoteChoice(BaseModel):

@@ -1,15 +1,15 @@
 <!doctype html>
-<html lang="fa" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <title>AgentHire OS — فضای کار استخدام</title>
+  <title>AgentHire OS — Recruiting Workspace</title>
   <link rel="stylesheet" href="/workspace/assets/styles.css">
   <script type="module" src="/workspace/assets/app.mjs"></script>
 </head>
 <body>
-  <a class="skip" href="#main-content">رفتن به محتوای اصلی</a>
+  <a class="skip" href="#main-content">Skip to main content</a>
 
   <header class="topbar">
     <a class="brand" href="/workspace/">
@@ -19,16 +19,16 @@
 
     <div id="account" hidden>
       <bdi id="account-email"></bdi>
-      <button id="logout" class="button quiet" type="button">خروج</button>
+      <button id="logout" class="button quiet" type="button">Sign out</button>
     </div>
 
-    <span id="public-label" class="muted">فضای کار استخدام</span>
+    <span id="public-label" class="muted">Recruiting workspace</span>
   </header>
 
   <main id="main-content" tabindex="-1">
     <div id="notification" class="toast" hidden>
       <p id="notice" class="notice" role="status" aria-live="polite" aria-atomic="true"></p>
-      <button id="notice-dismiss" class="button quiet" type="button" aria-label="بستن پیام">×</button>
+      <button id="notice-dismiss" class="button quiet" type="button" aria-label="Dismiss notification">×</button>
     </div>
 
     <p id="notice-alert" class="visually-hidden" role="alert" aria-live="assertive" aria-atomic="true"></p>
@@ -36,86 +36,86 @@
     <section id="auth-view" class="auth-grid" aria-labelledby="auth-title">
       <div class="auth-story">
         <p class="eyebrow"><bdi>HUMAN DECISIONS. TRACEABLE EVIDENCE.</bdi></p>
-        <h1>از رزومه،<br>به شواهد قابل بررسی.</h1>
-        <p>جست‌وجو، معیارهای مستقل و نقل‌قول مستند؛ در یک فضای کاری برای تصمیم‌های استخدام.</p>
+        <h1>From resumes,<br>to evidence you can verify.</h1>
+        <p>Search, independent criteria, and source-backed quotes in one recruiting workspace.</p>
 
         <div class="story-flow" aria-hidden="true">
-          <span>رزومه</span>
+          <span>Resume</span>
           <i></i>
-          <span>معیار</span>
+          <span>Criterion</span>
           <i></i>
-          <span>شاهد</span>
+          <span>Evidence</span>
         </div>
 
-        <p class="story-note">نتیجهٔ جست‌وجو نقطهٔ شروع بررسی انسانی است.</p>
+        <p class="story-note">Search results are the starting point for human review.</p>
       </div>
 
       <div class="auth-card">
-        <p class="eyebrow">شروع کار</p>
-        <h2 id="auth-title">ورود به فضای کاری</h2>
-        <p id="auth-description" class="muted">با حساب خود، سازمان و پرونده‌های در دسترس را انتخاب کنید.</p>
+        <p class="eyebrow">Get started</p>
+        <h2 id="auth-title">Sign in to your workspace</h2>
+        <p id="auth-description" class="muted">Sign in to access your organizations and recruiting records.</p>
 
         <form id="auth-form">
           <fieldset id="auth-fields">
             <label class="field">
-              ایمیل
+              Email
               <input id="auth-email" type="email" dir="ltr" autocomplete="username" maxlength="320" required>
             </label>
 
             <label class="field">
-              رمز عبور
+              Password
               <input id="auth-password" type="password" dir="ltr" autocomplete="current-password" minlength="1" maxlength="128" required>
             </label>
 
-            <button id="auth-submit" class="button primary full" type="submit">ورود</button>
+            <button id="auth-submit" class="button primary full" type="submit">Sign in</button>
           </fieldset>
         </form>
 
-        <button id="auth-mode" class="button quiet full" type="button">حساب ندارم؛ ثبت‌نام</button>
-        <p class="small muted">با تازه‌سازی، خروج یا بستن صفحه، دوباره باید وارد شوید.</p>
+        <button id="auth-mode" class="button quiet full" type="button">New here? Create an account</button>
+        <p class="small muted">You will need to sign in again after refreshing, signing out, or closing this page.</p>
       </div>
     </section>
 
-    <section id="shell" class="workspace-grid" hidden aria-label="فضای کاری استخدام">
+    <section id="shell" class="workspace-grid" hidden aria-label="Recruiting workspace">
       <aside class="sidebar">
-        <p class="eyebrow">فضای کاری</p>
+        <p class="eyebrow">Workspace</p>
 
         <fieldset id="organization-browser-fields" disabled>
         <label class="field">
-          سازمان
+          Organization
           <select id="organization-select">
-            <option value="">انتخاب سازمان</option>
+            <option value="">Select an organization</option>
           </select>
         </label>
 
-        <form id="organization-search-form" class="record-search" aria-label="جست‌وجوی سازمان‌ها">
-          <label class="field">نام یا شناسهٔ سازمان
+        <form id="organization-search-form" class="record-search" aria-label="Search organizations">
+          <label class="field">Organization name or slug
             <input id="organization-filter" type="search" maxlength="120">
           </label>
-          <button class="button secondary" type="submit">جست‌وجو</button>
+          <button class="button secondary" type="submit">Search</button>
         </form>
         <div class="pager">
-          <button id="organization-previous" class="button quiet" type="button" disabled>قبلی</button>
-          <button id="organization-next" class="button quiet" type="button" disabled>بعدی</button>
+          <button id="organization-previous" class="button quiet" type="button" disabled>Previous</button>
+          <button id="organization-next" class="button quiet" type="button" disabled>Next</button>
         </div>
         <p id="organization-page-info" class="small" role="status" aria-live="polite"></p>
         </fieldset>
 
         <details class="disclosure">
-          <summary>ساخت سازمان</summary>
+          <summary>Create organization</summary>
 
           <form id="organization-form">
             <label class="field">
-              نام سازمان
+              Organization name
               <input id="organization-name" maxlength="200" required>
             </label>
 
             <label class="field">
-              شناسهٔ خوانا
+              URL slug
               <input id="organization-slug" dir="ltr" pattern="[a-z0-9]+(-[a-z0-9]+)*" maxlength="100" required>
             </label>
 
-            <button id="organization-create" class="button secondary full" type="submit">ساخت سازمان</button>
+            <button id="organization-create" class="button secondary full" type="submit">Create organization</button>
           </form>
         </details>
 
@@ -123,138 +123,138 @@
 
         <fieldset id="job-browser-fields" disabled>
         <label class="field">
-          شغل جاری
+          Current job
           <select id="job-select">
-            <option value="">انتخاب شغل</option>
+            <option value="">Select a job</option>
           </select>
         </label>
 
-        <form id="job-search-form" class="record-search" aria-label="جست‌وجوی شغل‌ها">
-          <label class="field">عنوان یا شرح شغل
+        <form id="job-search-form" class="record-search" aria-label="Search jobs">
+          <label class="field">Job title or description
             <input id="job-filter" type="search" maxlength="120">
           </label>
-          <label class="field">وضعیت
+          <label class="field">Status
             <select id="job-status-filter">
-              <option value="">همه</option>
-              <option value="draft">پیش‌نویس</option>
-              <option value="open">باز</option>
-              <option value="closed">بسته</option>
+              <option value="">All</option>
+              <option value="draft">Draft</option>
+              <option value="open">Open</option>
+              <option value="closed">Closed</option>
             </select>
           </label>
-          <button class="button secondary" type="submit">جست‌وجو</button>
+          <button class="button secondary" type="submit">Search</button>
         </form>
         <div class="pager">
-          <button id="job-previous" class="button quiet" type="button" disabled>قبلی</button>
-          <button id="job-next" class="button quiet" type="button" disabled>بعدی</button>
+          <button id="job-previous" class="button quiet" type="button" disabled>Previous</button>
+          <button id="job-next" class="button quiet" type="button" disabled>Next</button>
         </div>
         <p id="job-page-info" class="small" role="status" aria-live="polite"></p>
         </fieldset>
 
         <details class="disclosure">
-          <summary>ساخت شغل</summary>
+          <summary>Create job</summary>
 
           <form id="job-form">
             <label class="field">
-              عنوان
+              Title
               <input id="job-title" maxlength="200" required>
             </label>
 
             <label class="field">
-              شرح شغل
+              Job description
               <textarea id="job-description" maxlength="20000" rows="4" required></textarea>
             </label>
 
-            <button id="job-create" class="button secondary full" type="submit">ساخت پیش‌نویس</button>
+            <button id="job-create" class="button secondary full" type="submit">Create draft</button>
           </form>
         </details>
 
-        <nav class="sidebar-nav" aria-label="بخش‌های فضای کاری">
-          <a href="#candidates-panel">داوطلبان</a>
-          <a href="#profiles-panel">معیار و جست‌وجو</a>
-          <a href="#applications-panel">درخواست‌های استخدام</a>
-          <a href="#candidate-panel">پرونده و شواهد</a>
-          <a href="#access-panel">اعضا و دسترسی‌ها</a>
-          <a href="#account-panel">امنیت حساب و نشست‌ها</a>
+        <nav class="sidebar-nav" aria-label="Workspace sections">
+          <a href="#candidates-panel">Candidates</a>
+          <a href="#profiles-panel">Criteria and search</a>
+          <a href="#applications-panel">Applications</a>
+          <a href="#candidate-panel">Candidate and evidence</a>
+          <a href="#access-panel">Members and access</a>
+          <a href="#account-panel">Account security and sessions</a>
         </nav>
 
-        <p class="sidebar-note">سازمان جاری، محدودهٔ تمام پرونده‌های این صفحه است.</p>
+        <p class="sidebar-note">All records on this page belong to the selected organization.</p>
       </aside>
 
       <div class="workspace-main">
         <div class="workspace-heading">
           <div>
-            <p class="eyebrow">پیشخوان شواهد</p>
-            <h1 id="organization-heading">فضای کاری</h1>
+            <p class="eyebrow">Evidence workspace</p>
+            <h1 id="organization-heading">Workspace</h1>
           </div>
 
-          <button id="workspace-refresh" class="button secondary" type="button">تازه‌سازی فهرست‌ها</button>
+          <button id="workspace-refresh" class="button secondary" type="button">Refresh lists</button>
         </div>
 
         <div class="metrics">
           <article>
-            <span>نتیجهٔ جست‌وجوی شغل</span>
+            <span>Matching jobs</span>
             <strong id="jobs-count">—</strong>
           </article>
 
           <article>
-            <span>نتیجهٔ جست‌وجوی داوطلب</span>
+            <span>Matching candidates</span>
             <strong id="candidates-count">—</strong>
           </article>
 
-          <article class="metric-note">هر شاهد همراه با متن اصلی و منبع قابل بررسی است.</article>
+          <article class="metric-note">Each piece of evidence includes the original text and its source.</article>
         </div>
 
         <section id="profiles-panel" class="panel" aria-labelledby="profiles-title">
           <div class="panel-title">
-            <h2 id="profiles-title">شغل، معیار و جست‌وجو</h2>
-            <span class="badge">پروفایل ذخیره‌شده</span>
+            <h2 id="profiles-title">Job, criteria, and search</h2>
+            <span class="badge">Saved profile</span>
           </div>
 
           <div id="job-description-view"></div>
 
           <details class="disclosure">
-            <summary>ویرایش شغل و وضعیت انتشار</summary>
-            <p class="small muted">با تغییر انتخاب یا خواندن نسخهٔ جدید، تغییرات ذخیره‌نشدهٔ فرم جایگزین می‌شوند.</p>
+            <summary>Edit job and publication status</summary>
+            <p class="small muted">Changing the selection or loading a newer version replaces unsaved form edits.</p>
             <form id="job-edit-form">
               <fieldset id="job-edit-fields" disabled>
-                <label class="field">عنوان شغل<input id="job-edit-title" maxlength="200" required></label>
-                <label class="field">شرح شغل<textarea id="job-edit-description" maxlength="20000" rows="4" required></textarea></label>
-                <label class="field">وضعیت
+                <label class="field">Job title<input id="job-edit-title" maxlength="200" required></label>
+                <label class="field">Job description<textarea id="job-edit-description" maxlength="20000" rows="4" required></textarea></label>
+                <label class="field">Status
                   <select id="job-edit-status">
-                    <option value="draft">پیش‌نویس</option>
-                    <option value="open">باز</option>
-                    <option value="closed">بسته</option>
+                    <option value="draft">Draft</option>
+                    <option value="open">Open</option>
+                    <option value="closed">Closed</option>
                   </select>
                 </label>
-                <button class="button primary" type="submit">ذخیرهٔ ویرایش شغل</button>
+                <button class="button primary" type="submit">Save job changes</button>
               </fieldset>
             </form>
-            <button id="job-edit-refresh" class="button quiet" type="button" disabled>خواندن نسخهٔ جدید شغل</button>
+            <button id="job-edit-refresh" class="button quiet" type="button" disabled>Load latest job version</button>
             <p id="job-edit-version" class="small muted"></p>
           </details>
 
           <details class="disclosure">
-            <summary>ویرایش معیارها و عبارت جست‌وجو</summary>
+            <summary>Edit criteria and search query</summary>
 
             <fieldset id="profiles-fields" disabled>
               <form id="search-profile-form" class="search-profile">
                 <label class="field">
-                  عبارت بازیابی داوطلب
+                  Candidate retrieval query
                   <input id="search-query" maxlength="256" required>
                 </label>
 
-                <button id="search-save" class="button secondary" type="submit">ذخیرهٔ جست‌وجو</button>
+                <button id="search-save" class="button secondary" type="submit">Save search</button>
                 <span id="search-revision" class="small muted"></span>
               </form>
 
               <form id="match-profile-form">
-                <p class="small muted">هر معیار جدا بررسی می‌شود. ذخیره، مجموعهٔ معیارهای این شغل را جایگزین می‌کند.</p>
+                <p class="small muted">Each criterion is checked separately. Saving replaces this job's criteria.</p>
 
                 <div id="criteria-list"></div>
 
                 <div class="actions">
-                  <button id="criterion-add" class="button quiet" type="button">افزودن معیار</button>
-                  <button id="match-save" class="button primary" type="submit">ذخیرهٔ معیارها</button>
+                  <button id="criterion-add" class="button quiet" type="button">Add criterion</button>
+                  <button id="match-save" class="button primary" type="submit">Save criteria</button>
                   <span id="match-revision" class="small muted"></span>
                 </div>
               </form>
@@ -263,32 +263,32 @@
         </section>
 
         <section id="applications-panel" class="panel" aria-labelledby="applications-title">
-          <div class="panel-title"><h2 id="applications-title">درخواست‌های استخدام شغل جاری</h2></div>
+          <div class="panel-title"><h2 id="applications-title">Applications for the current job</h2></div>
           <fieldset id="application-fields" disabled>
             <p id="application-context" class="summary-note"></p>
             <div class="actions">
-              <button id="application-create" class="button primary" type="button" disabled>ثبت داوطلب انتخاب‌شده برای این شغل</button>
-              <button id="application-refresh" class="button secondary" type="button">تازه‌سازی درخواست‌ها</button>
+              <button id="application-create" class="button primary" type="button" disabled>Apply selected candidate to this job</button>
+              <button id="application-refresh" class="button secondary" type="button">Refresh applications</button>
             </div>
-            <form id="application-search-form" class="record-search" aria-label="جست‌وجوی درخواست‌های استخدام">
-              <label class="field">نام داوطلب یا عنوان شغل<input id="application-filter" type="search" maxlength="120"></label>
-              <label class="field">وضعیت
+            <form id="application-search-form" class="record-search" aria-label="Search applications">
+              <label class="field">Candidate name or job title<input id="application-filter" type="search" maxlength="120"></label>
+              <label class="field">Status
                 <select id="application-status-filter">
-                  <option value="">همه</option>
-                  <option value="applied">ثبت درخواست</option>
-                  <option value="screening">بررسی اولیه</option>
-                  <option value="interview">مصاحبه</option>
-                  <option value="offer">پیشنهاد همکاری</option>
-                  <option value="hired">استخدام‌شده</option>
-                  <option value="rejected">ردشده</option>
+                  <option value="">All</option>
+                  <option value="applied">Applied</option>
+                  <option value="screening">Screening</option>
+                  <option value="interview">Interview</option>
+                  <option value="offer">Offer</option>
+                  <option value="hired">Hired</option>
+                  <option value="rejected">Rejected</option>
                 </select>
               </label>
-              <button class="button secondary" type="submit">جست‌وجو</button>
+              <button class="button secondary" type="submit">Search</button>
             </form>
             <div id="application-list" class="application-list"></div>
             <div class="pager">
-              <button id="application-previous" class="button quiet" type="button" disabled>قبلی</button>
-              <button id="application-next" class="button quiet" type="button" disabled>بعدی</button>
+              <button id="application-previous" class="button quiet" type="button" disabled>Previous</button>
+              <button id="application-next" class="button quiet" type="button" disabled>Next</button>
               <p id="application-page-info" class="small muted" role="status" aria-live="polite"></p>
             </div>
           </fieldset>
@@ -297,71 +297,71 @@
         <div class="review-grid">
           <section id="candidates-panel" class="panel" aria-labelledby="candidates-title">
             <div class="panel-title">
-              <h2 id="candidates-title">داوطلبان</h2>
+              <h2 id="candidates-title">Candidates</h2>
               <span id="candidate-list-count" class="small muted"></span>
             </div>
 
             <fieldset id="candidate-browser-fields" disabled>
-            <form id="candidate-search-form" class="record-search" aria-label="جست‌وجوی داوطلبان">
-              <label class="field">نام، ایمیل، عنوان یا موقعیت
+            <form id="candidate-search-form" class="record-search" aria-label="Search candidates">
+              <label class="field">Name, email, headline, or location
                 <input id="candidate-filter" type="search" maxlength="120">
               </label>
-              <button class="button secondary" type="submit">جست‌وجو</button>
+              <button class="button secondary" type="submit">Search</button>
             </form>
 
             <details class="disclosure">
-              <summary>افزودن داوطلب</summary>
+              <summary>Add candidate</summary>
 
               <form id="candidate-form" class="form-grid">
                 <label class="field">
-                  نام کامل
+                  Full name
                   <input id="candidate-name" maxlength="200" required>
                 </label>
 
                 <label class="field">
-                  ایمیل
+                  Email
                   <input id="candidate-email" type="email" dir="ltr" maxlength="320">
                 </label>
 
                 <label class="field">
-                  عنوان حرفه‌ای
+                  Headline
                   <input id="candidate-headline" maxlength="300">
                 </label>
 
                 <label class="field">
-                  موقعیت
+                  Location
                   <input id="candidate-location" maxlength="200">
                 </label>
 
-                <button id="candidate-create" class="button primary" type="submit">ثبت داوطلب</button>
+                <button id="candidate-create" class="button primary" type="submit">Create candidate</button>
               </form>
             </details>
 
             <div id="candidate-list" class="candidate-list"></div>
             <div class="pager">
-              <button id="candidate-previous" class="button quiet" type="button" disabled>قبلی</button>
-              <button id="candidate-next" class="button quiet" type="button" disabled>بعدی</button>
+              <button id="candidate-previous" class="button quiet" type="button" disabled>Previous</button>
+              <button id="candidate-next" class="button quiet" type="button" disabled>Next</button>
               <p id="candidate-page-info" class="small muted" role="status" aria-live="polite"></p>
             </div>
             </fieldset>
 
             <details class="disclosure">
-              <summary>بازیابی با پروفایل شغل</summary>
+              <summary>Retrieve using the job profile</summary>
 
               <form id="retrieval-form" class="actions">
                 <label class="field">
-                  روش
+                  Method
                   <select id="retrieval-mode">
-                    <option value="lexical">واژگانی</option>
-                    <option value="semantic">معنایی</option>
-                    <option value="hybrid">ترکیبی</option>
+                    <option value="lexical">Lexical</option>
+                    <option value="semantic">Semantic</option>
+                    <option value="hybrid">Hybrid</option>
                   </select>
                 </label>
 
-                <label class="check"><input id="retrieval-applicants" type="checkbox">فقط متقاضیان این شغل</label>
+                <label class="check"><input id="retrieval-applicants" type="checkbox">Only applicants for this job</label>
 
-                <button id="retrieval-run" class="button secondary" type="submit">بازیابی</button>
-                <button id="retrieval-cancel" class="button quiet" type="button" disabled>لغو انتظار</button>
+                <button id="retrieval-run" class="button secondary" type="submit">Retrieve</button>
+                <button id="retrieval-cancel" class="button quiet" type="button" disabled>Cancel wait</button>
               </form>
 
               <p id="retrieval-progress" class="small muted" role="status" aria-live="polite"></p>
@@ -370,43 +370,43 @@
               <div id="retrieval-results"></div>
 
               <div class="actions">
-                <button id="retrieval-previous" class="button quiet" type="button" disabled>قبلی</button>
-                <button id="retrieval-next" class="button quiet" type="button" disabled>بعدی</button>
+                <button id="retrieval-previous" class="button quiet" type="button" disabled>Previous</button>
+                <button id="retrieval-next" class="button quiet" type="button" disabled>Next</button>
               </div>
             </details>
           </section>
 
           <section id="candidate-panel" class="panel dossier" aria-labelledby="candidate-title">
             <div class="panel-title">
-              <h2 id="candidate-title">پرونده و شواهد</h2>
-              <span class="badge">منبع‌محور</span>
+              <h2 id="candidate-title">Candidate and evidence</h2>
+              <span class="badge">Source-backed</span>
             </div>
 
             <div id="candidate-heading"></div>
 
             <details class="disclosure">
-              <summary>ویرایش اطلاعات داوطلب</summary>
-              <p class="small muted">خالی‌کردن اطلاعات اختیاری، مقدار قبلی را پاک می‌کند. تغییر انتخاب یا خواندن نسخهٔ جدید، تغییرات ذخیره‌نشدهٔ فرم را جایگزین می‌کند.</p>
+              <summary>Edit candidate details</summary>
+              <p class="small muted">Clearing an optional field removes its previous value. Changing the selection or loading a newer version replaces unsaved form edits.</p>
               <form id="candidate-edit-form">
                 <fieldset id="candidate-edit-fields" disabled>
-                  <label class="field">نام و نام خانوادگی<input id="candidate-edit-full_name" maxlength="200" required></label>
-                  <label class="field">ایمیل<input id="candidate-edit-email" type="email" maxlength="320" dir="ltr"></label>
-                  <label class="field">تلفن<input id="candidate-edit-phone" type="tel" maxlength="50" dir="ltr"></label>
-                  <label class="field">عنوان حرفه‌ای<input id="candidate-edit-headline" maxlength="300"></label>
-                  <label class="field">موقعیت<input id="candidate-edit-location" maxlength="200"></label>
-                  <label class="field">خلاصهٔ حرفه‌ای<textarea id="candidate-edit-summary" maxlength="20000" rows="4"></textarea></label>
-                  <button class="button primary" type="submit">ذخیرهٔ ویرایش داوطلب</button>
+                  <label class="field">Full name<input id="candidate-edit-full_name" maxlength="200" required></label>
+                  <label class="field">Email<input id="candidate-edit-email" type="email" maxlength="320" dir="ltr"></label>
+                  <label class="field">Phone<input id="candidate-edit-phone" type="tel" maxlength="50" dir="ltr"></label>
+                  <label class="field">Headline<input id="candidate-edit-headline" maxlength="300"></label>
+                  <label class="field">Location<input id="candidate-edit-location" maxlength="200"></label>
+                  <label class="field">Professional summary<textarea id="candidate-edit-summary" maxlength="20000" rows="4"></textarea></label>
+                  <button class="button primary" type="submit">Save candidate changes</button>
                 </fieldset>
               </form>
-              <button id="candidate-edit-refresh" class="button quiet" type="button" disabled>خواندن نسخهٔ جدید داوطلب</button>
+              <button id="candidate-edit-refresh" class="button quiet" type="button" disabled>Load latest candidate version</button>
               <p id="candidate-edit-version" class="small muted"></p>
             </details>
 
             <fieldset id="candidate-fields" disabled>
               <div class="actions">
-                <button id="evidence-load" class="button secondary" type="button">خواندن شواهد معیارها</button>
-                <button id="explanation-run" class="button primary" type="button">توضیح مستند</button>
-                <button id="explanation-cancel" class="button quiet" type="button" disabled>لغو انتظار</button>
+                <button id="evidence-load" class="button secondary" type="button">Load criterion evidence</button>
+                <button id="explanation-run" class="button primary" type="button">Grounded brief</button>
+                <button id="explanation-cancel" class="button quiet" type="button" disabled>Cancel wait</button>
               </div>
 
               <p id="explanation-progress" class="small muted" role="status" aria-live="polite"></p>
@@ -414,20 +414,20 @@
               <div id="evidence-results"></div>
 
               <details class="disclosure" open>
-                <summary>رزومه‌های PDF</summary>
+                <summary>PDF resumes</summary>
 
                 <fieldset id="document-tools" disabled>
-                <p class="small muted">پس از استخراج و ساخت بخش‌های جست‌وجو، آماده‌سازی جست‌وجوی معنایی را درخواست کنید.</p>
+                <p class="small muted">After extraction and chunking, request embeddings to enable semantic search.</p>
 
                 <form id="document-form">
                   <label class="field">
-                    فایل PDF؛ حداکثر ۱۰ MiB
+                    PDF file; maximum 10 MiB
                     <input id="document-file" type="file" accept="application/pdf,.pdf" required>
                   </label>
 
                   <div class="actions">
-                    <button id="document-upload" class="button secondary" type="submit">بارگذاری</button>
-                    <button id="documents-refresh" class="button quiet" type="button">تازه‌سازی اسناد</button>
+                    <button id="document-upload" class="button secondary" type="submit">Upload</button>
+                    <button id="documents-refresh" class="button quiet" type="button">Refresh documents</button>
                   </div>
                 </form>
 
@@ -436,8 +436,8 @@
                 <div id="documents-list"></div>
 
                 <div class="actions">
-                  <button id="documents-previous" class="button quiet" type="button" disabled>قبلی</button>
-                  <button id="documents-next" class="button quiet" type="button" disabled>بعدی</button>
+                  <button id="documents-previous" class="button quiet" type="button" disabled>Previous</button>
+                  <button id="documents-next" class="button quiet" type="button" disabled>Next</button>
                 </div>
                 </fieldset>
               </details>
@@ -447,72 +447,72 @@
 
         <section id="access-panel" class="panel" aria-labelledby="access-title">
           <div class="panel-title">
-            <h2 id="access-title">اعضا و دسترسی‌های سازمان</h2>
-            <button id="access-refresh" class="button secondary" type="button" disabled>تازه‌سازی دسترسی‌ها</button>
+            <h2 id="access-title">Organization members and access</h2>
+            <button id="access-refresh" class="button secondary" type="button" disabled>Refresh access</button>
           </div>
           <p id="access-role" class="summary-note" role="status" aria-live="polite"></p>
           <div id="access-owner" hidden>
-            <p class="small muted">دعوت، تغییر نقش و حذف عضو به رمز فعلی و تأیید شما نیاز دارند. آخرین مالک فعال حفظ می‌شود.</p>
+            <p class="small muted">Invitations, role changes, and member removal require your current password and confirmation. The last active owner is protected.</p>
             <fieldset id="access-owner-fields" disabled>
-              <label class="field">رمز فعلی برای تأیید تغییر دسترسی
+              <label class="field">Current password to confirm access changes
                 <input id="access-password" type="password" autocomplete="current-password" maxlength="128" dir="ltr">
               </label>
               <form id="invitation-form" class="form-grid">
-                <label class="field">ایمیل دریافت‌کننده<input id="invitation-email" type="email" maxlength="320" dir="ltr" required></label>
-                <label class="field">نقش دعوت‌شده
-                  <select id="invitation-role"><option value="recruiter">استخدام‌کننده</option><option value="viewer">فقط مشاهده</option></select>
+                <label class="field">Recipient email<input id="invitation-email" type="email" maxlength="320" dir="ltr" required></label>
+                <label class="field">Invitation role
+                  <select id="invitation-role"><option value="recruiter">Recruiter</option><option value="viewer">Viewer</option></select>
                 </label>
-                <button class="button primary" type="submit">ساخت دعوت</button>
+                <button class="button primary" type="submit">Create invitation</button>
               </form>
-              <label class="field">کد دعوت؛ فقط این‌بار نمایش داده می‌شود
+              <label class="field">Invitation code; shown only once
                 <input id="invitation-secret" readonly autocomplete="off" dir="ltr">
               </label>
-              <p class="small muted">کد ۴۸ ساعت معتبر است و فقط با حساب همان ایمیل پذیرفته می‌شود. آن را مستقیم به همان فرد بدهید؛ پس از تغییر سازمان یا خروج، از این صفحه پاک می‌شود.</p>
+              <p class="small muted">The code expires after 48 hours and can only be accepted by the matching email account. Share it directly with that person. Changing organization or signing out clears it from this page.</p>
               <div id="access-invitations"></div>
-              <h3>اعضا</h3>
+              <h3>Members</h3>
               <div id="access-members"></div>
             </fieldset>
             <div class="pager">
-              <button id="access-previous" class="button quiet" type="button" disabled>اعضای قبلی</button>
-              <button id="access-next" class="button quiet" type="button" disabled>اعضای بعدی</button>
+              <button id="access-previous" class="button quiet" type="button" disabled>Previous members</button>
+              <button id="access-next" class="button quiet" type="button" disabled>Next members</button>
             </div>
-            <h3>۲۰ رویداد اخیر دسترسی</h3>
+            <h3>Latest 20 access events</h3>
             <div id="access-events"></div>
           </div>
           <p id="access-page-info" class="small muted" role="status" aria-live="polite"></p>
         </section>
 
         <section id="account-panel" class="panel" aria-labelledby="account-title">
-          <div class="panel-title"><h2 id="account-title">امنیت حساب و نشست‌ها</h2></div>
+          <div class="panel-title"><h2 id="account-title">Account security and sessions</h2></div>
           <p id="session-expiry" class="small muted"></p>
-          <p class="small muted">خروج، نشست همین صفحه را در سرور باطل می‌کند. بستن یا تازه‌سازی صفحه، رمز ورود ذخیره نمی‌کند؛ نشست قبلی تا انقضا یا ابطال در فهرست باقی می‌ماند.</p>
+          <p class="small muted">Signing out revokes this page's server session. Refreshing or closing the page stores no credentials; the previous session remains listed until expiry or revocation.</p>
           <fieldset id="account-fields" disabled>
-            <label class="field">رمز فعلی برای تغییر رمز یا ابطال نشست‌های دیگر
+            <label class="field">Current password for password changes or revoking other sessions
               <input id="account-password" type="password" autocomplete="current-password" maxlength="128" dir="ltr">
             </label>
             <div class="actions">
-              <button id="sessions-refresh" class="button secondary" type="button">خواندن نشست‌های فعال</button>
-              <button id="sessions-revoke-others" class="button danger" type="button">ابطال همهٔ نشست‌های دیگر</button>
+              <button id="sessions-refresh" class="button secondary" type="button">Load active sessions</button>
+              <button id="sessions-revoke-others" class="button danger" type="button">Revoke all other sessions</button>
             </div>
             <div id="sessions-list"></div>
             <form id="password-form" class="form-grid">
-              <label class="field">رمز جدید؛ حداقل ۱۵ کاراکتر
+              <label class="field">New password; at least 15 characters
                 <input id="account-new-password" type="password" autocomplete="new-password" minlength="15" maxlength="128" dir="ltr" required>
               </label>
-              <label class="field">تکرار رمز جدید
+              <label class="field">Confirm new password
                 <input id="account-confirm-password" type="password" autocomplete="new-password" minlength="15" maxlength="128" dir="ltr" required>
               </label>
-              <button class="button primary" type="submit">تغییر رمز و ابطال همهٔ نشست‌ها</button>
+              <button class="button primary" type="submit">Change password and revoke all sessions</button>
             </form>
           </fieldset>
           <details class="disclosure">
-            <summary>پذیرفتن دعوت یک سازمان</summary>
+            <summary>Accept an organization invitation</summary>
             <form id="invitation-accept-form">
               <fieldset id="invitation-accept-fields" disabled>
-                <label class="field">کد دعوت؛ با حساب ایمیل دریافت‌کننده وارد شوید
+                <label class="field">Invitation code; sign in with the recipient email account
                   <input id="invitation-token" type="password" autocomplete="off" minlength="43" maxlength="43" dir="ltr" required>
                 </label>
-                <button class="button secondary" type="submit">پذیرفتن دعوت</button>
+                <button class="button secondary" type="submit">Accept invitation</button>
               </fieldset>
             </form>
           </details>
@@ -524,18 +524,18 @@
       <form id="confirm-form">
         <h2 id="confirm-title"></h2>
         <p id="confirm-message"></p>
-        <label id="confirm-label" class="field" hidden>برای تأیید حذف، نام فایل را دقیق وارد کنید.
+        <label id="confirm-label" class="field" hidden>Type the exact filename to confirm deletion.
           <input id="confirm-input" maxlength="200" autocomplete="off" dir="auto">
         </label>
         <div class="actions">
-          <button id="confirm-cancel" class="button secondary" type="button">انصراف</button>
-          <button id="confirm-accept" class="button primary" type="submit">تأیید</button>
+          <button id="confirm-cancel" class="button secondary" type="button">Cancel</button>
+          <button id="confirm-accept" class="button primary" type="submit">Confirm</button>
         </div>
       </form>
     </dialog>
 
     <noscript>
-      <p class="notice error">برای استفاده از فضای کاری، JavaScript مرورگر باید فعال باشد.</p>
+      <p class="notice error">Enable JavaScript in your browser to use this workspace.</p>
     </noscript>
   </main>
 </body>

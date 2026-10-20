@@ -3,8 +3,8 @@ import { createPager, mutationNotice } from "./paging.mjs";
 import { orgPath, uuid } from "./session.mjs";
 
 export const applicationLabels = Object.freeze({
-  applied: "ثبت درخواست", screening: "بررسی اولیه", interview: "مصاحبه",
-  offer: "پیشنهاد همکاری", hired: "استخدام‌شده", rejected: "ردشده",
+  applied: "Applied", screening: "Screening", interview: "Interview",
+  offer: "Offer", hired: "Hired", rejected: "Rejected",
 });
 
 export function createApplications(ctx) {
@@ -27,15 +27,15 @@ export function createApplications(ctx) {
         const title = node("h3", item.candidate_name);
         title.dir = "auto";
         card.append(title, node("p", `${item.job_title} · ${applicationLabels[item.status]}`, "small muted"));
-        card.append(button("بازکردن پرونده", () => ctx.selectCandidateId(item.candidate_id)));
+        card.append(button("Open candidate", () => ctx.selectCandidateId(item.candidate_id)));
         if (item.allowed_statuses.length) {
-          const select = field("وضعیت بعدی", { value: "",
-            options: [["", "انتخاب وضعیت"], ...item.allowed_statuses.map(value => [value, applicationLabels[value]])] });
+          const select = field("Next status", { value: "",
+            options: [["", "Select a status"], ...item.allowed_statuses.map(value => [value, applicationLabels[value]])] });
           select.input.requiresWrite = true;
-          const save = button("ثبت تغییر وضعیت", async () => {
+          const save = button("Update status", async () => {
             const target = select.input.value;
             if (!item.allowed_statuses.includes(target)) return;
-            const accepted = await ctx.confirm.ask({ title: "تأیید تغییر وضعیت",
+            const accepted = await ctx.confirm.ask({ title: "Confirm status change",
               message: `${item.candidate_name} · ${item.job_title}: ${applicationLabels[item.status]} ← ${applicationLabels[target]}` });
             if (!accepted || ctx.session.organization?.id !== org.id || ctx.session.job?.id !== job.id) return;
             await ctx.perform("application-transition", signal => ctx.api.request(
@@ -46,7 +46,7 @@ export function createApplications(ctx) {
                 throw new Error("INVALID_SCOPE");
               ctx.candidates.clearResults();
               const refreshed = await pager.load();
-              if (owned()) mutationNotice("وضعیت ثبت شد", refreshed);
+              if (owned()) mutationNotice("Status updated", refreshed);
             }, save, true);
           });
           save.requiresWrite = true;
@@ -54,11 +54,11 @@ export function createApplications(ctx) {
           save.disabled = true;
           select.input.addEventListener("change", () => { save.disabled = !ctx.access.canWrite || !save.canAct(); });
           card.append(select.wrapper, save);
-        } else card.append(node("p", "این درخواست در وضعیت نهایی است.", "small muted"));
+        } else card.append(node("p", "This application is in a terminal state.", "small muted"));
         content.append(card);
       }
       $("application-list").replaceChildren(content);
-      if (!page.items.length) empty($("application-list"), "درخواستی مطابق این فیلتر وجود ندارد.");
+      if (!page.items.length) empty($("application-list"), "No applications match these filters.");
     },
   });
   $("application-create").addEventListener("click", async () => {
@@ -73,7 +73,7 @@ export function createApplications(ctx) {
       $("application-status-filter").value = "";
       $("application-filter").value = "";
       const refreshed = await pager.load({ reset: true });
-      if (owned()) mutationNotice("درخواست استخدام ثبت شد", refreshed);
+      if (owned()) mutationNotice("Application created", refreshed);
     }, $("application-create"), true);
   });
   $("application-refresh").addEventListener("click", () => pager.load());

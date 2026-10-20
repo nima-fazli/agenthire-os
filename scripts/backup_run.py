@@ -31,6 +31,7 @@ from scripts.ci_plan import (
     repository_root,
 )
 from scripts.ci_verify import isolated_environment, preflight, write_environment
+from scripts.recovery_postgres import RecoveryDatabaseFailure, require_empty_database
 
 BASELINE = "07778952be9ff9a6fd86064a3fa2c7dcd048c824"
 
@@ -128,11 +129,8 @@ def restore(store, identity, root, report, *, runner=subprocess.run, fixture_see
             target.call(("--profile", "smoke", "build", "api", "migrate", "extraction-worker", "smoke"), timeout=1200)
             target.call(("up", "--detach", "--wait", "--wait-timeout", "90", "postgres"))
             pg = ("exec", "-T", "postgres")
-            tables = target.call((*pg, "psql", "--no-psqlrc", "--no-password", "--tuples-only", "--no-align",
-                                  "--username=agenthire_ci", "--dbname=agenthire_ci", "--command",
-                                  "SELECT count(*) FROM pg_tables WHERE schemaname='public'"))
-            if tables.strip() != "0":
-                raise ValueError("Backup destination must be empty.")
+            require_empty_database(root, target.prefix, environment, runner=runner)
+            report["target_database_check"] = "passed"
             if not re.search(r"PostgreSQL\) 18\.", target.call((*pg, "pg_restore", "--version"))):
                 raise ValueError("PostgreSQL 18 restore tool required.")
             store.verify(identity)
@@ -215,6 +213,8 @@ def main(argv=None, *, runner=subprocess.run):
                         capture(store, source, root / ".env", revision, "normal", report)
     except KeyboardInterrupt:
         report.update(status="interrupted", diagnostic="operation_interrupted")
+    except RecoveryDatabaseFailure as error:
+        report.update(status="failed", diagnostic=str(error), database_failure=error.details)
     except (OSError, ValueError, KeyError, TypeError, RuntimeError, zipfile.BadZipFile,
             subprocess.SubprocessError, BackupFailure):
         report.update(status="failed", diagnostic="backup_operation_unavailable")

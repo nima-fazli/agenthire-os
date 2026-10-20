@@ -21,7 +21,6 @@ from app.core.semantic_embeddings import (
     MODEL_TAG,
     ModelIdentity,
 )
-from app.core.tokens import create_access_token
 from app.db.session import async_session_factory, engine
 from app.models import (
     Application,
@@ -43,6 +42,7 @@ from app.schemas.semantic_retrieval import SemanticDocumentQuery, SemanticJobQue
 from app.services.job_retrieval import JobRetrievalService
 from app.services.semantic_retrieval import SemanticRetrievalService
 from scripts.docker_smoke import SmokeFailure, log_ok
+from scripts.fixture_session import fixture_session
 from scripts.semantic_retrieval_evaluation import evaluate, load_reference
 
 
@@ -88,6 +88,8 @@ async def run(live=False):
                 Organization(id=org, name="Semantic fixture", slug=f"semantic-{org.hex}"),
                 Organization(id=foreign, name="Excluded fixture", slug=f"semantic-{foreign.hex}")])
             await session.flush()
+            access_session, token = fixture_session(user, settings)
+            session.add(access_session)
             session.add(OrganizationMembership(organization_id=org, user_id=user))
             session.add(Job(id=job, organization_id=org, title="Reference role", description="Synthetic role"))
             session.add_all([Candidate(id=identifier, organization_id=foreign if key == "foreign" else org,
@@ -160,7 +162,6 @@ async def run(live=False):
         log_ok("Three-mode quality comparison, candidate grouping, coverage and tenant/applicant scope")
 
         if live:
-            token = create_access_token(subject=user, settings=settings)
             url = os.environ.get("AGENTHIRE_API_BASE_URL", "http://127.0.0.1:8000").rstrip("/")
             request = urllib.request.Request(url + f"/organizations/{org}/semantic-search",
                 data=json.dumps({"q": "Python", "mode": "semantic", "limit": 1}).encode(),

@@ -13,7 +13,7 @@ export function createEditors(ctx) {
   function show(kind, record) {
     for (const name of fields[kind])
       $(`${prefix(kind)}-edit-${name}`).value = record?.[name] ?? "";
-    $(`${kind}-edit-version`).textContent = record ? "ویرایش بر اساس آخرین نسخهٔ خوانده‌شده" : "ابتدا یک مورد انتخاب کنید.";
+    $(`${kind}-edit-version`).textContent = record ? "Editing the latest loaded version" : "Select a record first.";
   }
 
   for (const kind of ["job", "candidate"]) {
@@ -34,7 +34,7 @@ export function createEditors(ctx) {
         const selected = kind === "job" ? await ctx.selectJob(updated) : await ctx.selectCandidate(updated);
         if (!owned()) return;
         const refreshed = kind === "job" ? await ctx.workspace.loadJobs() : await ctx.candidates.load();
-        if (owned()) mutationNotice(kind === "job" ? "شغل ویرایش شد" : "پرونده ویرایش شد",
+        if (owned()) mutationNotice(kind === "job" ? "Job updated" : "Candidate updated",
           selected === false || refreshed === false ? false : true);
       }, $(`${kind}-edit-fields`), true);
     });

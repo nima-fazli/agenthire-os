@@ -1,129 +1,94 @@
 # AgentHire OS
 
-A private recruiting workspace and API built with FastAPI, PostgreSQL/pgvector
-and locally hosted Ollama models. Scoped jobs, candidates and applications link
-to private PDFs, extraction, immutable chunks and traceable criterion evidence.
-Hiring decisions remain human; retrieval scores are not hiring probabilities.
+A private recruiting workspace built with FastAPI, PostgreSQL/pgvector, and local
+Ollama models. Manage jobs, candidates, applications, and private PDFs, then
+review criterion evidence with exact source text, Unicode offsets, and hashes.
+Recruiters retain responsibility for hiring decisions.
 
-## Engineering foundation
+## Capabilities
 
-- Tenant-scoped queries and relational constraints protect related records.
-- Extraction and embedding workers use leases, bounded attempts and fencing.
-- Versioned provenance retains exact Unicode source offsets and hashes.
-- Literal server search and bounded pages use consistent database snapshots.
-- Version-checked edits prevent silent overwrites of another recruiter's work.
-- Explicit transitions and confirmed PDF deletion remain human actions.
-- Revocable bearer sessions and server-enforced roles protect every tenant route.
-- Owner actions require the current password and serialize per organization.
-- Operational and recovery gates use isolated, owned synthetic resources.
+- Organization-scoped records and database-enforced tenant relationships.
+- Owner, recruiter, and viewer roles with revocable server-side sessions.
+- One-use, email-bound invitations and current-password confirmations.
+- Searchable lists, version-checked edits, and explicit application transitions.
+- Private PDF storage, leased extraction workers, and immutable source chunks.
+- Optional local semantic retrieval, hybrid ranking, and grounded evidence briefs.
+- Source-bound citations, independent quality evaluation, and retained recovery tools.
+
+The workspace, product messages, documentation, and generated operator receipts
+use English. The workspace uses left-to-right layout and Gregorian dates.
+Resume content remains Unicode-capable and is displayed without translation.
+Grounded briefs default to English; the explicit legacy API language option is
+preserved for compatibility. Multilingual test fixtures are evaluation data.
 
 ## Current checkpoint
 
-The accepted stage 2 checkpoint is main
-1865a7bae5815a083cfd6ad03a00ad202f08ebc6, with feature commit
-ea1c46acde2eeaa13c4c0c19b4c0bde9dc01fcc3. Observed native acceptance passed
-Windows Python 1763 plus 5 known platform skips, Docker Python 1768, Node 59,
-Ruff, 33 isolated CI checks and owned cleanup, the normal workload, recruiting
-HTTP smoke and healthy API plus two extraction workers. Its 381-file source
-ZIP and every file hash were independently verified. The archive SHA-256 was
-5505ca7d68fe13c00a9cf497ed7547ea4021f54905a9a7d3b3943d4958ff2ddf.
+The latest accepted main commit is
+`261dd607b740a8d91d0bafabe2cb268c276c1c75` (completion stage 3).
+The database head is `0017_access_sessions`.
 
-Stage 3 source adds access and sessions. Native acceptance of this source remains
-pending. The migration advances 0016_document_embeddings to 0017_access_sessions.
-Existing organizations give ownership to their earliest active member, or
-earliest member if none is active. Other existing members become recruiters.
-A new organization grants its creator ownership. Review owners after upgrading.
+Stage 4 adds broader AI quality evaluation and English workspace copy. Its
+first native attempt passed Ruff, 1,879 Windows Python tests with five known
+platform skips, and 70 Node tests. Docker then reported three failures because
+its test image omitted source files required by acceptance checks. The test
+image now includes those inputs and has a regression test reproducing the
+three reported checks. Native Docker and live-model acceptance remain pending.
 
-| Role | Read records/evidence | Edit recruiting data | Manage access |
-| --- | --- | --- | --- |
-| owner | Yes | Yes | Yes, with current password |
-| recruiter | Yes | Yes | No |
-| viewer | Yes | No | No |
+## Development
 
-Viewers can request read-only semantic retrieval and grounded explanations.
-The owner panel lists 20 members per page and the latest 20 access events.
-Invitations grant recruiter/viewer access, are bound to the recipient email,
-expire after 48 hours, and are consumed once. Only the SHA-256 token digest is
-stored. Send the code manually; this project does not send invitation emails.
-Promotion to owner is an explicit, confirmed role change. The last active
-owner cannot be demoted or removed.
+See [development](docs/development.md) for initial setup. The workspace is served
+by the API at `/workspace/`. Keep the existing checkout and Git history.
 
-Login creates a database session and a signed token with its session ID and
-expiry. Every authenticated request checks the active user and unrevoked,
-unexpired session. Each user has at most 10 active sessions; a new login
-revokes the oldest excess sessions. Logout revokes only its own session.
-Revoking other sessions and changing passwords require the current password;
-password changes revoke every session, including the current one.
-Five failed login/confirmation attempts per normalized email in 15 minutes
-return a generic throttle response. Password work has two process-local slots.
-This is not an edge-level rate limiter; deployment controls remain a release gate.
+```powershell
+uv sync --locked --no-install-project
+uv run --locked --no-sync ruff check .
+uv run --locked --no-sync pytest -rs -W error
+node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs tests/recruiter_api_errors.test.mjs tests/recruiter_workflow.test.mjs
+```
 
-Pre-stage-3 tokens require a new login. The UI keeps tokens in memory and clears
-private state on logout/expiry. Closing/reloading a page does not revoke its
-server session; revoke it from another login or let it expire. A request already
-accepted before a revocation may finish. UI role changes appear on refresh;
-the server checks current roles on each new request.
+Stage 4 acceptance verifies its cumulative source manifest, native checks,
+isolated CI, live local models, cleanup, and the normal English workspace.
+Without `--execute`, it prints a plan only.
 
-Pinned dependencies, local model settings, encoding/dimensions and feature flags
-retain their existing contracts. Live model quality, final bilingual design,
-comprehensive browser QA and release deployment remain later stages.
+```powershell
+uv run --locked --no-sync python -m scripts.ai_quality_acceptance
+uv run --locked --no-sync python -m scripts.ai_quality_acceptance --execute --finalize
+```
 
-## Run and verify
+Execution requires the accepted stage 3 main history, schema 0017, a healthy
+normal stack, and `AgentHire_OS_Recovery_Current.md` beside the repository.
+After all gates pass, it rebuilds the normal API/smoke images, checks the English
+HTTP shell, creates two scoped local commits, exports source, and appends a
+receipt. It also updates `AgentHire_OS_Recovery_Complete.md` when that file exists.
+It does not push or deploy to an external host.
 
-Initial setup is in [development](docs/development.md). The workspace is served
-at /workspace/ by the API. Keep the existing checkout and Git history.
+## AI quality and operations
 
-    uv sync --locked --no-install-project
-    uv run --locked --no-sync ruff check .
-    uv run --locked --no-sync pytest -rs -W error
-    node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs tests/recruiter_api_errors.test.mjs tests/recruiter_workflow.test.mjs
+```powershell
+uv run --locked --no-sync python -m scripts.ai_quality_run
+uv run --locked --no-sync python -m scripts.ai_quality_run --execute
+uv run --locked --no-sync python -m scripts.source_bundle --execute
+```
 
-The stage 3 driver validates all 40 complete delivered files against its manifest.
-Default invocation only prints a plan. Execution runs native checks and isolated
-CI, retains a private normal-data backup before building new normal images,
-then migrates, checks drift and runs the real-stack access/recruiting HTTP smoke.
+The quality runner owns a fresh isolated Compose project, publishes no host
+ports, downloads the existing free local model tags into its own volume, and
+removes only its resources. Normal model volumes and feature flags are retained.
+The quality report remains outside Git even when evaluation fails.
 
-    uv run --locked --no-sync python -m scripts.access_acceptance
-    uv run --locked --no-sync python -m scripts.access_acceptance --execute --finalize
-
-Use accepted stage 2 main and the existing healthy normal stack. The driver
-requires AgentHire_OS_Recovery_Current.md beside the repository. It creates or
-uses the private AgentHire_OS_Backups directory beside the repository, preserves
-the normal environment and two extraction replicas, and does not reset volumes.
-The pre-migration capture deliberately uses the accepted stage 2 smoke image.
-Keep that image until capture succeeds. A retry on schema 0017 requires the
-verified retained 0016 backup receipt and unchanged environment.
-
-The pre-migration backup is schema 0016: restore it with the accepted stage 2
-source in a separate recovery checkout using the existing isolated restore
-procedure. Keep the accepted stage 2 source ZIP and Git history. The stage 3
-restore tool expects schema 0017; it does not automatically downgrade/migrate an
-old backup or overwrite the normal database. See [backups](docs/backups.md).
-
-Only after checks pass does finalization create two scoped local commits,
-export committed source and append the native receipt to the personal recovery
-file. Interrupted finalization can recognize its exact scoped commits. It does
-not push. Historical stage 1/2 acceptance drivers remain pinned to their stages.
-
-## Source and operational data
-
-    uv run --locked --no-sync python -m scripts.source_bundle
-    uv run --locked --no-sync python -m scripts.source_bundle --execute
-
-Source exports include CI and per-file hashes; they exclude private configuration,
-PDFs, Git history and personal recovery files. A source ZIP does not back up the
-database, documents or Git history. See [source distribution](docs/source-distribution.md),
-[backups](docs/backups.md) and [recovery](docs/recovery.md).
+A source ZIP excludes private configuration, PDFs, database contents, and Git
+history. It is not a data backup. The retained stage 3 pre-migration backup uses
+schema 0016 and must be restored with the accepted stage 2 source in an isolated
+recovery checkout. Current backup/restore tooling expects schema 0017.
 
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Recruiting workflow](docs/recruiting-workflow.md)
 - [Recruiter workspace](docs/recruiter-ui.md)
-- [Verification history](docs/verification.md)
-- [Operations](docs/operations.md)
-- [Incident runbook](docs/operations-runbook.md)
-- [Retrieval](docs/retrieval.md)
 - [Semantic retrieval](docs/semantic.md)
-- [Grounded explanations](docs/explanations.md)
+- [Grounded briefs](docs/explanations.md)
+- [AI quality](docs/ai-quality.md)
+- [Operations](docs/operations.md)
+- [Backups](docs/backups.md)
+- [Recovery](docs/recovery.md)
 - [Roadmap](docs/roadmap.md)

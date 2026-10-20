@@ -30,15 +30,15 @@ export function createCandidates(ctx) {
         if (item.organization_id !== ctx.session.organization?.id) throw new Error("INVALID_SCOPE");
         const card = node("article", "", "candidate-card");
         const heading = node("h3", item.full_name);
-        const subtitle = node("p", item.headline || "عنوان حرفه‌ای ثبت نشده", "muted");
-        const place = node("p", item.location || "موقعیت ثبت نشده", "muted");
+        const subtitle = node("p", item.headline || "No headline provided", "muted");
+        const place = node("p", item.location || "No location provided", "muted");
         heading.dir = subtitle.dir = place.dir = "auto";
-        card.append(heading, subtitle, place, button("بررسی پرونده", () => ctx.selectCandidate(item)));
+        card.append(heading, subtitle, place, button("Review candidate", () => ctx.selectCandidate(item)));
         content.append(card);
       }
       $("candidate-list").replaceChildren(content);
-      if (!page.items.length) empty($("candidate-list"), "داوطلبی مطابق این جست‌وجو پیدا نشد.");
-      $("candidate-list-count").textContent = `${page.total} نتیجه`;
+      if (!page.items.length) empty($("candidate-list"), "No candidates match this search.");
+      $("candidate-list-count").textContent = `${page.total} results`;
       $("candidates-count").textContent = String(page.total);
     },
   });
@@ -83,7 +83,7 @@ export function createCandidates(ctx) {
         const listed = await pager.load({ reset: true });
         if (!owned()) return;
         const selected = await ctx.selectCandidate(result);
-        if (owned()) mutationNotice("داوطلب ثبت شد", listed === false || selected === false ? false : true);
+        if (owned()) mutationNotice("Candidate created", listed === false || selected === false ? false : true);
       },
       $("candidate-create"),
       true,
@@ -113,11 +113,11 @@ export function createCandidates(ctx) {
     stop();
     empty(
       $("retrieval-results"),
-      "انتظار لغو شد؛ می‌توانید درخواست تازه‌ای ارسال کنید.",
+      "Waiting cancelled. You can submit a new request.",
     );
 
     $("retrieval-progress").textContent =
-      "ممکن است پردازش مدل قبلی روی سرور هنوز ادامه داشته باشد.";
+      "The previous model request may still be running on the server.";
   });
 
   async function retrieve() {
@@ -137,7 +137,7 @@ export function createCandidates(ctx) {
       ? `${base}/candidate-retrieval?limit=20&offset=${offset}&applicants_only=${$("retrieval-applicants").checked}`
       : `${base}/semantic-candidate-retrieval`;
 
-    empty($("retrieval-results"), "در حال بازیابی…");
+    empty($("retrieval-results"), "Retrieving candidates…");
     $("retrieval-info").textContent = "";
     $("retrieval-next").disabled =
       $("retrieval-previous").disabled = true;
@@ -145,7 +145,7 @@ export function createCandidates(ctx) {
     const progress = () => {
       if (current === generation) {
         $("retrieval-progress").textContent =
-          `${Math.floor((performance.now() - started) / 1000)} ثانیه انتظار…`;
+          `Waiting ${Math.floor((performance.now() - started) / 1000)} seconds…`;
       }
     };
 
@@ -190,15 +190,15 @@ export function createCandidates(ctx) {
 
           card.append(
             title,
-            badge(`ارتباط: ${hit.score.toFixed(4)}`),
+            badge(`Relevance: ${hit.score.toFixed(4)}`),
           );
 
           for (const witness of hit.evidence ?? [hit]) {
             card.append(
               details(
                 witness.branch === "semantic"
-                  ? "منبع معنایی"
-                  : "منبع واژگانی",
+                  ? "Semantic source"
+                  : "Lexical source",
                 sourceView(witness),
               ),
             );
@@ -206,7 +206,7 @@ export function createCandidates(ctx) {
 
           card.append(
             button(
-              "بررسی پرونده",
+              "Review candidate",
               () => ctx.selectCandidateId(hit.candidate_id),
             ),
           );
@@ -221,8 +221,8 @@ export function createCandidates(ctx) {
           : result.pooled_count;
 
         $("retrieval-info").textContent = mode === "lexical"
-          ? `${result.items.length} نتیجه؛ کل ${total}؛ از جایگاه ${offset + 1}`
-          : `${result.items.length} نتیجه از مجموعهٔ محدود ${total}؛ ${result.embedded_chunks} از ${result.eligible_chunks} بخش دارای embedding${result.pool_truncated ? "؛ مجموعه بریده شده است" : ""}`;
+          ? `${result.items.length} results; ${total} total; starting at ${offset + 1}`
+          : `${result.items.length} results from a bounded pool of ${total}; ${result.embedded_chunks} of ${result.eligible_chunks} chunks embedded${result.pool_truncated ? "; pool truncated" : ""}`;
 
         $("retrieval-next").disabled =
           mode !== "lexical" ||
@@ -235,7 +235,7 @@ export function createCandidates(ctx) {
         if (!result.items.length) {
           empty(
             $("retrieval-results"),
-            "با این پروفایل نتیجه‌ای یافت نشد.",
+            "No results match this job profile.",
           );
         }
       },
@@ -248,12 +248,12 @@ export function createCandidates(ctx) {
     timer = null;
 
     $("retrieval-progress").textContent =
-      "انتظار این درخواست پایان یافت.";
+      "This request is no longer being awaited.";
 
     if (completed === false) {
       empty(
         $("retrieval-results"),
-        "بازیابی کامل نشد؛ پیام خطا را بررسی کنید.",
+        "Retrieval did not complete. Review the error message.",
       );
     }
   }
@@ -264,11 +264,11 @@ export function createCandidates(ctx) {
 
     empty(
       $("retrieval-results"),
-      "نتایج جست‌وجوی ذخیره‌شدهٔ شغل اینجا نمایش داده می‌شود.",
+      "Results from the saved job search profile appear here.",
     );
 
     $("retrieval-info").textContent =
-      "امتیاز ارتباط، احتمال استخدام یا میزان مهارت نیست.";
+      "Relevance scores are not hiring probabilities or measures of proficiency.";
 
     $("retrieval-next").disabled =
       $("retrieval-previous").disabled = true;

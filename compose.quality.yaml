@@ -1,0 +1,12 @@
+services:
+  api:
+    environment:
+      AGENTHIRE_SEMANTIC_ENABLED: "true"
+      AGENTHIRE_EXPLANATIONS_ENABLED: "true"
+      AGENTHIRE_ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+  smoke:
+    environment:
+      AGENTHIRE_SEMANTIC_ENABLED: "true"
+      AGENTHIRE_EXPLANATIONS_ENABLED: "true"
+      AGENTHIRE_ACCESS_TOKEN_EXPIRE_MINUTES: "60"
+      AGENTHIRE_QUALITY_PROJECT: ${AGENTHIRE_CI_PROJECT:?Quality project required}

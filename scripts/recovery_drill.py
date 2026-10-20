@@ -20,6 +20,7 @@ from scripts.ci_plan import (
     repository_root,
 )
 from scripts.ci_verify import isolated_environment, preflight, write_environment
+from scripts.recovery_postgres import RecoveryDatabaseFailure, require_empty_database
 
 FILES = ("database.dump", "documents.zip")
 LIMIT = 256 * 1024 * 1024
@@ -174,11 +175,9 @@ def execute(root, runner=subprocess.run):
                 print("[recovery] restore into empty isolated destination", flush=True)
                 call(dst, dst_env, ("--profile", "smoke", "build", "api", "migrate", "extraction-worker", "smoke"), timeout=1200)
                 call(dst, dst_env, ("up", "--detach", "--wait", "--wait-timeout", "90", "postgres"))
-                tables = call(dst, dst_env, (*pg, "psql", "--no-psqlrc", "--no-password", "--tuples-only", "--no-align",
-                                            "--username=agenthire_ci", "--dbname=agenthire_ci", "--command",
-                                            "SELECT count(*) FROM pg_tables WHERE schemaname='public'"))
-                if tables.strip() != "0":
-                    raise RecoveryFailure("recovery_destination_not_empty")
+                report["last_operation"] = "psql"
+                require_empty_database(root, dst, dst_env, runner=runner)
+                report["target_database_check"] = "passed"
                 restore_version = call(dst, dst_env, (*pg, "pg_restore", "--version"))
                 if not re.search(r"PostgreSQL\) 18\.", restore_version):
                     raise RecoveryFailure("recovery_tool_version")
@@ -223,6 +222,9 @@ def execute(root, runner=subprocess.run):
                     report["phase"] = "cleanup"
     except KeyboardInterrupt:
         report.update(status="interrupted", diagnostic="interrupted")
+    except RecoveryDatabaseFailure as error:
+        report.update(status="failed", diagnostic=report["diagnostic"] or str(error), database_failure=error.details,
+                      last_operation=error.details["operation"])
     except RecoveryFailure as error:
         report["status"] = "failed"
         report["diagnostic"] = report["diagnostic"] or str(error)

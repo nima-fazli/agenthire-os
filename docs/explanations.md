@@ -1,78 +1,69 @@
 # Grounded local evidence briefs
 
-POST /organizations/{org}/jobs/{job}/candidates/{candidate}/grounded-explanation
-accepts only a presentation language, fa or en; the default remains fa.
-The endpoint requires authentication, membership, scoped parents and a saved
-match profile. Success is private/no-store. Sources and criteria are server-owned.
+`POST /organizations/{org}/jobs/{job}/candidates/{candidate}/grounded-explanation`
+accepts a presentation language. English (`en`) is the default and the workspace
+always requests English. Explicit `fa` requests remain a legacy API capability;
+there is no Farsi workspace mode. Source quotations retain their original text.
+
+A tracked session, membership, scoped parents, and a saved criterion profile are
+required. Successful responses are private/no-store. The model selects source
+anchors; it does not decide suitability or recommend hiring.
 
 ## Version 2 citation contract
 
-explanation_version is extractive-brief-v2, prompt_version is
-local-quote-selection-v2 and citation_policy is assigned-chunk-context-v1.
+| Contract | Value |
+| --- | --- |
+| explanation_version | extractive-brief-v2 |
+| prompt_version | local-quote-selection-v2 |
+| citation_policy | assigned-chunk-context-v1 |
+| matching_version | criterion-evidence-v1 |
 
-The local model selects one exact contiguous anchor per witnessed criterion.
-The anchor must contain all complete lexical query terms, occur in the assigned
-source and not cut a source token. English case, Unicode compatibility forms
-and the specified Persian/Arabic variants are folded only for relevance checks.
-The original source text is never rewritten. This guard does not replace or
-modify PostgreSQL's frozen simple-fold-v1 search normalization.
+For each witnessed criterion, the model selects an exact contiguous anchor of at
+most 400 characters from its assigned source. All complete query terms must be
+present. The original source text is never rewritten.
 
-The server returns the entire original assigned chunk as citation.quote, not
-the short anchor. Its absolute Unicode code-point start/end offsets and SHA-256
-cover that full chunk. Negation and qualifications before or after the anchor
-therefore remain visible. Multiple criteria may cite the same full context.
-The model anchor remains limited to 400 characters; context is bounded by the
-existing maximum chunk size of 4000 characters and the 6000-byte prompt budget.
+The server retains the entire assigned chunk as citation.quote, including any
+negation or qualification before/after the anchor. Offsets use Unicode code
+points. Hashes identify the full quote, chunk, source text, and source document.
+The maximum chunk size remains 4000 characters and the prompt budget remains
+6000 UTF-8 bytes. Text is not silently sliced to fit.
 
-This is a source quotation, not a semantic entailment check or a proficiency
-assessment. Information outside the assigned chunk is not reconstructed.
-No evidence means no current searchable witness, not absence of a skill.
-Scores are retrieval relevance, never hiring probability.
+This is not a semantic entailment or proficiency test. Context outside the
+assigned chunk is not reconstructed. No evidence means no current searchable
+witness. The server writes summary and missing-evidence prose; free model prose,
+tools, and hiring recommendations are not accepted.
 
-## Grounding and lifecycle
+## Validation and failure behavior
 
-The server writes summaries and missing-evidence states. Free model prose,
-tools, hiring recommendations and suitability scores are not accepted.
-Exact source hashes, slice identity, parent scope, membership, profile revision
-and newest source are verified before/after generation. Changed snapshots are
-discarded. PDF filesystem bytes are not reread by the citation SQL checks.
-Generated text is not stored. Read sessions close around model work.
+Hashes, slices, parents, membership, profile revision, and latest source are
+verified before/after inference. Changed snapshots are discarded. Citation SQL
+does not reopen PDF filesystem bytes. Generated text is not persisted, and read
+transactions are closed around model work.
 
-Invalid/invented/unrelated model output fails closed. Revoked access is 404,
-changed evidence is 409, oversized input is 422 and model/grounding failures
-use safe 503 codes. There is no automatic repair, retry or provider fallback.
-An all-missing-evidence result needs no model call and claims no token usage.
+| Condition | Result |
+| --- | --- |
+| No evidence | No model call and no claimed token usage |
+| Missing access or candidate | 404 |
+| Snapshot changed | 409 |
+| Input exceeds prompt budget | 422 |
+| Invalid/ungrounded output or provider failure | 503 with a safe code |
 
-## Local runtime and privacy
+There is no automatic output repair, retry, or provider fallback. Duplicate JSON
+keys, nonfinite numbers, extra fields, and truncated outputs remain rejected.
 
-AGENTHIRE_EXPLANATIONS_ENABLED remains false by default. qwen3:0.6b uses the
-existing directly local Ollama HTTP transport; inventory digest is pinned and
-rechecked. CPU-only, nonstreaming, think=false, num_ctx=8192, num_predict=1024
-and keep_alive=0 remain unchanged. No dependency or migration is added.
+## Local runtime and evaluation
 
-Prompts contain untrusted source text, which may contain personal information.
-Omitting identity metadata does not anonymize it. Prompt size is bounded without
-silent slicing. Duplicate JSON keys, nonfinite values, extra fields and truncated
-model output remain rejected. One API-process transport slot remains occupied
-until its worker thread ends, including after caller cancellation/timeouts.
-This is not distributed rate limiting. Model contention still needs measurement.
+`AGENTHIRE_EXPLANATIONS_ENABLED` remains false by default. The existing
+`qwen3:0.6b` runtime is CPU-only with think=false, num_ctx=8192, num_predict=1024,
+temperature=0, seed=17, and keep_alive=0. Digest identity is checked before/after.
+The process-local transport lock remains held until the model thread finishes,
+including when a waiting request is cancelled. It is not distributed rate limiting.
 
-## Evaluation and acceptance
+Resume text may contain personal information. Excluding identity metadata does
+not anonymize the source. Keep the local model endpoint private.
 
-grounded_explanations_v2.json is a new nine-case synthetic reference. It includes
-English/Persian negation, qualifications in a later sentence, multiple terms,
-punctuated terms, hostile instructions and no documents. The independent
-grounded-quality-v2 evaluator expects the complete literal fixture context,
-offsets and hashes; it does not call the production anchor validator.
-Reports contain case outcomes/timings/provenance, not private source text.
-
-Existing isolated CI uses a deterministic generator against real PostgreSQL;
-it does not download or invoke a model. Live inference is opt-in through the
-existing scripts.grounded_explanations_smoke --live-model operator workflow.
-Lifecycle mutation checks and owned cleanup remain mandatory.
-
-Stage 12's accepted v1 CPU samples on 2026-10-13 took roughly 10-19 seconds
-for the three generated cases. Those historical samples and the old four-case
-fixture do not certify v2. Native/live v2 acceptance is pending. Wider corpus,
-fairness, concurrent capacity and latency-percentile evidence remain future work.
-Schema remains 0016_document_embeddings. See stabilization.md and verification.md.
+The older nine-case v2 reference and lifecycle mutation tests remain. Their live
+session path is compatible with stage 3. Historical v1 measurements do not
+certify v2. The broader reference and independent evaluator are documented in
+[AI quality](ai-quality.md). Native live acceptance is still pending.
+Schema remains `0017_access_sessions`; stage 4 adds no migration.
