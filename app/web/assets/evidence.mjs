@@ -12,6 +12,7 @@ import {
 import { jobPath, uuid } from "./session.mjs";
 import { ApiError } from "./api.mjs";
 import { createDocuments } from "./documents.mjs";
+import { avatar, icon } from "./ui.mjs";
 
 const sourceStates = {
   no_documents: "No documents",
@@ -78,7 +79,7 @@ export function createEvidence(ctx) {
     const content = document.createDocumentFragment();
     const summary = result.summary;
 
-    content.append(
+    if (!explanation) content.append(
       node(
         "p",
         `Required evidence: ${summary.required_with_evidence}/${summary.required_total} · Preferred: ${summary.preferred_with_evidence}/${summary.preferred_total}`,
@@ -140,22 +141,20 @@ export function createEvidence(ctx) {
       card.append(
         node(
           "p",
-          explanation
-            ? criterion.text
-            : criterion.evidence
-              ? "Lexical evidence was found. Review the original source."
-              : "No evidence was found in the current sources. This does not establish a lack of skill.",
+          criterion.evidence
+            ? "Mention found in source text. Review its context below."
+            : "No evidence was found in the current sources. This does not establish a lack of skill.",
           "small muted",
         ),
       );
 
       if (criterion.evidence) {
-        card.append(
-          sourceView(
-            criterion.evidence,
-            explanation ? criterion.citation : null,
-          ),
-        );
+        if (explanation && !criterion.citation) throw new Error("INVALID_CITATION");
+        // Validate the complete source before displaying even a collapsed brief.
+        card.append(details(
+          "View source evidence",
+          sourceView(criterion.evidence, explanation ? criterion.citation : null),
+        ));
       }
 
       content.append(card);
@@ -204,7 +203,7 @@ export function createEvidence(ctx) {
 
     $("explanation-cancel").disabled = false;
 
-    await ctx.perform(
+    const completed = await ctx.perform(
       "explanation",
       signal => ctx.api.request(
         `${evidencePath()}/grounded-explanation`,
@@ -223,8 +222,11 @@ export function createEvidence(ctx) {
       clearInterval(timer);
       timer = null;
       $("explanation-cancel").disabled = true;
-      $("explanation-progress").textContent =
-        "This request is no longer being awaited.";
+      $("explanation-progress").textContent = completed === true
+        ? "Grounded brief is ready."
+        : completed === false
+          ? "Brief generation did not complete. Review the error message."
+          : "";
     }
   });
 
@@ -237,15 +239,36 @@ export function createEvidence(ctx) {
 
   async function selectCandidate(item) {
     clearResults();
-
-    $("candidate-heading").replaceChildren(
-      node("h3", item.full_name),
-      node(
-        "p",
-        item.headline || "No headline provided",
-        "muted",
-      ),
-    );
+    const identity = node("div", "", "dossier-identity");
+    const title = node("h3", item.full_name);
+    title.dir = "auto";
+    const headline = node("p", item.headline || "No headline provided", "muted");
+    headline.dir = "auto";
+    identity.append(title, headline);
+    if (item.location) {
+      const location = node("p", "", "dossier-location");
+      location.append(icon("geo-alt"), node("span", item.location));
+      identity.append(location);
+    }
+    const heading = $("candidate-heading");
+    if (heading.dataset) heading.dataset.candidateId = item.id;
+    heading.replaceChildren(avatar(item, true), identity);
+    const overview = $("candidate-overview");
+    const summary = node("p", item.summary || "No professional summary has been added yet.", "candidate-summary");
+    summary.dir = "auto";
+    overview.replaceChildren(node("h3", "About this candidate"), summary);
+    const facts = node("dl", "", "candidate-facts");
+    for (const [label, value] of [["Email", item.email], ["Location", item.location], ["Phone", item.phone]]) {
+      if (!value) continue;
+      const detail = node("dd", value);
+      detail.dir = "auto";
+      facts.append(node("dt", label), detail);
+    }
+    overview.append(facts);
+    const sourceNote = node("div", "", "candidate-source-note");
+    sourceNote.append(icon("file-earmark-text"), node("h3", "The full story is in the source"),
+      node("p", "Open Resume to manage documents, or Evidence to review criteria against original sources.", "muted small"));
+    overview.append(sourceNote);
 
     $("candidate-fields").disabled = false;
     $("evidence-load").disabled =
@@ -263,6 +286,8 @@ export function createEvidence(ctx) {
       $("candidate-heading"),
       "Select a candidate from the list to review their record.",
     );
+    if ($("candidate-heading").dataset) delete $("candidate-heading").dataset.candidateId;
+    empty($("candidate-overview"), "Choose a candidate to see their overview.");
   }
 
   return { reset, selectCandidate, clearResults };

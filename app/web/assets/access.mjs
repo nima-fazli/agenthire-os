@@ -43,7 +43,9 @@ export function createAccess(ctx, expired) {
     $("access-role").textContent = "Your role: " + labels[role];
     $("access-owner").hidden = role !== "owner";
     $("access-page-info").textContent = role === "owner"
-      ? "Members " + (offset + 1) + " to " + (offset + value.members.length) + "; up to 20 members per page"
+      ? value.members.length
+        ? "Members " + (offset + 1) + " to " + (offset + value.members.length) + "; up to 20 members per page"
+        : "No members in this result."
       : "You can read the organization records available to your role.";
     const members = document.createDocumentFragment();
     for (const item of value.members) {

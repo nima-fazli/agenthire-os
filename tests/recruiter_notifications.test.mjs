@@ -32,6 +32,49 @@ function fixture() {
   };
 }
 
+function historyFixture() {
+  class HistoryElement extends Element {
+    constructor() { super(); this.attributes = {}; }
+    setAttribute(name, value) { this.attributes[name] = value; }
+  }
+  const fields = Object.fromEntries(["region", "status", "alert", "dismiss", "title", "symbol",
+    "history", "count", "toggle", "markRead", "clearHistoryButton"].map(key => [key, new HistoryElement()]));
+  fields.history.ownerDocument = { createElement: () => new HistoryElement() };
+  const clock = { setTimeout: () => 1, clearTimeout() {} };
+  return { fields, feedback: createNotifications(fields, clock) };
+}
+
+test("notification history bounds memory, keeps text inert, and marks actual unread entries", () => {
+  const { fields, feedback } = historyFixture();
+  for (let i = 0; i < 24; i++) feedback.show(`Saved ${i}`);
+  assert.equal(fields.history.children.length, 20);
+  assert.equal(fields.count.textContent, "20");
+  assert.doesNotMatch(fields.history.textContent, /Saved 0Workspace/);
+  feedback.show("<img src=x onerror=alert(1)>", true);
+  assert.match(fields.history.textContent, /<img src=x onerror=alert\(1\)>/);
+  fields.markRead.emit("click");
+  assert.equal(fields.count.hidden, true);
+  assert.equal(fields.markRead.disabled, true);
+  assert.ok(fields.history.children.every(item => item.className.includes("is-read")));
+  feedback.show("A new update");
+  assert.equal(fields.count.textContent, "1");
+});
+
+test("resetting workspace history removes prior private text and active feedback", () => {
+  const { fields, feedback } = historyFixture();
+  feedback.show("PRIVATE ORGANIZATION / CANDIDATE", true);
+  feedback.resetHistory();
+  assert.doesNotMatch(fields.history.textContent, /PRIVATE/);
+  assert.equal(fields.status.textContent, "");
+  assert.equal(fields.alert.textContent, "");
+  assert.equal(fields.region.hidden, true);
+  assert.equal(fields.count.hidden, true);
+  assert.equal(fields.clearHistoryButton.disabled, true);
+  feedback.show("New organization saved");
+  fields.clearHistoryButton.emit("click");
+  assert.doesNotMatch(fields.history.textContent, /New organization/);
+});
+
 test("success popup is dismissible and clears its timer", () => {
   const { fields, timers, feedback } = fixture();
 

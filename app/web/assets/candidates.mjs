@@ -11,6 +11,7 @@ import {
 
 import { orgPath, jobPath, uuid } from "./session.mjs";
 import { createPager, mutationNotice } from "./paging.mjs";
+import { avatar, icon } from "./ui.mjs";
 
 export function createCandidates(ctx) {
   let offset = 0;
@@ -22,18 +23,28 @@ export function createCandidates(ctx) {
     name: "candidate", url: () => ctx.session.organization
       ? `${orgPath(ctx.session.organization.id)}/recruiting/candidates` : null,
     filters: () => ({ q: $("candidate-filter").value.trim() }),
-    clear: text => empty($("candidate-list"), text),
+    clear: text => {
+      empty($("candidate-list"), text);
+      $("candidate-list-count").textContent = $("candidates-count").textContent = "—";
+    },
     render(page) {
       const content = document.createDocumentFragment();
       for (const item of page.items) {
         uuid(item.id);
         if (item.organization_id !== ctx.session.organization?.id) throw new Error("INVALID_SCOPE");
         const card = node("article", "", "candidate-card");
+        if (card.dataset) card.dataset.candidateId = item.id;
+        const person = node("div", "", "candidate-person");
+        const identity = node("div", "", "candidate-identity");
         const heading = node("h3", item.full_name);
         const subtitle = node("p", item.headline || "No headline provided", "muted");
         const place = node("p", item.location || "No location provided", "muted");
         heading.dir = subtitle.dir = place.dir = "auto";
-        card.append(heading, subtitle, place, button("Review candidate", () => ctx.selectCandidate(item)));
+        identity.append(heading, subtitle);
+        person.append(avatar(item), identity);
+        const review = button("Review candidate", () => ctx.selectCandidate(item), "button quiet candidate-open");
+        review.append(icon("arrow-up-right"));
+        card.append(person, place, review);
         content.append(card);
       }
       $("candidate-list").replaceChildren(content);
@@ -247,8 +258,11 @@ export function createCandidates(ctx) {
     clearInterval(timer);
     timer = null;
 
-    $("retrieval-progress").textContent =
-      "This request is no longer being awaited.";
+    $("retrieval-progress").textContent = completed === true
+      ? "Retrieval complete."
+      : completed === false
+        ? "Retrieval did not complete. Review the error message."
+        : "";
 
     if (completed === false) {
       empty(

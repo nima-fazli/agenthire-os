@@ -39,6 +39,17 @@ def test_all_declared_assets_are_served_with_explicit_types_and_no_cache(client,
     assert response.headers["x-content-type-options"] == "nosniff"
 
 
+@pytest.mark.parametrize("filename", sorted(ui.MEDIA_ASSETS))
+def test_frontend_media_is_allowlisted_local_and_served_without_cache(client, filename):
+    response = client.get(f"/workspace/assets/{filename}")
+    assert response.status_code == 200 and response.content
+    assert response.headers["content-type"].startswith(ui.MEDIA_ASSETS[filename])
+    assert response.headers["cache-control"] == "no-store"
+    assert "img-src 'self'" in response.headers["content-security-policy"]
+    if filename.endswith(".svg"):
+        assert b"<script" not in response.content and b"onload=" not in response.content
+
+
 @pytest.mark.parametrize("filename", ["router.py", "private.pdf", "config.py", "missing.mjs", "..%2Frouter.py"])
 def test_private_or_unknown_files_are_never_exposed(client, filename):
     response = client.get(f"/workspace/assets/{filename}")

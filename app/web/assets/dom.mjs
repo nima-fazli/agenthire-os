@@ -66,6 +66,7 @@ export function field(label, { value = "", required = false, max, options } = {}
   }
 
   input.value = value ?? "";
+  input.ariaLabel = String(label);
   input.required = required;
   input.dir = "auto";
 

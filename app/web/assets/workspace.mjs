@@ -34,7 +34,10 @@ export function createWorkspace(ctx) {
     name: "job", url: () => ctx.session.organization
       ? `${orgPath(ctx.session.organization.id)}/recruiting/jobs` : null,
     filters: () => ({ q: $("job-filter").value.trim(), status: $("job-status-filter").value }),
-    clear: label => options($("job-select"), [], label, ctx.session.job),
+    clear: label => {
+      options($("job-select"), [], label, ctx.session.job);
+      $("jobs-count").textContent = "—";
+    },
     async render(page, preferred) {
       if (page.items.some(item => item.organization_id !== ctx.session.organization?.id)) throw new Error("INVALID_SCOPE");
       jobs = page.items;

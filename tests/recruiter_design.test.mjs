@@ -114,12 +114,13 @@ test("section target lookup refuses unrecognized and inherited names", () => {
   assert.equal(viewForTarget("constructor"), null);
 });
 
-test("opening an application candidate moves to the dossier after its heading is rendered", () => {
+test("opening an application candidate focuses its dossier and keeps the applications view", () => {
   const f = fixture(); f.elements.get("shell").hidden = false; f.controller.refresh();
   f.controller.show("applications");
   f.elements.get("candidate-heading").querySelector = () => ({ tagName: "H3" });
   f.observers[0]();
-  assert.equal(f.panels[0].hidden, false);
+  assert.equal(f.panels[0].hidden, true);
+  assert.equal(f.panels[2].hidden, false);
   assert.equal(f.doc.activeElement.id, "candidate-panel");
 });
 
@@ -142,6 +143,10 @@ test("browser fixture is identical for UTF-8 BOM and Windows line endings", asyn
   try {
     const source = new URL("../app/web/assets/", import.meta.url);
     for (const name of await readdir(source)) {
+      if (/\.(webp|woff2)$/.test(name)) {
+        await writeFile(join(assets, name), await readFile(new URL(name, source)));
+        continue;
+      }
       const text = await readFile(new URL(name, source), "utf8");
       await writeFile(join(assets, name), "\uFEFF" + text.replace(/^\uFEFF/, "").replaceAll("\r\n", "\n").replaceAll("\n", "\r\n"));
     }
@@ -224,7 +229,7 @@ test("bundled browser fixture boots, signs in and renders the synthetic workspac
     candidate.hidden = false;
     assert.equal(activateControl("candidate", controls), true);
     await f.wait(() => heading.textContent.includes("Alex Morgan"), "Application candidate must open");
-    assert.equal(links[0].attributes["aria-current"], "page");
+    assert.equal(links[2].attributes["aria-current"], "page");
     assert.equal(f.document.activeElement, f.elements.get("candidate-panel"));
     links[2].click();
     const status = visit(application).find(element => element.tagName === "SELECT");

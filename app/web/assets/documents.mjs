@@ -3,6 +3,34 @@ import { candidatePath, uuid } from "./session.mjs";
 import { mutationNotice } from "./paging.mjs";
 
 const states = Object.freeze({ queued: "Queued", running: "Running", succeeded: "Succeeded", failed: "Failed" });
+const failures = Object.freeze({
+  PDF_NO_TEXT: "No selectable text was found. Upload a PDF with selectable text; scanned images need OCR first.",
+  PDF_ENCRYPTED: "The PDF is encrypted. Upload an unencrypted copy.",
+  PDF_INVALID: "The PDF could not be read. Export it again and upload the new copy.",
+  PDF_PAGE_LIMIT: "The PDF exceeds the configured page limit. Upload a shorter document.",
+  PDF_TEXT_LIMIT: "The PDF exceeds the configured text limit. Upload a shorter document.",
+  PDF_TIMEOUT: "PDF extraction timed out. Try a smaller PDF.",
+  PDF_RESOURCE_LIMIT: "PDF extraction exceeded its resource limit. Try a smaller PDF.",
+  PDF_TOOLS_UNAVAILABLE: "PDF extraction tools are unavailable on the server.",
+  PDF_INTEGRITY_MISMATCH: "The stored PDF could not be verified. Upload a new copy.",
+  EMBEDDING_PROVIDER_UNAVAILABLE: "The local retrieval model is unavailable. Check the model service before retrying.",
+  EMBEDDING_PROVIDER_TIMEOUT: "The local retrieval model timed out. Check its service before retrying.",
+  EMBEDDING_MODEL_NOT_INSTALLED: "The local retrieval model is not installed.",
+  EMBEDDING_MODEL_CHANGED: "The retrieval model changed during processing. Retry with the configured model.",
+});
+
+function failureDetail(value) {
+  if (value.status !== "failed") return "";
+  const message = Object.hasOwn(failures, value.failure_code) ? failures[value.failure_code]
+    : "Processing failed. Check the server logs for details.";
+  return ` · ${message}`;
+}
+
+function extractionStatus(value) {
+  if (value.status === "not_requested") return "Extraction has not been requested.";
+  if (!Object.hasOwn(states, value.status)) throw new Error("INVALID_RESPONSE");
+  return `Extraction: ${states[value.status]}${failureDetail(value)}`;
+}
 
 export function createDocuments(ctx, validatePdf) {
   let offset = 0;
@@ -39,7 +67,7 @@ export function createDocuments(ctx, validatePdf) {
     ctx.cancel("document-read");
     $("documents-previous").disabled = $("documents-next").disabled = true;
     empty($("documents-list"), "Loading documents…");
-    return ctx.perform("documents", async signal => {
+    const completed = await ctx.perform("documents", async signal => {
       let items = await ctx.api.request(`${root}?limit=11&offset=${offset}`, { signal });
       if (!Array.isArray(items) || items.length > 11) throw new Error("INVALID_RESPONSE");
       if (!items.length && offset) {
@@ -63,10 +91,10 @@ export function createDocuments(ctx, validatePdf) {
             signal => ctx.api.request(`${path}/extraction`, { signal }).catch(error => {
               if (error.code === "EXTRACTION_NOT_FOUND") return { status: "not_requested" };
               throw error;
-            }), value => { state.textContent = states[value.status] ?? "Extraction has not been requested."; })),
+            }), value => { state.textContent = extractionStatus(value); })),
           writeButton("Start / retry extraction", () => action(path,
             signal => ctx.api.request(`${path}/extraction`, { method: "POST", data: { retry: true }, signal }),
-            value => { state.textContent = states[value.status]; clearEmbedding(); notice("Extraction requested. Refresh its status to follow progress."); }, true)),
+            value => { state.textContent = extractionStatus(value); clearEmbedding(); notice("Extraction requested. Refresh its status to follow progress."); }, true)),
           writeButton("Build search chunks", () => action(path,
             signal => ctx.api.request(`${path}/chunks`, { method: "POST", data: {}, signal }),
             () => { state.textContent = "Search chunks are ready."; clearEmbedding(); ctx.profileChanged(); }, true)),
@@ -83,7 +111,7 @@ export function createDocuments(ctx, validatePdf) {
         refresh.disabled = !jobs.has(item.id);
         function clearEmbedding() {
           jobs.delete(item.id); refresh.disabled = true;
-          embedding.textContent = "After chunks are ready, refresh the embedding status.";
+          embedding.textContent = "After chunks are ready, select Start / view embeddings.";
         }
         function showEmbedding(job) {
           uuid(job.id);
@@ -92,7 +120,7 @@ export function createDocuments(ctx, validatePdf) {
               || !Number.isSafeInteger(job.attempts) || job.attempts < 0)
             throw new Error("INVALID_RESPONSE");
           jobs.set(item.id, job);
-          embedding.textContent = `Embeddings: ${states[job.status]} · ${job.chunk_count} chunks · attempt ${job.attempts}`;
+          embedding.textContent = `Embeddings: ${states[job.status]} · ${job.chunk_count} chunks · attempt ${job.attempts}${failureDetail(job)}`;
           refresh.disabled = false;
         }
         if (jobs.has(item.id)) showEmbedding(jobs.get(item.id));
@@ -125,6 +153,13 @@ export function createDocuments(ctx, validatePdf) {
       $("documents-previous").disabled = offset === 0;
       $("documents-next").disabled = items.length <= 10 || offset >= 10000;
     }, $("documents-refresh"));
+    if (completed === false && base() === root) {
+      empty($("documents-list"), "Documents could not be loaded. Refresh documents to try again.");
+      $("documents-info").textContent = "Loading failed";
+      $("documents-previous").disabled = offset === 0;
+      $("documents-next").disabled = true;
+    }
+    return completed;
   }
 
   $("document-form").addEventListener("submit", async event => {

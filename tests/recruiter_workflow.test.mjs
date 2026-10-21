@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { scenario, ids } from "./helpers/recruiter_scenario.mjs";
-import { json } from "./helpers/recruiter_dom.mjs";
+import { json, visit } from "./helpers/recruiter_dom.mjs";
 import { sourceParts } from "../app/web/assets/dom.mjs";
 import { validatePage } from "../app/web/assets/paging.mjs";
 
@@ -407,4 +407,154 @@ test("session expiry clears the account even when no API request is in flight", 
     await dom.wait(() => Boolean(message));
     assert.equal(dom.elements.get("session-expiry").textContent, "");
   } finally { access.clearSession(); await dom.restore(); }
+});
+
+
+function briefFixture(candidateId) {
+  const text = "Source resume marker. Python FastAPI PostgreSQL Docker pytest. " + "Context retained. ".repeat(100);
+  const evidence = { document_id: ids.document, chunk_set_id: ids.other, chunk_position: 0,
+    filename: "synthetic.pdf", start_offset: 100, end_offset: 100 + Array.from(text).length, text,
+    chunk_sha256: "a".repeat(64), source_text_sha256: "b".repeat(64), source_document_sha256: "c".repeat(64) };
+  return { job_id: ids.job, candidate_id: candidateId, profile_revision: 1,
+    summary: { required_with_evidence: 3, required_total: 3, preferred_with_evidence: 2, preferred_total: 2, source_status: "indexed" },
+    summary_text: "Textual evidence was found for 3 of 3 required and 2 of 2 preferred criteria.",
+    scope_note: "This brief reports source text; it does not establish proficiency.",
+    generator_used: true, model_tag: "qwen3:0.6b", model_digest: "d".repeat(64), elapsed_ms: 15,
+    criteria: ["Python", "FastAPI", "PostgreSQL", "Docker", "Automated tests"].map((label, i) => ({
+      key: `criterion_${i}`, label, importance: i < 3 ? "required" : "preferred", state: "mention_observed",
+      text: `For "${label}", the source states: "${text}".`, evidence,
+      citation: { ...evidence, quote: text, quote_sha256: "e".repeat(64) },
+    })),
+  };
+}
+
+function visibleText(element) {
+  if (!element) return "";
+  if (element.tag === "details" && !element.open)
+    return visibleText(element.children.find(item => item.tag === "summary"));
+  return (element.text ?? "") + element.children.map(visibleText).join("");
+}
+
+test("grounded brief stays concise while complete validated sources remain expandable", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    await f.selectCandidate();
+    const result = briefFixture(state.candidates[0].id);
+    state.intercept = path => path.endsWith("/grounded-explanation") ? json(result) : undefined;
+    e.get("explanation-run").click();
+    await wait(() => e.get("evidence-results").textContent.includes(result.summary_text));
+    const view = e.get("evidence-results"), visible = visibleText(view);
+    assert.ok(visible.length < 2000, `Brief is too long: ${visible.length}`);
+    assert.equal(visible.includes("Source resume marker"), false);
+    assert.equal(visible.includes("Context retained"), false);
+    assert.equal(view.textContent.split("Source resume marker").length - 1, 5);
+    const sources = visit(view).filter(item => item.tag === "details" && item.children[0]?.textContent === "View source evidence");
+    assert.equal(sources.length, 5);
+    assert.ok(sources.every(item => !item.open));
+    sources[0].open = true;
+    assert.ok(visibleText(view).includes(result.criteria[0].citation.quote));
+    await wait(() => e.get("explanation-progress").textContent === "Grounded brief is ready.");
+    assert.equal(e.get("explanation-cancel").disabled, true);
+  } finally { await f.close(); }
+});
+
+test("collapsed brief sources are validated before any successful report is displayed", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    await f.selectCandidate();
+    const result = briefFixture(state.candidates[0].id);
+    result.criteria[0].citation.quote = "Fabricated evidence";
+    state.intercept = path => path.endsWith("/grounded-explanation") ? json(result) : undefined;
+    e.get("explanation-run").click();
+    await wait(() => e.get("notice").textContent.includes("response could not be used"));
+    assert.equal(e.get("evidence-results").textContent.includes(result.summary_text), false);
+    assert.equal(e.get("explanation-progress").textContent, "Brief generation did not complete. Review the error message.");
+  } finally { await f.close(); }
+});
+
+test("brief and retrieval failures replace waiting indicators with accurate outcomes", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    await f.selectCandidate();
+    state.intercept = path => path.endsWith("/grounded-explanation")
+      ? json({ error: { code: "EXPLANATIONS_DISABLED" } }, 503)
+      : path.includes("/candidate-retrieval?") ? json({ job_id: ids.job, items: [], total: 0 }) : undefined;
+    e.get("explanation-run").click();
+    await wait(() => e.get("notice").textContent.includes("Grounded briefs are disabled"));
+    assert.equal(e.get("explanation-progress").textContent, "Brief generation did not complete. Review the error message.");
+    e.get("retrieval-form").emit("submit");
+    await wait(() => e.get("retrieval-results").textContent.includes("No results match"));
+    assert.equal(e.get("retrieval-progress").textContent, "Retrieval complete.");
+    state.intercept = path => path.includes("/candidate-retrieval?") ? json({ error: { code: "HTTP_ERROR" } }, 503) : undefined;
+    e.get("retrieval-form").emit("submit");
+    await wait(() => e.get("retrieval-results").textContent.includes("Retrieval did not complete"));
+    assert.equal(e.get("retrieval-progress").textContent, "Retrieval did not complete. Review the error message.");
+  } finally { await f.close(); }
+});
+
+test("failed list refreshes cannot leave counters from previous results", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    await f.selectCandidate(); e.get("application-create").click();
+    await wait(() => e.get("applications-count").textContent === "1");
+    assert.equal(e.get("candidates-count").textContent, "24");
+    assert.equal(e.get("jobs-count").textContent, "1");
+    state.intercept = path => path.includes("/recruiting/") ? json({ error: { code: "HTTP_ERROR" } }, 503) : undefined;
+    e.get("candidate-search-form").emit("submit");
+    await wait(() => e.get("candidate-page-info").textContent === "Loading failed");
+    assert.equal(e.get("candidates-count").textContent, "—");
+    assert.equal(e.get("candidate-list-count").textContent, "—");
+    e.get("application-refresh").click();
+    await wait(() => e.get("application-page-info").textContent === "Loading failed");
+    for (const id of ["applications-count", "interviews-count", "offers-count"])
+      assert.equal(e.get(id).textContent, "—");
+    e.get("job-search-form").emit("submit");
+    await wait(() => e.get("job-page-info").textContent === "Loading failed");
+    assert.equal(e.get("jobs-count").textContent, "—");
+  } finally { await f.close(); }
+});
+
+test("failed document loads end their loading state and can be retried explicitly", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    await f.selectCandidate();
+    state.intercept = path => path.includes("/documents?") ? json({ error: { code: "DOCUMENT_STORAGE_UNAVAILABLE" } }, 503) : undefined;
+    e.get("documents-refresh").click();
+    await wait(() => e.get("notice").textContent.includes("storage is temporarily unavailable"));
+    assert.equal(e.get("documents-info").textContent, "Loading failed");
+    assert.ok(e.get("documents-list").textContent.includes("Refresh documents to try again"));
+    assert.equal(e.get("documents-refresh").disabled, false);
+    state.intercept = null;
+    e.get("documents-refresh").click();
+    await wait(() => e.get("documents-list").textContent.includes("synthetic.pdf"));
+    assert.equal(e.get("documents-info").textContent.includes("Loading failed"), false);
+  } finally { await f.close(); }
+});
+
+test("processing failures explain known causes and hide unrecognized server text", async () => {
+  const f = await scenario();
+  try {
+    const { elements: e, state, wait } = f;
+    await f.selectCandidate();
+    state.intercept = path => path.endsWith("/extraction") ? json({ status: "failed", failure_code: "PDF_NO_TEXT" }) : undefined;
+    f.button("documents-list", "Extraction status").click();
+    await wait(() => e.get("documents-list").textContent.includes("selectable text"));
+    state.intercept = path => path.endsWith("/extraction") ? json({ status: "failed", failure_code: "<img PRIVATE_ERROR>" }) : undefined;
+    f.button("documents-list", "Extraction status").click();
+    await wait(() => e.get("documents-list").textContent.includes("Processing failed"));
+    assert.equal(e.get("documents-list").textContent.includes("PRIVATE_ERROR"), false);
+    state.intercept = null;
+    f.button("documents-list", "Start / view embeddings").click();
+    await wait(() => e.get("documents-list").textContent.includes("Embeddings: Queued"));
+    state.embedding.status = "failed";
+    state.embedding.failure_code = "EMBEDDING_PROVIDER_UNAVAILABLE";
+    f.button("documents-list", "Refresh embedding status").click();
+    await wait(() => e.get("documents-list").textContent.includes("local retrieval model is unavailable"));
+    assert.equal(state.calls.filter(item => item.method === "POST" && item.path.endsWith("/embedding-jobs")).length, 1);
+  } finally { await f.close(); }
 });

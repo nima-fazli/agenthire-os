@@ -12,7 +12,22 @@ ASSETS = {
         "app", "api", "session", "requests", "dom", "workspace",
         "profiles", "candidates", "evidence", "notifications",
         "paging", "confirmation", "editors", "applications", "documents",
-        "access", "design",
+        "access", "design", "ui", "experience",
+    )},
+}
+MEDIA_ASSETS = {
+    "inter-latin-variable.woff2": "font/woff2",
+    **{f"avatar-{name}.webp": "image/webp" for name in (
+        "alex", "priya", "daniel", "maria", "james", "fatima",
+    )},
+    **{f"icon-{name}.svg": "image/svg+xml" for name in (
+        "bell", "people", "briefcase", "calendar-event", "gift", "x-circle",
+        "check-circle", "info-circle", "exclamation-circle", "arrow-right",
+        "arrow-left", "search", "arrow-repeat", "sliders", "box-arrow-right",
+        "question-circle", "three-dots", "geo-alt", "envelope", "file-earmark-pdf",
+        "shield-check", "chevron-down", "x-lg", "plus-lg", "check-lg", "download",
+        "file-earmark-text", "person-circle", "gear", "eye", "clock", "trash",
+        "list", "lock", "building", "arrow-up-right", "link-45deg", "clipboard-check",
     )},
 }
 UI_HEADERS = {
@@ -33,7 +48,7 @@ def asset_response(filename: str):
     path = ASSET_ROOT / filename
     try:
         valid = (
-            filename in ASSETS and not path.is_symlink() and path.is_file()
+            (filename in ASSETS or filename in MEDIA_ASSETS) and not path.is_symlink() and path.is_file()
             and path.resolve().parent == ASSET_ROOT.resolve() and path.stat().st_size > 0
         )
     except OSError:
@@ -43,7 +58,8 @@ def asset_response(filename: str):
             {"error": {"code": "UI_ASSET_NOT_FOUND", "message": "Asset not found.", "details": {}}},
             status_code=404, headers=UI_HEADERS,
         )
-    return FileResponse(path, media_type=ASSETS[filename], headers=UI_HEADERS)
+    media_type = ASSETS.get(filename) or MEDIA_ASSETS[filename]
+    return FileResponse(path, media_type=media_type, headers=UI_HEADERS)
 
 
 @router.api_route("", methods=["GET", "HEAD"])

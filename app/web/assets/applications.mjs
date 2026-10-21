@@ -1,6 +1,7 @@
 import { $, node, button, empty, field } from "./dom.mjs";
 import { createPager, mutationNotice } from "./paging.mjs";
 import { orgPath, uuid } from "./session.mjs";
+import { avatar, applicationStatus } from "./ui.mjs";
 
 export const applicationLabels = Object.freeze({
   applied: "Applied", screening: "Screening", interview: "Interview",
@@ -13,7 +14,10 @@ export function createApplications(ctx) {
     url: () => ctx.session.job ? `${orgPath(ctx.session.organization.id)}/recruiting/applications` : null,
     filters: () => ({ q: $("application-filter").value.trim(), status: $("application-status-filter").value,
       job_id: ctx.session.job.id }),
-    clear: text => empty($("application-list"), text),
+    clear: text => {
+      empty($("application-list"), text);
+      for (const id of ["applications-count", "interviews-count", "offers-count"]) $(id).textContent = "—";
+    },
     render(page) {
       const org = ctx.session.organization, job = ctx.session.job;
       const content = document.createDocumentFragment();
@@ -26,7 +30,11 @@ export function createApplications(ctx) {
         const card = node("article", "", "application-card");
         const title = node("h3", item.candidate_name);
         title.dir = "auto";
-        card.append(title, node("p", `${item.job_title} · ${applicationLabels[item.status]}`, "small muted"));
+        const person = node("div", "", "application-person");
+        const identity = node("div", "", "candidate-identity");
+        identity.append(title, node("p", item.job_title, "small muted"));
+        person.append(avatar({ full_name: item.candidate_name, synthetic_portrait: item.synthetic_portrait }), identity);
+        card.append(person, applicationStatus(item.status, applicationLabels[item.status]));
         card.append(button("Open candidate", () => ctx.selectCandidateId(item.candidate_id)));
         if (item.allowed_statuses.length) {
           const select = field("Next status", { value: "",
@@ -36,7 +44,7 @@ export function createApplications(ctx) {
             const target = select.input.value;
             if (!item.allowed_statuses.includes(target)) return;
             const accepted = await ctx.confirm.ask({ title: "Confirm status change",
-              message: `${item.candidate_name} · ${item.job_title}: ${applicationLabels[item.status]} ← ${applicationLabels[target]}` });
+              message: `${item.candidate_name} · ${item.job_title}: ${applicationLabels[item.status]} → ${applicationLabels[target]}` });
             if (!accepted || ctx.session.organization?.id !== org.id || ctx.session.job?.id !== job.id) return;
             await ctx.perform("application-transition", signal => ctx.api.request(
               `${orgPath(org.id)}/applications/${item.id}/transitions`,
@@ -59,6 +67,9 @@ export function createApplications(ctx) {
       }
       $("application-list").replaceChildren(content);
       if (!page.items.length) empty($("application-list"), "No applications match these filters.");
+      $("applications-count").textContent = String(page.total);
+      $("interviews-count").textContent = String(page.items.filter(item => item.status === "interview").length);
+      $("offers-count").textContent = String(page.items.filter(item => item.status === "offer").length);
     },
   });
   $("application-create").addEventListener("click", async () => {
@@ -79,6 +90,9 @@ export function createApplications(ctx) {
   $("application-refresh").addEventListener("click", () => pager.load());
   return {
     load: () => pager.load(),
-    reset() { pager.reset(); $("application-status-filter").value = ""; },
+    reset() {
+      pager.reset(); $("application-status-filter").value = "";
+      for (const id of ["applications-count", "interviews-count", "offers-count"]) $(id).textContent = "—";
+    },
   };
 }

@@ -14,42 +14,56 @@
   <a class="skip" href="#main-content">Skip to main content</a>
 
   <header class="topbar">
-    <a class="brand" href="/workspace/">
+    <a class="brand" href="/workspace/" aria-label="AgentHire OS home">
       <span class="brand-mark" aria-hidden="true">A</span>
       <bdi>AgentHire <span>OS</span></bdi>
     </a>
-
-    <div id="account" hidden>
-      <bdi id="account-email"></bdi>
-      <button id="logout" class="button quiet" type="button">Sign out</button>
-    </div>
-
+        <nav id="primary-navigation" class="primary-nav" hidden aria-label="Workspace sections">
+          <a href="#candidates-panel" data-workspace-view="review" aria-current="page">Candidates</a>
+          <a href="#profiles-panel" data-workspace-view="setup">Jobs</a>
+          <a href="#applications-panel" data-workspace-view="applications">Applications</a>
+          <a href="#access-panel" data-workspace-view="access">Team</a>
+          <a href="#account-panel" data-workspace-view="account">Settings</a>
+        </nav>
     <div class="topbar-tools">
-      <span id="public-label" class="muted">Recruiting workspace</span>
-      <button id="workspace-help" class="button quiet" type="button" aria-haspopup="dialog">Workspace guide</button>
+      <span id="public-label" class="muted">Your next great hire starts here.</span>
+      <button id="workspace-help" class="button icon-button quiet" type="button" aria-label="Workspace guide" aria-haspopup="dialog"><span class="icon icon-question-circle" aria-hidden="true"></span></button>
+      <div id="workspace-tools" hidden>
+        <button id="notification-toggle" class="button icon-button quiet notification-toggle" type="button" popovertarget="notification-center" aria-label="Notifications" aria-expanded="false">
+          <span class="icon icon-bell" aria-hidden="true"></span><span id="notification-count" class="unread-count" hidden>0</span>
+        </button>
+      </div>
+      <div id="account" hidden>
+        <button id="account-toggle" class="button account-toggle quiet" type="button" popovertarget="account-menu" aria-label="Account menu"><span id="account-avatar" class="avatar account-avatar" aria-hidden="true">A</span><span class="icon icon-chevron-down" aria-hidden="true"></span></button>
+        <div id="account-menu" class="account-menu" popover="auto">
+          <p class="eyebrow">SIGNED IN AS</p><bdi id="account-email"></bdi>
+          <button id="logout" class="button quiet full" type="button"><span class="icon icon-box-arrow-right" aria-hidden="true"></span>Sign out</button>
+        </div>
+      </div>
     </div>
   </header>
 
   <main id="main-content" tabindex="-1">
     <div id="notification" class="toast" hidden>
-      <p id="notice" class="notice" role="status" aria-live="polite" aria-atomic="true"></p>
-      <button id="notice-dismiss" class="button quiet" type="button" aria-label="Dismiss notification">×</button>
+      <span id="notice-icon" class="icon icon-check-circle toast-icon" aria-hidden="true"></span>
+      <div class="toast-content"><strong id="notice-title">All done</strong><p id="notice" class="notice" role="status" aria-live="polite" aria-atomic="true"></p></div>
+      <button id="notice-dismiss" class="button quiet icon-button" type="button" aria-label="Dismiss notification"><span class="icon icon-x-lg" aria-hidden="true"></span></button>
     </div>
 
     <p id="notice-alert" class="visually-hidden" role="alert" aria-live="assertive" aria-atomic="true"></p>
 
     <section id="auth-view" class="auth-grid" aria-labelledby="auth-title">
       <div class="auth-story">
-        <p class="eyebrow">THE EVIDENCE WORKSPACE</p>
-        <h1>A clearer view.<br>A better-informed decision.</h1>
-        <p>Bring candidates, job criteria, and original resume evidence into one focused review.</p>
+        <p class="eyebrow">A LITTLE CLARITY. A GREAT NEXT HIRE.</p>
+        <h1>Great people.<br>Clearer decisions.</h1>
+        <p>One calm workspace for your candidates, your criteria, and the evidence that connects them.</p>
 
-        <div class="story-flow" aria-hidden="true">
-          <span>Resume</span>
-          <i></i>
-          <span>Criterion</span>
-          <i></i>
-          <span>Evidence</span>
+        <div class="auth-preview" aria-hidden="true">
+          <div class="auth-preview-top"><span class="icon icon-people"></span><strong>Candidate review</strong><span class="badge">In focus</span></div>
+          <div class="auth-preview-person"><img src="/workspace/assets/avatar-alex.webp" width="48" height="48" alt=""><div><strong>Alex Morgan</strong><span>Senior Software Engineer</span></div><span class="icon icon-check-circle"></span></div>
+          <div class="auth-preview-line"><span class="icon icon-file-earmark-text"></span><span>Resume connected to original sources</span></div>
+          <div class="auth-preview-line"><span class="icon icon-clipboard-check"></span><span>Every criterion. All the context.</span></div>
+          <p>Synthetic example</p>
         </div>
 
         <div class="story-proof">
@@ -61,7 +75,7 @@
       </div>
 
       <div class="auth-card">
-        <p class="eyebrow">Get started</p>
+        <p class="eyebrow">WELCOME TO AGENTHIRE</p>
         <h2 id="auth-title">Sign in to your workspace</h2>
         <p id="auth-description" class="muted">Sign in to access your organizations and recruiting records.</p>
 
@@ -74,7 +88,7 @@
 
             <label class="field">
               Password
-              <input id="auth-password" type="password" dir="ltr" autocomplete="current-password" minlength="1" maxlength="128" required>
+              <span class="password-input"><input id="auth-password" type="password" placeholder="Enter your password" dir="ltr" autocomplete="current-password" minlength="1" maxlength="128" required><button id="password-reveal" class="button icon-button quiet" type="button" aria-label="Show password" aria-pressed="false"><span class="icon icon-eye" aria-hidden="true"></span></button></span>
             </label>
 
             <button id="auth-submit" class="button primary full" type="submit">Sign in</button>
@@ -87,15 +101,374 @@
     </section>
 
     <section id="shell" class="workspace-grid" hidden aria-label="Recruiting workspace">
+
+
+      <div class="workspace-main">
+        <div class="workspace-heading">
+          <div>
+            <p class="eyebrow" id="workspace-view-label">CANDIDATE REVIEW</p>
+            <h1 id="workspace-page-title">Candidates</h1>
+            <p class="workspace-description" id="workspace-page-description">A closer look at the people behind every application.</p>
+            <span id="organization-heading" class="visually-hidden">Workspace</span>
+          </div>
+
+          <div class="heading-actions">
+            <button id="context-open" class="button secondary" type="button" aria-haspopup="dialog"><span class="icon icon-building" aria-hidden="true"></span><span id="context-button-label">Choose workspace</span><span class="icon icon-chevron-down" aria-hidden="true"></span></button>
+            <button id="workspace-refresh" class="button icon-button secondary" type="button" aria-label="Refresh lists"><span class="icon icon-arrow-repeat" aria-hidden="true"></span></button>
+          </div>
+        </div>
+
+        <p id="selection-context" class="selection-context" role="status" aria-live="polite">Choose an organization and job to begin.</p>
+        <div id="workspace-start" class="start-card">
+          <span class="start-number" aria-hidden="true">01</span>
+          <div><h2>Start with your organization</h2><p>Choose or create an organization in the context menu. Then add a job and the candidates you want to review.</p></div>
+        </div>
+        <div class="metrics" aria-label="Workspace summary">
+          <article class="metric metric-blue"><span class="metric-icon"><span class="icon icon-people" aria-hidden="true"></span></span><div><strong id="candidates-count">—</strong><span>Candidates in result</span></div></article>
+          <article class="metric metric-mint"><span class="metric-icon"><span class="icon icon-briefcase" aria-hidden="true"></span></span><div><strong id="jobs-count">—</strong><span>Jobs in result</span></div></article>
+          <article class="metric metric-amber"><span class="metric-icon"><span class="icon icon-file-earmark-text" aria-hidden="true"></span></span><div><strong id="applications-count">—</strong><span>Applications in result</span></div></article>
+          <article class="metric metric-violet"><span class="metric-icon"><span class="icon icon-calendar-event" aria-hidden="true"></span></span><div><strong id="interviews-count">—</strong><span>Interviews on page</span></div></article>
+          <article class="metric metric-coral"><span class="metric-icon"><span class="icon icon-gift" aria-hidden="true"></span></span><div><strong id="offers-count">—</strong><span>Offers on page</span></div></article>
+        </div>
+
+        <section id="profiles-panel" class="panel" data-view-panel="setup" tabindex="-1" aria-labelledby="profiles-title">
+          <div class="panel-title">
+            <h2 id="profiles-title">Define the role. Set the criteria.</h2>
+            <span class="badge">Job configuration</span>
+          </div>
+
+          <div id="job-description-view"></div>
+
+          <details class="disclosure">
+            <summary>Edit job and publication status</summary>
+            <p class="small muted">Changing the selection or loading a newer version replaces unsaved form edits.</p>
+            <form id="job-edit-form">
+              <fieldset id="job-edit-fields" disabled>
+                <label class="field">Job title<input id="job-edit-title" maxlength="200" required></label>
+                <label class="field">Job description<textarea id="job-edit-description" maxlength="20000" rows="4" required></textarea></label>
+                <label class="field">Status
+                  <select id="job-edit-status">
+                    <option value="draft">Draft</option>
+                    <option value="open">Open</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </label>
+                <button class="button primary" type="submit">Save job changes</button>
+              </fieldset>
+            </form>
+            <button id="job-edit-refresh" class="button quiet" type="button" disabled>Load latest job version</button>
+            <p id="job-edit-version" class="small muted"></p>
+          </details>
+
+          <details class="disclosure">
+            <summary>Edit criteria and search query</summary>
+
+            <fieldset id="profiles-fields" disabled>
+              <form id="search-profile-form" class="search-profile">
+                <label class="field">
+                  Candidate retrieval query
+                  <input id="search-query" maxlength="256" required>
+                </label>
+
+                <button id="search-save" class="button secondary" type="submit">Save search</button>
+                <span id="search-revision" class="small muted"></span>
+              </form>
+
+              <form id="match-profile-form">
+                <p class="small muted">Each criterion is checked separately. Saving replaces this job's criteria.</p>
+
+                <div id="criteria-list"></div>
+
+                <div class="actions">
+                  <button id="criterion-add" class="button quiet" type="button">Add criterion</button>
+                  <button id="match-save" class="button primary" type="submit">Save criteria</button>
+                  <span id="match-revision" class="small muted"></span>
+                </div>
+              </form>
+            </fieldset>
+          </details>
+        </section>
+
+        <div id="applications-layout" class="applications-layout" data-view-panel="applications">
+        <section id="applications-panel" class="panel" tabindex="-1" aria-labelledby="applications-title">
+          <div class="panel-title"><h2 id="applications-title">Applications for the current job</h2></div>
+          <fieldset id="application-fields" disabled>
+            <p id="application-context" class="summary-note"></p>
+            <div class="actions">
+              <button id="application-create" class="button primary" type="button" disabled>Apply selected candidate to this job</button>
+              <button id="application-refresh" class="button secondary" type="button">Refresh applications</button>
+            </div>
+            <form id="application-search-form" class="record-search" aria-label="Search applications">
+              <label class="field">Candidate name or job title<input id="application-filter" type="search" maxlength="120"></label>
+              <label class="field">Status
+                <select id="application-status-filter">
+                  <option value="">All</option>
+                  <option value="applied">Applied</option>
+                  <option value="screening">Screening</option>
+                  <option value="interview">Interview</option>
+                  <option value="offer">Offer</option>
+                  <option value="hired">Hired</option>
+                  <option value="rejected">Rejected</option>
+                </select>
+              </label>
+              <button class="button secondary" type="submit">Search</button>
+            </form>
+            <div id="application-list" class="application-list"></div>
+            <div class="pager">
+              <button id="application-previous" class="button quiet" type="button" disabled>Previous</button>
+              <button id="application-next" class="button quiet" type="button" disabled>Next</button>
+              <p id="application-page-info" class="small muted" role="status" aria-live="polite"></p>
+            </div>
+          </fieldset>
+        </section>
+
+        <div id="application-dossier-slot"></div>
+        </div>
+        <div id="review-layout" class="review-grid" data-view-panel="review">
+          <section id="candidates-panel" class="panel" tabindex="-1" aria-labelledby="candidates-title">
+            <div class="panel-title">
+              <h2 id="candidates-title">Candidates</h2>
+              <span id="candidate-list-count" class="small muted"></span>
+            </div>
+
+            <fieldset id="candidate-browser-fields" disabled>
+            <form id="candidate-search-form" class="record-search" aria-label="Search candidates">
+              <label class="field"><span class="visually-hidden">Name, email, headline, or location</span>
+                <input id="candidate-filter" type="search" placeholder="Search your candidates" maxlength="120">
+              </label>
+              <button class="button secondary" type="submit"><span class="icon icon-search" aria-hidden="true"></span>Search</button>
+            </form>
+
+            <details class="disclosure add-candidate">
+              <summary><span class="icon icon-plus-lg" aria-hidden="true"></span>Add candidate</summary>
+
+              <form id="candidate-form" class="form-grid">
+                <label class="field">
+                  Full name
+                  <input id="candidate-name" maxlength="200" required>
+                </label>
+
+                <label class="field">
+                  Email
+                  <input id="candidate-email" type="email" dir="ltr" maxlength="320">
+                </label>
+
+                <label class="field">
+                  Headline
+                  <input id="candidate-headline" maxlength="300">
+                </label>
+
+                <label class="field">
+                  Location
+                  <input id="candidate-location" maxlength="200">
+                </label>
+
+                <button id="candidate-create" class="button primary" type="submit">Create candidate</button>
+              </form>
+            </details>
+
+            <div class="candidate-table-heading" aria-hidden="true"><span>Candidate</span><span>Location</span><span>Review</span></div>
+            <div id="candidate-list" class="candidate-list"></div>
+            <div class="pager">
+              <button id="candidate-previous" class="button quiet" type="button" disabled>Previous</button>
+              <button id="candidate-next" class="button quiet" type="button" disabled>Next</button>
+              <p id="candidate-page-info" class="small muted" role="status" aria-live="polite"></p>
+            </div>
+            </fieldset>
+
+            <details class="disclosure">
+              <summary>Retrieve using the job profile</summary>
+
+              <form id="retrieval-form" class="actions">
+                <label class="field">
+                  Method
+                  <select id="retrieval-mode">
+                    <option value="lexical">Lexical</option>
+                    <option value="semantic">Semantic</option>
+                    <option value="hybrid">Hybrid</option>
+                  </select>
+                </label>
+
+                <label class="check"><input id="retrieval-applicants" type="checkbox">Only applicants for this job</label>
+
+                <button id="retrieval-run" class="button secondary" type="submit">Retrieve</button>
+                <button id="retrieval-cancel" class="button quiet" type="button" disabled>Cancel wait</button>
+              </form>
+
+              <p id="retrieval-progress" class="small muted" role="status" aria-live="polite"></p>
+              <p id="retrieval-info" class="small muted"></p>
+
+              <div id="retrieval-results"></div>
+
+              <div class="actions">
+                <button id="retrieval-previous" class="button quiet" type="button" disabled>Previous</button>
+                <button id="retrieval-next" class="button quiet" type="button" disabled>Next</button>
+              </div>
+            </details>
+          </section>
+
+          <section id="candidate-panel" class="panel dossier" tabindex="-1" aria-labelledby="candidate-title">
+            <div class="panel-title">
+              <h2 id="candidate-title">Candidate dossier</h2>
+              <span class="badge">Original source context</span>
+            </div>
+
+            <div id="candidate-heading"></div>
+            <div id="dossier-tabs" class="dossier-tabs" role="tablist" aria-label="Candidate details">
+              <button id="tab-overview" role="tab" aria-controls="dossier-overview" aria-selected="true" type="button" data-dossier-tab="overview">Overview</button>
+              <button id="tab-resume" role="tab" aria-controls="dossier-resume" aria-selected="false" tabindex="-1" type="button" data-dossier-tab="resume">Resume</button>
+              <button id="tab-evidence" role="tab" aria-controls="dossier-evidence" aria-selected="false" tabindex="-1" type="button" data-dossier-tab="evidence">Evidence</button>
+              <button id="tab-edit" role="tab" aria-controls="dossier-edit" aria-selected="false" tabindex="-1" type="button" data-dossier-tab="edit">Details</button>
+            </div>
+            <div id="dossier-overview" role="tabpanel" aria-labelledby="tab-overview" tabindex="0">
+              <div id="candidate-overview" class="candidate-overview"><p class="muted">Choose a candidate to see their overview.</p></div>
+            </div>
+
+            <div id="dossier-edit" role="tabpanel" aria-labelledby="tab-edit" tabindex="0" hidden><details class="disclosure" open>
+              <summary>Edit candidate details</summary>
+              <p class="small muted">Clearing an optional field removes its previous value. Changing the selection or loading a newer version replaces unsaved form edits.</p>
+              <form id="candidate-edit-form">
+                <fieldset id="candidate-edit-fields" disabled>
+                  <label class="field">Full name<input id="candidate-edit-full_name" maxlength="200" required></label>
+                  <label class="field">Email<input id="candidate-edit-email" type="email" maxlength="320" dir="ltr"></label>
+                  <label class="field">Phone<input id="candidate-edit-phone" type="tel" maxlength="50" dir="ltr"></label>
+                  <label class="field">Headline<input id="candidate-edit-headline" maxlength="300"></label>
+                  <label class="field">Location<input id="candidate-edit-location" maxlength="200"></label>
+                  <label class="field">Professional summary<textarea id="candidate-edit-summary" maxlength="20000" rows="4"></textarea></label>
+                  <button class="button primary" type="submit">Save candidate changes</button>
+                </fieldset>
+              </form>
+              <button id="candidate-edit-refresh" class="button quiet" type="button" disabled>Load latest candidate version</button>
+              <p id="candidate-edit-version" class="small muted"></p>
+            </details>
+
+            </div>
+            <fieldset id="candidate-fields" disabled>
+              <div id="dossier-evidence" role="tabpanel" aria-labelledby="tab-evidence" tabindex="0" hidden>
+              <div class="actions">
+                <button id="evidence-load" class="button secondary" type="button">Load criterion evidence</button>
+                <button id="explanation-run" class="button primary" type="button">Grounded brief</button>
+                <button id="explanation-cancel" class="button quiet" type="button" disabled>Cancel wait</button>
+              </div>
+
+              <p id="explanation-progress" class="small muted" role="status" aria-live="polite"></p>
+
+              <div id="evidence-results"></div>
+              </div>
+              <div id="dossier-resume" role="tabpanel" aria-labelledby="tab-resume" tabindex="0" hidden>
+              <details class="disclosure" open>
+                <summary>PDF resumes</summary>
+
+                <fieldset id="document-tools" disabled>
+                <p class="small muted">After extraction and chunking, request embeddings to enable semantic search.</p>
+
+                <form id="document-form">
+                  <label class="field">
+                    PDF file; maximum 10 MiB
+                    <input id="document-file" type="file" accept="application/pdf,.pdf" required>
+                  </label>
+
+                  <div class="actions">
+                    <button id="document-upload" class="button secondary" type="submit">Upload</button>
+                    <button id="documents-refresh" class="button quiet" type="button">Refresh documents</button>
+                  </div>
+                </form>
+
+                <p id="documents-info" class="small muted"></p>
+
+                <div id="documents-list"></div>
+
+                <div class="actions">
+                  <button id="documents-previous" class="button quiet" type="button" disabled>Previous</button>
+                  <button id="documents-next" class="button quiet" type="button" disabled>Next</button>
+                </div>
+                </fieldset>
+              </details>
+              </div>
+            </fieldset>
+          </section>
+        </div>
+
+        <section id="access-panel" class="panel" data-view-panel="access" tabindex="-1" aria-labelledby="access-title">
+          <div class="panel-title">
+            <h2 id="access-title">Organization members and access</h2>
+            <button id="access-refresh" class="button secondary" type="button" disabled>Refresh access</button>
+          </div>
+          <p id="access-role" class="summary-note" role="status" aria-live="polite"></p>
+          <div id="access-owner" hidden>
+            <p class="small muted">Invitations, role changes, and member removal require your current password and confirmation. The last active owner is protected.</p>
+            <fieldset id="access-owner-fields" disabled>
+              <label class="field">Current password to confirm access changes
+                <input id="access-password" type="password" autocomplete="current-password" maxlength="128" dir="ltr">
+              </label>
+              <form id="invitation-form" class="form-grid">
+                <label class="field">Recipient email<input id="invitation-email" type="email" maxlength="320" dir="ltr" required></label>
+                <label class="field">Invitation role
+                  <select id="invitation-role"><option value="recruiter">Recruiter</option><option value="viewer">Viewer</option></select>
+                </label>
+                <button class="button primary" type="submit">Create invitation</button>
+              </form>
+              <label class="field">Invitation code; shown only once
+                <input id="invitation-secret" readonly autocomplete="off" dir="ltr">
+              </label>
+              <p class="small muted">The code expires after 48 hours and can only be accepted by the matching email account. Share it directly with that person. Changing organization or signing out clears it from this page.</p>
+              <div id="access-invitations"></div>
+              <h3>Members</h3>
+              <div id="access-members"></div>
+            </fieldset>
+            <div class="pager">
+              <button id="access-previous" class="button quiet" type="button" disabled>Previous members</button>
+              <button id="access-next" class="button quiet" type="button" disabled>Next members</button>
+            </div>
+            <h3>Latest 20 access events</h3>
+            <div id="access-events"></div>
+          </div>
+          <p id="access-page-info" class="small muted" role="status" aria-live="polite"></p>
+        </section>
+
+        <section id="account-panel" class="panel" data-view-panel="account" tabindex="-1" aria-labelledby="account-title">
+          <div class="panel-title"><h2 id="account-title">Account security and sessions</h2></div>
+          <p id="session-expiry" class="small muted"></p>
+          <p class="small muted">Signing out revokes this page's server session. Refreshing or closing the page stores no credentials; the previous session remains listed until expiry or revocation.</p>
+          <fieldset id="account-fields" disabled>
+            <label class="field">Current password for password changes or revoking other sessions
+              <input id="account-password" type="password" autocomplete="current-password" maxlength="128" dir="ltr">
+            </label>
+            <div class="actions">
+              <button id="sessions-refresh" class="button secondary" type="button">Load active sessions</button>
+              <button id="sessions-revoke-others" class="button danger" type="button">Revoke all other sessions</button>
+            </div>
+            <div id="sessions-list"></div>
+            <form id="password-form" class="form-grid">
+              <label class="field">New password; at least 15 characters
+                <input id="account-new-password" type="password" autocomplete="new-password" minlength="15" maxlength="128" dir="ltr" required>
+              </label>
+              <label class="field">Confirm new password
+                <input id="account-confirm-password" type="password" autocomplete="new-password" minlength="15" maxlength="128" dir="ltr" required>
+              </label>
+              <button class="button primary" type="submit">Change password and revoke all sessions</button>
+            </form>
+          </fieldset>
+          <details class="disclosure">
+            <summary>Accept an organization invitation</summary>
+            <form id="invitation-accept-form">
+              <fieldset id="invitation-accept-fields" disabled>
+                <label class="field">Invitation code; sign in with the recipient email account
+                  <input id="invitation-token" type="password" autocomplete="off" minlength="43" maxlength="43" dir="ltr" required>
+                </label>
+                <button class="button secondary" type="submit">Accept invitation</button>
+              </fieldset>
+            </form>
+          </details>
+        </section>
+      </div>
+    </section>
+
+    <dialog id="context-dialog" class="confirmation context-dialog" aria-labelledby="context-title">
+      <div class="dialog-heading"><div><p class="eyebrow">YOUR WORKSPACE</p><h2 id="context-title">Choose your context</h2></div><button id="context-close" class="button icon-button quiet" type="button" aria-label="Close workspace context"><span class="icon icon-x-lg" aria-hidden="true"></span></button></div>
       <aside class="sidebar">
-        <p class="eyebrow">YOUR WORKSPACE</p>
-        <nav class="sidebar-nav" aria-label="Workspace sections">
-          <a href="#candidates-panel" data-workspace-view="review" aria-current="page"><span class="nav-index" aria-hidden="true">01</span> Candidate review</a>
-          <a href="#profiles-panel" data-workspace-view="setup"><span class="nav-index" aria-hidden="true">02</span> Job setup</a>
-          <a href="#applications-panel" data-workspace-view="applications"><span class="nav-index" aria-hidden="true">03</span> Applications</a>
-          <a href="#access-panel" data-workspace-view="access"><span class="nav-index" aria-hidden="true">04</span> Members &amp; access</a>
-          <a href="#account-panel" data-workspace-view="account"><span class="nav-index" aria-hidden="true">05</span> Account security</a>
-        </nav>
+        <p class="eyebrow">WORKSPACE CONTEXT</p>
+
         <details id="context-switcher" class="context-switcher" open>
           <summary>Organization &amp; job</summary>
           <p class="small sidebar-hint">Choose the records you want to work with.</p>
@@ -192,355 +565,12 @@
 
         <p class="sidebar-note">All records on this page belong to the selected organization.</p>
       </aside>
-
-      <div class="workspace-main">
-        <div class="workspace-heading">
-          <div>
-            <p class="eyebrow" id="workspace-view-label">CANDIDATE REVIEW</p>
-            <h1 id="organization-heading">Workspace</h1>
-          </div>
-
-          <div class="heading-actions">
-            <button id="context-open" class="button quiet" type="button">Choose context</button>
-            <button id="workspace-refresh" class="button secondary" type="button">Refresh lists</button>
-          </div>
-        </div>
-
-        <p id="selection-context" class="selection-context" role="status" aria-live="polite">Choose an organization and job to begin.</p>
-        <div id="workspace-start" class="start-card">
-          <span class="start-number" aria-hidden="true">01</span>
-          <div><h2>Start with your organization</h2><p>Choose or create an organization in the context menu. Then add a job and the candidates you want to review.</p></div>
-        </div>
-        <div class="metrics">
-          <article>
-            <span>Jobs in this result</span>
-            <strong id="jobs-count">—</strong>
-          </article>
-
-          <article>
-            <span>Candidates in this result</span>
-            <strong id="candidates-count">—</strong>
-          </article>
-
-          <article class="metric-note"><span class="evidence-symbol" aria-hidden="true">↗</span><span>Evidence stays connected to its original source.<small>Review the context before making a decision.</small></span></article>
-        </div>
-
-        <section id="profiles-panel" class="panel" data-view-panel="setup" tabindex="-1" aria-labelledby="profiles-title">
-          <div class="panel-title">
-            <h2 id="profiles-title">Define the role. Set the criteria.</h2>
-            <span class="badge">Job configuration</span>
-          </div>
-
-          <div id="job-description-view"></div>
-
-          <details class="disclosure">
-            <summary>Edit job and publication status</summary>
-            <p class="small muted">Changing the selection or loading a newer version replaces unsaved form edits.</p>
-            <form id="job-edit-form">
-              <fieldset id="job-edit-fields" disabled>
-                <label class="field">Job title<input id="job-edit-title" maxlength="200" required></label>
-                <label class="field">Job description<textarea id="job-edit-description" maxlength="20000" rows="4" required></textarea></label>
-                <label class="field">Status
-                  <select id="job-edit-status">
-                    <option value="draft">Draft</option>
-                    <option value="open">Open</option>
-                    <option value="closed">Closed</option>
-                  </select>
-                </label>
-                <button class="button primary" type="submit">Save job changes</button>
-              </fieldset>
-            </form>
-            <button id="job-edit-refresh" class="button quiet" type="button" disabled>Load latest job version</button>
-            <p id="job-edit-version" class="small muted"></p>
-          </details>
-
-          <details class="disclosure">
-            <summary>Edit criteria and search query</summary>
-
-            <fieldset id="profiles-fields" disabled>
-              <form id="search-profile-form" class="search-profile">
-                <label class="field">
-                  Candidate retrieval query
-                  <input id="search-query" maxlength="256" required>
-                </label>
-
-                <button id="search-save" class="button secondary" type="submit">Save search</button>
-                <span id="search-revision" class="small muted"></span>
-              </form>
-
-              <form id="match-profile-form">
-                <p class="small muted">Each criterion is checked separately. Saving replaces this job's criteria.</p>
-
-                <div id="criteria-list"></div>
-
-                <div class="actions">
-                  <button id="criterion-add" class="button quiet" type="button">Add criterion</button>
-                  <button id="match-save" class="button primary" type="submit">Save criteria</button>
-                  <span id="match-revision" class="small muted"></span>
-                </div>
-              </form>
-            </fieldset>
-          </details>
-        </section>
-
-        <section id="applications-panel" class="panel" data-view-panel="applications" tabindex="-1" aria-labelledby="applications-title">
-          <div class="panel-title"><h2 id="applications-title">Applications for the current job</h2></div>
-          <fieldset id="application-fields" disabled>
-            <p id="application-context" class="summary-note"></p>
-            <div class="actions">
-              <button id="application-create" class="button primary" type="button" disabled>Apply selected candidate to this job</button>
-              <button id="application-refresh" class="button secondary" type="button">Refresh applications</button>
-            </div>
-            <form id="application-search-form" class="record-search" aria-label="Search applications">
-              <label class="field">Candidate name or job title<input id="application-filter" type="search" maxlength="120"></label>
-              <label class="field">Status
-                <select id="application-status-filter">
-                  <option value="">All</option>
-                  <option value="applied">Applied</option>
-                  <option value="screening">Screening</option>
-                  <option value="interview">Interview</option>
-                  <option value="offer">Offer</option>
-                  <option value="hired">Hired</option>
-                  <option value="rejected">Rejected</option>
-                </select>
-              </label>
-              <button class="button secondary" type="submit">Search</button>
-            </form>
-            <div id="application-list" class="application-list"></div>
-            <div class="pager">
-              <button id="application-previous" class="button quiet" type="button" disabled>Previous</button>
-              <button id="application-next" class="button quiet" type="button" disabled>Next</button>
-              <p id="application-page-info" class="small muted" role="status" aria-live="polite"></p>
-            </div>
-          </fieldset>
-        </section>
-
-        <div class="review-grid" data-view-panel="review">
-          <section id="candidates-panel" class="panel" tabindex="-1" aria-labelledby="candidates-title">
-            <div class="panel-title">
-              <h2 id="candidates-title">Candidates</h2>
-              <span id="candidate-list-count" class="small muted"></span>
-            </div>
-
-            <fieldset id="candidate-browser-fields" disabled>
-            <form id="candidate-search-form" class="record-search" aria-label="Search candidates">
-              <label class="field">Name, email, headline, or location
-                <input id="candidate-filter" type="search" placeholder="Search your candidates" maxlength="120">
-              </label>
-              <button class="button secondary" type="submit">Search</button>
-            </form>
-
-            <details class="disclosure">
-              <summary>Add candidate</summary>
-
-              <form id="candidate-form" class="form-grid">
-                <label class="field">
-                  Full name
-                  <input id="candidate-name" maxlength="200" required>
-                </label>
-
-                <label class="field">
-                  Email
-                  <input id="candidate-email" type="email" dir="ltr" maxlength="320">
-                </label>
-
-                <label class="field">
-                  Headline
-                  <input id="candidate-headline" maxlength="300">
-                </label>
-
-                <label class="field">
-                  Location
-                  <input id="candidate-location" maxlength="200">
-                </label>
-
-                <button id="candidate-create" class="button primary" type="submit">Create candidate</button>
-              </form>
-            </details>
-
-            <div id="candidate-list" class="candidate-list"></div>
-            <div class="pager">
-              <button id="candidate-previous" class="button quiet" type="button" disabled>Previous</button>
-              <button id="candidate-next" class="button quiet" type="button" disabled>Next</button>
-              <p id="candidate-page-info" class="small muted" role="status" aria-live="polite"></p>
-            </div>
-            </fieldset>
-
-            <details class="disclosure">
-              <summary>Retrieve using the job profile</summary>
-
-              <form id="retrieval-form" class="actions">
-                <label class="field">
-                  Method
-                  <select id="retrieval-mode">
-                    <option value="lexical">Lexical</option>
-                    <option value="semantic">Semantic</option>
-                    <option value="hybrid">Hybrid</option>
-                  </select>
-                </label>
-
-                <label class="check"><input id="retrieval-applicants" type="checkbox">Only applicants for this job</label>
-
-                <button id="retrieval-run" class="button secondary" type="submit">Retrieve</button>
-                <button id="retrieval-cancel" class="button quiet" type="button" disabled>Cancel wait</button>
-              </form>
-
-              <p id="retrieval-progress" class="small muted" role="status" aria-live="polite"></p>
-              <p id="retrieval-info" class="small muted"></p>
-
-              <div id="retrieval-results"></div>
-
-              <div class="actions">
-                <button id="retrieval-previous" class="button quiet" type="button" disabled>Previous</button>
-                <button id="retrieval-next" class="button quiet" type="button" disabled>Next</button>
-              </div>
-            </details>
-          </section>
-
-          <section id="candidate-panel" class="panel dossier" tabindex="-1" aria-labelledby="candidate-title">
-            <div class="panel-title">
-              <h2 id="candidate-title">Candidate dossier</h2>
-              <span class="badge">Original source context</span>
-            </div>
-
-            <div id="candidate-heading"></div>
-
-            <details class="disclosure">
-              <summary>Edit candidate details</summary>
-              <p class="small muted">Clearing an optional field removes its previous value. Changing the selection or loading a newer version replaces unsaved form edits.</p>
-              <form id="candidate-edit-form">
-                <fieldset id="candidate-edit-fields" disabled>
-                  <label class="field">Full name<input id="candidate-edit-full_name" maxlength="200" required></label>
-                  <label class="field">Email<input id="candidate-edit-email" type="email" maxlength="320" dir="ltr"></label>
-                  <label class="field">Phone<input id="candidate-edit-phone" type="tel" maxlength="50" dir="ltr"></label>
-                  <label class="field">Headline<input id="candidate-edit-headline" maxlength="300"></label>
-                  <label class="field">Location<input id="candidate-edit-location" maxlength="200"></label>
-                  <label class="field">Professional summary<textarea id="candidate-edit-summary" maxlength="20000" rows="4"></textarea></label>
-                  <button class="button primary" type="submit">Save candidate changes</button>
-                </fieldset>
-              </form>
-              <button id="candidate-edit-refresh" class="button quiet" type="button" disabled>Load latest candidate version</button>
-              <p id="candidate-edit-version" class="small muted"></p>
-            </details>
-
-            <fieldset id="candidate-fields" disabled>
-              <div class="actions">
-                <button id="evidence-load" class="button secondary" type="button">Load criterion evidence</button>
-                <button id="explanation-run" class="button primary" type="button">Grounded brief</button>
-                <button id="explanation-cancel" class="button quiet" type="button" disabled>Cancel wait</button>
-              </div>
-
-              <p id="explanation-progress" class="small muted" role="status" aria-live="polite"></p>
-
-              <div id="evidence-results"></div>
-
-              <details class="disclosure" open>
-                <summary>PDF resumes</summary>
-
-                <fieldset id="document-tools" disabled>
-                <p class="small muted">After extraction and chunking, request embeddings to enable semantic search.</p>
-
-                <form id="document-form">
-                  <label class="field">
-                    PDF file; maximum 10 MiB
-                    <input id="document-file" type="file" accept="application/pdf,.pdf" required>
-                  </label>
-
-                  <div class="actions">
-                    <button id="document-upload" class="button secondary" type="submit">Upload</button>
-                    <button id="documents-refresh" class="button quiet" type="button">Refresh documents</button>
-                  </div>
-                </form>
-
-                <p id="documents-info" class="small muted"></p>
-
-                <div id="documents-list"></div>
-
-                <div class="actions">
-                  <button id="documents-previous" class="button quiet" type="button" disabled>Previous</button>
-                  <button id="documents-next" class="button quiet" type="button" disabled>Next</button>
-                </div>
-                </fieldset>
-              </details>
-            </fieldset>
-          </section>
-        </div>
-
-        <section id="access-panel" class="panel" data-view-panel="access" tabindex="-1" aria-labelledby="access-title">
-          <div class="panel-title">
-            <h2 id="access-title">Organization members and access</h2>
-            <button id="access-refresh" class="button secondary" type="button" disabled>Refresh access</button>
-          </div>
-          <p id="access-role" class="summary-note" role="status" aria-live="polite"></p>
-          <div id="access-owner" hidden>
-            <p class="small muted">Invitations, role changes, and member removal require your current password and confirmation. The last active owner is protected.</p>
-            <fieldset id="access-owner-fields" disabled>
-              <label class="field">Current password to confirm access changes
-                <input id="access-password" type="password" autocomplete="current-password" maxlength="128" dir="ltr">
-              </label>
-              <form id="invitation-form" class="form-grid">
-                <label class="field">Recipient email<input id="invitation-email" type="email" maxlength="320" dir="ltr" required></label>
-                <label class="field">Invitation role
-                  <select id="invitation-role"><option value="recruiter">Recruiter</option><option value="viewer">Viewer</option></select>
-                </label>
-                <button class="button primary" type="submit">Create invitation</button>
-              </form>
-              <label class="field">Invitation code; shown only once
-                <input id="invitation-secret" readonly autocomplete="off" dir="ltr">
-              </label>
-              <p class="small muted">The code expires after 48 hours and can only be accepted by the matching email account. Share it directly with that person. Changing organization or signing out clears it from this page.</p>
-              <div id="access-invitations"></div>
-              <h3>Members</h3>
-              <div id="access-members"></div>
-            </fieldset>
-            <div class="pager">
-              <button id="access-previous" class="button quiet" type="button" disabled>Previous members</button>
-              <button id="access-next" class="button quiet" type="button" disabled>Next members</button>
-            </div>
-            <h3>Latest 20 access events</h3>
-            <div id="access-events"></div>
-          </div>
-          <p id="access-page-info" class="small muted" role="status" aria-live="polite"></p>
-        </section>
-
-        <section id="account-panel" class="panel" data-view-panel="account" tabindex="-1" aria-labelledby="account-title">
-          <div class="panel-title"><h2 id="account-title">Account security and sessions</h2></div>
-          <p id="session-expiry" class="small muted"></p>
-          <p class="small muted">Signing out revokes this page's server session. Refreshing or closing the page stores no credentials; the previous session remains listed until expiry or revocation.</p>
-          <fieldset id="account-fields" disabled>
-            <label class="field">Current password for password changes or revoking other sessions
-              <input id="account-password" type="password" autocomplete="current-password" maxlength="128" dir="ltr">
-            </label>
-            <div class="actions">
-              <button id="sessions-refresh" class="button secondary" type="button">Load active sessions</button>
-              <button id="sessions-revoke-others" class="button danger" type="button">Revoke all other sessions</button>
-            </div>
-            <div id="sessions-list"></div>
-            <form id="password-form" class="form-grid">
-              <label class="field">New password; at least 15 characters
-                <input id="account-new-password" type="password" autocomplete="new-password" minlength="15" maxlength="128" dir="ltr" required>
-              </label>
-              <label class="field">Confirm new password
-                <input id="account-confirm-password" type="password" autocomplete="new-password" minlength="15" maxlength="128" dir="ltr" required>
-              </label>
-              <button class="button primary" type="submit">Change password and revoke all sessions</button>
-            </form>
-          </fieldset>
-          <details class="disclosure">
-            <summary>Accept an organization invitation</summary>
-            <form id="invitation-accept-form">
-              <fieldset id="invitation-accept-fields" disabled>
-                <label class="field">Invitation code; sign in with the recipient email account
-                  <input id="invitation-token" type="password" autocomplete="off" minlength="43" maxlength="43" dir="ltr" required>
-                </label>
-                <button class="button secondary" type="submit">Accept invitation</button>
-              </fieldset>
-            </form>
-          </details>
-        </section>
-      </div>
+    </dialog>
+    <section id="notification-center" class="notification-center" popover="auto" aria-labelledby="notification-center-title">
+      <div class="notification-center-heading"><h2 id="notification-center-title">Notifications</h2><button id="notification-read" class="button quiet" type="button">Mark all as read</button></div>
+      <div id="notification-history" class="notification-history"><p class="notification-empty">You're all caught up.<span>Updates from your work will appear here.</span></p></div>
+      <button id="notification-clear" class="button quiet full" type="button">Clear notifications</button>
     </section>
-
     <dialog id="help-dialog" class="confirmation help-dialog" aria-labelledby="help-title" aria-describedby="help-description">
     <p class="eyebrow">WORKSPACE GUIDE</p>
     <h2 id="help-title">A focused path from role to evidence</h2>
@@ -557,7 +587,7 @@
 
   <dialog id="confirm-dialog" class="confirmation" aria-labelledby="confirm-title" aria-describedby="confirm-message">
       <form id="confirm-form">
-        <h2 id="confirm-title"></h2>
+        <div class="dialog-symbol"><span class="icon icon-shield-check" aria-hidden="true"></span></div><h2 id="confirm-title"></h2>
         <p id="confirm-message"></p>
         <label id="confirm-label" class="field" hidden>Type the exact filename to confirm deletion.
           <input id="confirm-input" maxlength="200" autocomplete="off" dir="auto">

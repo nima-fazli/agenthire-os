@@ -7,11 +7,27 @@ import { sourceParts, sourceView } from "../app/web/assets/dom.mjs";
 import { profilePayload } from "../app/web/assets/profiles.mjs";
 import { validatePdf } from "../app/web/assets/evidence.mjs";
 import { installDOM, pageResponse } from "./helpers/recruiter_dom.mjs";
+import { avatar } from "../app/web/assets/ui.mjs";
 
 const id = "11111111-1111-4111-8111-111111111111";
 const foreign = "22222222-2222-4222-8222-222222222222";
 const deferred = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no; }); return { promise, resolve, reject }; };
 const json = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
+
+test("candidate portraits use a fixed synthetic allowlist and initials for real records", async () => {
+  const dom = installDOM();
+  try {
+    const real = avatar({ full_name: "Avery Smith" });
+    assert.equal(real.textContent, "AS");
+    for (const key of ["__proto__", "https://untrusted.invalid/photo", "../../private"]) {
+      const unsafe = avatar({ full_name: "Real Candidate", synthetic_portrait: key });
+      assert.equal(unsafe.textContent, "RC");
+      assert.equal(unsafe.children.length, 0);
+    }
+    const demo = avatar({ full_name: "Alex Morgan", synthetic_portrait: "alex" });
+    assert.equal(demo.children[0].src, "/workspace/assets/avatar-alex.webp");
+  } finally { await dom.restore(); }
+});
 
 test("private API requests omit cookies and refuse redirects and caches", async () => {
   const client = new ApiClient(() => "token", () => {}, async (path, options) => {

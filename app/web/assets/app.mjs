@@ -12,12 +12,21 @@ import { createApplications } from "./applications.mjs";
 import { createEditors } from "./editors.mjs";
 import { createAccess } from "./access.mjs";
 
-setupNotices(createNotifications({
+const notifications = createNotifications({
   region: $("notification"),
   status: $("notice"),
   alert: $("notice-alert"),
   dismiss: $("notice-dismiss"),
-}));
+  title: $("notice-title"),
+  symbol: $("notice-icon"),
+  // Optional history is rendered only in a full browser document.
+  ...($("notification-history").ownerDocument ? {
+    history: $("notification-history"), count: $("notification-count"),
+    toggle: $("notification-toggle"), markRead: $("notification-read"),
+    clearHistoryButton: $("notification-clear"),
+  } : {}),
+});
+setupNotices(notifications);
 
 const session = new Session();
 const gate = new RequestGate();
@@ -178,6 +187,7 @@ ctx.profileChanged = () => {
 };
 
 ctx.selectOrganization = async item => {
+  notifications.resetHistory();
   ctx.confirm.cancel();
   ctx.cancelAll();
   session.selectOrganization(item);
@@ -206,6 +216,7 @@ ctx.selectOrganization = async item => {
 };
 
 ctx.selectJob = async item => {
+  notifications.resetHistory();
   ctx.confirm.cancel();
   if (session.job?.id !== item?.id) ctx.cancel("edit-job", "refresh-job", "application-create", "application-transition");
   ctx.cancel(
@@ -290,6 +301,7 @@ function setAuthMode(value) {
 }
 
 function logout(message = "You have signed out.") {
+  notifications.resetHistory();
   ctx.confirm.cancel();
   authAttempt += 1;
   ctx.cancelAll();

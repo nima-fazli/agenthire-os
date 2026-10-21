@@ -1,3 +1,5 @@
+import { createExperience } from "./experience.mjs";
+
 const VIEWS = Object.freeze({
   review: { label: "Candidate review", target: "candidates-panel" },
   setup: { label: "Job setup", target: "profiles-panel" },
@@ -27,7 +29,10 @@ export function createDesign(doc, host = window) {
       else link.removeAttribute("aria-current");
     }
     find("workspace-view-label").textContent = VIEWS[view].label.toUpperCase();
-    if (focus && !shell.hidden) find(VIEWS[view].target).focus();
+    if (focus && !shell.hidden) {
+      find(VIEWS[view].target).focus({ preventScroll: true });
+      host.scrollTo?.({ top: 0, behavior: "auto" });
+    }
     return true;
   }
 
@@ -38,7 +43,10 @@ export function createDesign(doc, host = window) {
       show("review");
       switcher.open = !media.matches;
       if (help.open) help.close();
-      if (signedIn) find("candidates-panel").focus();
+      if (signedIn) {
+        find("candidates-panel").focus({ preventScroll: true });
+        host.scrollTo?.({ top: 0, behavior: "auto" });
+      }
       else if (shell.contains(doc.activeElement)) find("auth-email").focus();
     }
     const org = find("organization-select"), job = find("job-select");
@@ -74,8 +82,8 @@ export function createDesign(doc, host = window) {
   media.addEventListener("change", breakpoint);
   const candidateObserver = new host.MutationObserver(() => {
     if (active === "applications" && !shell.hidden && find("candidate-heading").querySelector("h3")) {
-      show("review");
-      find("candidate-panel").focus();
+      find("candidate-panel").focus({ preventScroll: true });
+      if (!media.matches) host.scrollTo?.({ top: 0, behavior: "auto" });
     }
   });
   candidateObserver.observe(find("candidate-heading"), { childList: true, subtree: true });
@@ -91,4 +99,7 @@ export function createDesign(doc, host = window) {
   return { show, refresh, destroy() { observer.disconnect(); candidateObserver.disconnect(); media.removeEventListener("change", breakpoint); } };
 }
 
-if (typeof document !== "undefined") createDesign(document);
+if (typeof document !== "undefined") {
+  createDesign(document);
+  if (document.documentElement) createExperience(document);
+}

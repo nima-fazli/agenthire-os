@@ -42,18 +42,24 @@ function syntheticTransport() {
   const jobs = [{ id: job, organization_id: org, title: "Senior Backend Engineer", status: "open",
     description: "Build reliable APIs and data systems. Review Python, PostgreSQL, and distributed processing experience.", updated_at: date }];
   const names = ["Alex Morgan", "Sam Rivera", "Jordan Lee", "Casey Patel", "Taylor Chen", "Robin Ellis"];
+  const portraits = ["alex", "daniel", "priya", "maria", "james", "fatima"];
+  const locations = ["San Francisco, CA", "Austin, TX", "Seattle, WA", "New York, NY", "Boston, MA", "Chicago, IL"];
   const candidates = names.map((full_name, i) => ({ id: id(i + 10), organization_id: org, full_name,
     headline: i % 2 ? "Software Engineer · Python & PostgreSQL" : "Backend Engineer · APIs & distributed systems",
-    email: `sample${i}@example.com`, location: "Synthetic candidate", summary: null, phone: null, updated_at: date }));
+    email: `sample${i}@example.com`, location: locations[i], synthetic_portrait: portraits[i],
+    summary: "Software engineer focused on reliable services, thoughtful collaboration, and maintainable systems. This is a synthetic record for exploring the workspace.",
+    phone: null, updated_at: date }));
   const applications = [{ id: id(70), organization_id: org, job_id: job, candidate_id: candidates[0].id,
     candidate_name: candidates[0].full_name, job_title: jobs[0].title, status: "screening",
+    synthetic_portrait: "alex",
     allowed_statuses: ["interview", "rejected"], updated_at: date }];
   const response = (data, status = 200) => new Response(JSON.stringify(data), { status, headers: { "Content-Type": "application/json" } });
   const error = (code, status) => response({ error: { code, message: "SYNTHETIC_PRIVATE_MESSAGE" } }, status);
   const page = (items, url) => {
     const q = (url.searchParams.get("q") ?? "").toLowerCase();
-    const filtered = q ? items.filter(item => [item.name, item.title, item.full_name, item.candidate_name, item.job_title]
+    let filtered = q ? items.filter(item => [item.name, item.title, item.full_name, item.candidate_name, item.job_title]
       .some(value => typeof value === "string" && value.toLowerCase().includes(q))) : items;
+    if (url.searchParams.get("status")) filtered = filtered.filter(item => item.status === url.searchParams.get("status"));
     const offset = Number(url.searchParams.get("offset") ?? 0), limit = Number(url.searchParams.get("limit") ?? 20);
     return response({ items: filtered.slice(offset, offset + limit), total: filtered.length, offset, limit });
   };
@@ -63,6 +69,16 @@ function syntheticTransport() {
       expires_at: new Date(Date.now() + 1800000).toISOString() });
     if (resource === "/auth/logout") return new Response(null, { status: 204 });
     if (options.headers?.Authorization !== "Bearer synthetic.session.only") return error("INVALID_ACCESS_TOKEN", 401);
+    if (resource.endsWith("/transitions") && options.method === "POST") {
+      const application = applications.find(item => resource.endsWith(`/applications/${item.id}/transitions`));
+      const target = JSON.parse(options.body).status;
+      if (!application || !application.allowed_statuses.includes(target)) return error("INVALID_APPLICATION_TRANSITION", 409);
+      const next = { applied: ["screening", "rejected"], screening: ["interview", "rejected"],
+        interview: ["offer", "rejected"], offer: ["hired", "rejected"], hired: [], rejected: [] };
+      application.status = target;
+      application.allowed_statuses = next[target];
+      return response(application);
+    }
     if (resource === "/users/me") return response({ id: id(50), email: "reviewer@example.com" });
     if (resource === "/auth/sessions") return response([{ id: session, current: true, created_at: date, expires_at: new Date(Date.now() + 1800000).toISOString() }]);
     if (resource === "/organizations/page") return page([{ id: org, name: "Northstar Studio" }, { id: other, name: "Empty workspace" }], url);
@@ -102,11 +118,25 @@ function syntheticTransport() {
 
 export async function buildPreview(assets = join(root, "app/web/assets")) {
   const modules = new Map(), visiting = new Set();
+  const embedded = new Map();
+  async function embed(source) {
+    for (const match of source.matchAll(/\/workspace\/assets\/([\w-]+\.(?:svg|webp|woff2))/g)) {
+      const name = match[1];
+      if (!embedded.has(name)) {
+        const mime = name.endsWith(".svg") ? "image/svg+xml" : name.endsWith(".webp") ? "image/webp" : "font/woff2";
+        let raw = await readFile(join(assets, name));
+        if (name.endsWith(".svg")) raw = Buffer.from(canonical(raw));
+        embedded.set(name, `data:${mime};base64,${raw.toString("base64")}`);
+      }
+      source = source.replaceAll(match[0], embedded.get(name));
+    }
+    return source;
+  }
   async function bundle(name) {
     if (modules.has(name)) return;
     if (visiting.has(name)) throw new Error("Cyclic browser module graph");
     visiting.add(name);
-    let source = canonical(await readFile(join(assets, name)));
+    let source = await embed(canonical(await readFile(join(assets, name))));
     const imports = [...source.matchAll(/import\s*\{([^}]+)\}\s*from\s*"\.\/([^"]+)";/g)];
     for (const [, , dependency] of imports) await bundle(dependency);
     source = source.replace(/import\s*\{([^}]+)\}\s*from\s*"\.\/([^"]+)";/g,
@@ -118,11 +148,10 @@ export async function buildPreview(assets = join(root, "app/web/assets")) {
   await bundle("app.mjs"); await bundle("design.mjs");
   const script = `(${syntheticTransport.toString()})();\nconst modules = Object.create(null);\n${[...modules.values()].join("\n")}`.replaceAll("\r\n", "\n");
   assert(!script.includes("</script"), "Unsafe embedded script terminator");
-  const style = canonical(await readFile(join(assets, "styles.css")))
-    + "\n.qa-banner{border:2px solid #b46a13;background:#fff9df;padding:16px;margin:16px;color:#172b2b;font:13px/1.6 sans-serif}.qa-banner p{margin:0 0 8px}";
-  let html = canonical(await readFile(join(assets, "index.html")));
+  const style = await embed(canonical(await readFile(join(assets, "styles.css"))));
+  let html = await embed(canonical(await readFile(join(assets, "index.html"))));
   html = html.replace(/\s*<script[^>]*>[^<]*<\/script>/g, "").replace(/\s*<link rel="stylesheet"[^>]*>/g, "");
-  const csp = `default-src 'none'; script-src 'sha256-${createHash("sha256").update(script).digest("base64")}'; style-src 'sha256-${createHash("sha256").update(style).digest("base64")}'; connect-src 'none'; img-src 'none'; base-uri 'none'; form-action 'none'`;
+  const csp = `default-src 'none'; script-src 'sha256-${createHash("sha256").update(script).digest("base64")}'; style-src 'sha256-${createHash("sha256").update(style).digest("base64")}'; connect-src 'none'; img-src data:; font-src data:; base-uri 'none'; form-action 'none'`;
   return html.replace("<head>", `<head>\n<meta http-equiv="Content-Security-Policy" content="${csp}">`)
     .replace("</head>", `<style>${style}</style></head>`).replace("</body>", `<script type="module">${script}</script></body>`);
 }
@@ -237,7 +266,8 @@ async function run(options) {
     await wait("application-list", "document.querySelectorAll('.application-card').length===1");
     await click(".application-card button");
     await wait("application-candidate-focus", "document.activeElement.id==='candidate-panel'");
-    await check("application-candidate-navigation", "document.querySelector('[aria-current=page]').dataset.workspaceView==='review'");
+    await check("application-candidate-navigation", "document.querySelector('[aria-current=page]').dataset.workspaceView==='applications'");
+    await click('[data-workspace-view="review"]');
     await click('[data-workspace-view="applications"]');
     await evaluate("const select=document.querySelector('.application-card select');select.value='interview';select.dispatchEvent(new Event('change'))", "application-status-selection");
     await click(".application-card button:last-child");
