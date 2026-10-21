@@ -1,0 +1,63 @@
+# Additive local portfolio services. Existing database/document volumes are retained.
+services:
+  api:
+    environment:
+      AGENTHIRE_AGENTS_ENABLED: "true"
+      AGENTHIRE_AGENT_MODEL: "${AGENTHIRE_AGENT_MODEL:-qwen3:4b}"
+      AGENTHIRE_AGENT_MAIL_HOST: mailpit
+      AGENTHIRE_AGENT_MAIL_PORT: "1025"
+      LANGSMITH_TRACING: "false"
+      LANGCHAIN_TRACING_V2: "false"
+  agent-worker:
+    build: {context: ., target: runtime}
+    command: ["python", "-m", "app.workers.agents"]
+    env_file: [.env]
+    environment:
+      AGENTHIRE_POSTGRES_HOST: postgres
+      AGENTHIRE_POSTGRES_PORT: "5432"
+      AGENTHIRE_CHAT_BASE_URL: http://ollama:11434
+      AGENTHIRE_AGENTS_ENABLED: "true"
+      AGENTHIRE_AGENT_MODEL: "${AGENTHIRE_AGENT_MODEL:-qwen3:4b}"
+      AGENTHIRE_AGENT_MAIL_HOST: mailpit
+      AGENTHIRE_AGENT_MAIL_PORT: "1025"
+      LANGSMITH_TRACING: "false"
+      LANGCHAIN_TRACING_V2: "false"
+    depends_on:
+      postgres: {condition: service_healthy}
+      migrate: {condition: service_completed_successfully}
+      mailpit: {condition: service_healthy}
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=16m"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    cpus: 1.0
+    pids_limit: 64
+    healthcheck:
+      test: ["CMD", "python", "/app/app/workers/agent_healthcheck.py"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    logging: {driver: json-file, options: {max-size: "10m", max-file: "3"}}
+  mailpit:
+    image: axllent/mailpit:v1.31.6
+    ports: ["127.0.0.1:8025:8025"]
+    environment: {MP_DATABASE: /data/mailpit.db, MP_MAX_MESSAGES: "200"}
+    volumes: ["agenthire_mailpit_data:/data"]
+    healthcheck:
+      test: ["CMD", "/mailpit", "readyz"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    mem_limit: 128m
+    restart: unless-stopped
+    logging: {driver: json-file, options: {max-size: "5m", max-file: "2"}}
+  ollama:
+    profiles: [semantic, live-ai]
+    environment: {OLLAMA_NO_CLOUD: "1"}
+    mem_limit: "${AGENTHIRE_AGENT_MODEL_MEMORY:-6g}"
+    cpus: 4.0
+volumes:
+  agenthire_mailpit_data:

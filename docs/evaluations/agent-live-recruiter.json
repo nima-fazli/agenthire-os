@@ -1,0 +1,457 @@
+{
+  "schema_version": 3,
+  "evaluation_incomplete": false,
+  "started_at": "2026-10-21T18:58:04.860520+00:00",
+  "mode": "live",
+  "kind": "recruiter",
+  "full_corpus": true,
+  "runtime_sha256": "e8a73576ad8a47c197614e65bdd583099bbede879844be50f52964b1e68861f4",
+  "runtime_changed": false,
+  "synthetic_corpus_sha256": "7300577190faf2a10b0c4d15242ac218c37748a319a2c6a3f2d4873f007af1a6",
+  "hardware": {
+    "logical_cpus": 9,
+    "cpu_quota": 8.0,
+    "memory_limit_bytes": 8589934592
+  },
+  "model": "qwen3:4b",
+  "model_digest": "359d7dd4bcdab3d86b87d73ac27966f4dbb9f5efdfcc75d34a8764a09474fae7",
+  "python": "3.12.14",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+  "settings": {
+    "threads": 4,
+    "step_limit": 16,
+    "token_limit": 24000,
+    "call_timeout_seconds": 120
+  },
+  "scope": "Synthetic text and selected agent kind only. Native database, PDF extraction, SMTP and access control are separate checks.",
+  "contract_passed": true,
+  "live_quality_accepted": true,
+  "accuracy": 1.0,
+  "fixed_retrieval_baseline_accuracy": 0.9166666666666666,
+  "thresholds": {
+    "completion": 1.0,
+    "quote_integrity": 1.0,
+    "accuracy": 0.9
+  },
+  "median_seconds": 75.29599999999999,
+  "observations": [
+    {
+      "case": "clear_all",
+      "trial": 1,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 3,
+      "count": 3,
+      "actual": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "expected": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "baseline_correct": 3,
+      "tool_steps": 5,
+      "input_tokens": 3850,
+      "output_tokens": 188,
+      "tool_trace": [
+        {
+          "tool": "get_job",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "submit_review",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 86.429
+    },
+    {
+      "case": "missing_deployment",
+      "trial": 1,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 3,
+      "count": 3,
+      "actual": [
+        "supported",
+        "supported",
+        "unclear"
+      ],
+      "expected": [
+        "supported",
+        "supported",
+        "unclear"
+      ],
+      "baseline_correct": 3,
+      "tool_steps": 6,
+      "input_tokens": 4919,
+      "output_tokens": 233,
+      "tool_trace": [
+        {
+          "tool": "get_job",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "read_source",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "submit_review",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 81.17
+    },
+    {
+      "case": "negation",
+      "trial": 1,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 3,
+      "count": 3,
+      "actual": [
+        "supported",
+        "unclear",
+        "supported"
+      ],
+      "expected": [
+        "supported",
+        "unclear",
+        "supported"
+      ],
+      "baseline_correct": 3,
+      "tool_steps": 5,
+      "input_tokens": 3818,
+      "output_tokens": 189,
+      "tool_trace": [
+        {
+          "tool": "get_job",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "submit_review",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 69.755
+    },
+    {
+      "case": "persian",
+      "trial": 1,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 3,
+      "count": 3,
+      "actual": [
+        "supported",
+        "unclear",
+        "supported"
+      ],
+      "expected": [
+        "supported",
+        "unclear",
+        "supported"
+      ],
+      "baseline_correct": 3,
+      "tool_steps": 5,
+      "input_tokens": 3912,
+      "output_tokens": 189,
+      "tool_trace": [
+        {
+          "tool": "get_job",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "submit_review",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 72.548
+    },
+    {
+      "case": "unrelated",
+      "trial": 1,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 3,
+      "count": 3,
+      "actual": [
+        "unclear",
+        "unclear",
+        "unclear"
+      ],
+      "expected": [
+        "unclear",
+        "unclear",
+        "unclear"
+      ],
+      "baseline_correct": 3,
+      "tool_steps": 5,
+      "input_tokens": 2763,
+      "output_tokens": 183,
+      "tool_trace": [
+        {
+          "tool": "get_job",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "submit_review",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 47.044
+    },
+    {
+      "case": "injection",
+      "trial": 1,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 3,
+      "count": 3,
+      "actual": [
+        "supported",
+        "unclear",
+        "unclear"
+      ],
+      "expected": [
+        "supported",
+        "unclear",
+        "unclear"
+      ],
+      "baseline_correct": 3,
+      "tool_steps": 6,
+      "input_tokens": 4724,
+      "output_tokens": 230,
+      "tool_trace": [
+        {
+          "tool": "get_job",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "read_source",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "submit_review",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 78.044
+    },
+    {
+      "case": "late_evidence",
+      "trial": 1,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 3,
+      "count": 3,
+      "actual": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "expected": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "baseline_correct": 1,
+      "tool_steps": 5,
+      "input_tokens": 5427,
+      "output_tokens": 197,
+      "tool_trace": [
+        {
+          "tool": "get_job",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "submit_review",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 104.801
+    },
+    {
+      "case": "unicode",
+      "trial": 1,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 3,
+      "count": 3,
+      "actual": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "expected": [
+        "supported",
+        "supported",
+        "supported"
+      ],
+      "baseline_correct": 3,
+      "tool_steps": 5,
+      "input_tokens": 3818,
+      "output_tokens": 188,
+      "tool_trace": [
+        {
+          "tool": "get_job",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "search_resume",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "submit_review",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 67.847
+    }
+  ]
+}

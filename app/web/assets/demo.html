@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AgentHire OS — Recorded Agent Demo</title>
+    <link rel="stylesheet" href="/workspace/assets/agents.css" />
+    <script type="module" src="/workspace/assets/demo.mjs"></script>
+  </head>
+  <body>
+    <a class="agent-skip" href="#agent-main">Skip to main content</a>
+    <header class="agent-header">
+      <a class="agent-brand" href="/workspace/"><b>A</b>AgentHire OS</a>
+      <nav aria-label="Product">
+        <a href="/agent-center/">Agent Center</a
+        ><a href="/portal/">Applicant Portal</a
+        ><a href="/demo/" aria-current="page">Demo</a
+        ><a href="/workspace/">Recruiter workspace</a>
+      </nav>
+    </header>
+    <main class="agent-main" id="agent-main">
+      <div class="agent-hero">
+        <p class="agent-eyebrow">LOCAL · INSPECTABLE · HUMAN REVIEWED</p>
+        <h1>Follow a review, one tool at a time.</h1>
+        <p>
+          A fictional resume has Python and PostgreSQL evidence, with a missing
+          deployment detail.
+        </p>
+      </div>
+      <p class="agent-banner">
+        Recorded deterministic replay. No AI model is running on this page. Use
+        Live local AI in Agent Center to evaluate new inputs.
+      </p>
+      <div class="agent-grid">
+        <section class="agent-card">
+          <h2>Synthetic application</h2>
+          <p id="demo-resume" class="agent-resume"></p>
+          <div class="agent-actions">
+            <button id="demo-next" class="agent-button" type="button">
+              Show next tool step</button
+            ><button
+              id="demo-reset"
+              class="agent-button secondary"
+              type="button"
+            >
+              Restart replay
+            </button>
+          </div>
+          <p id="demo-progress" aria-live="polite"></p>
+        </section>
+        <section class="agent-card">
+          <h2>Tool timeline</h2>
+          <div id="demo-events"></div>
+          <div id="demo-report"></div>
+        </section>
+      </div>
+      <p class="agent-footer">
+        Local portfolio environment · Replay and live inference are labeled
+        separately · Final hiring decisions remain with the employer.
+      </p>
+    </main>
+  </body>
+</html>

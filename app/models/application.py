@@ -21,6 +21,7 @@ class Application(Base):
     __tablename__ = "applications"
 
     __table_args__ = (
+        UniqueConstraint("organization_id", "id", name="uq_applications_organization_id_id"),
         ForeignKeyConstraint(
             ["organization_id", "job_id"],
             ["jobs.organization_id", "jobs.id"],

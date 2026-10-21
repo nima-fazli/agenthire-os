@@ -36,7 +36,7 @@ jobs:
       - run: uv run --locked --no-sync ruff check .
       - run: uv run --locked --no-sync pytest -rs -W error
       - run: uv run --locked --no-sync python -m scripts.retrieval_evaluation --example
-      - run: uv run --locked --no-sync python -m scripts.release_acceptance
+      - run: uv run --locked --no-sync python -m scripts.agent_evaluation --mode replay --output reports/agent-evaluation.json
 
   client:
     name: Client (${{ matrix.os }})
@@ -54,7 +54,7 @@ jobs:
         with:
           node-version: "24"
           package-manager-cache: false
-      - run: node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs tests/recruiter_api_errors.test.mjs tests/recruiter_workflow.test.mjs tests/recruiter_design.test.mjs
+      - run: node --test tests/recruiter_ui.test.mjs tests/recruiter_notifications.test.mjs tests/recruiter_api_errors.test.mjs tests/recruiter_workflow.test.mjs tests/recruiter_design.test.mjs tests/agents_ui.test.mjs
       - name: Verify synthetic workspace in Chrome
         if: runner.os == 'Linux'
         env:
@@ -84,4 +84,12 @@ jobs:
           python-version: "3.12"
           enable-cache: false
       - run: uv sync --locked --no-install-project
-      - run: uv run --locked --no-sync python -m scripts.ci_verify
+      - name: Start the isolated local agent stack
+        run: uv run --locked --no-sync python -m scripts.local_demo --start --seed
+      - name: Exercise actual API, workers and verification SMTP
+        run: uv run --locked --no-sync python -m scripts.agents_smoke
+      - name: Compare migration with ORM
+        run: docker compose -f compose.yaml -f compose.agents.yaml exec -T api alembic check
+      - name: Stop the owned CI stack
+        if: always()
+        run: docker compose -f compose.yaml -f compose.agents.yaml down --remove-orphans

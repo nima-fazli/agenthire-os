@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.api.routes.agent_workspace import router as agent_workspace_router
 from app.api.routes.applications import router as applications_router
 from app.api.routes.auth import router as auth_router
 from app.api.routes.candidate_documents import router as candidate_documents_router
@@ -50,3 +51,5 @@ api_router.include_router(job_matching_router)
 api_router.include_router(semantic_retrieval_router)
 
 api_router.include_router(grounded_explanations_router)
+
+api_router.include_router(agent_workspace_router)

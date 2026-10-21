@@ -1,3 +1,13 @@
+from app.models.agent_workspace import (
+    AgentEvent,
+    AgentNotification,
+    AgentOutbox,
+    AgentRun,
+    ApplicantAnswer,
+    ApplicantIdentity,
+    ApplicantSubmission,
+    CareerPublication,
+)
 from app.models.application import Application
 from app.models.candidate import Candidate
 from app.models.candidate_document import CandidateDocument
@@ -12,9 +22,17 @@ from app.models.organization_membership import OrganizationMembership
 from app.models.user import User
 
 __all__ = [
+    "AgentEvent",
+    "AgentNotification",
+    "AgentOutbox",
+    "AgentRun",
+    "ApplicantAnswer",
+    "ApplicantIdentity",
+    "ApplicantSubmission",
     "Application",
     "Candidate",
     "CandidateDocument",
+    "CareerPublication",
     "DocumentChunk",
     "DocumentChunkSet",
     "DocumentEmbedding",

@@ -96,7 +96,7 @@ COPY --chown=agenthire:agenthire migrations ./migrations
 COPY --chown=agenthire:agenthire tests ./tests
 COPY --chown=agenthire:agenthire scripts ./scripts
 COPY --chown=agenthire:agenthire alembic.ini ./
-COPY --chown=agenthire:agenthire README.md Dockerfile compose.yaml compose.ci.yaml compose.quality.yaml ./
+COPY --chown=agenthire:agenthire README.md Dockerfile compose.yaml compose.ci.yaml compose.quality.yaml compose.agents.yaml ./
 COPY --chown=agenthire:agenthire docs ./docs
 COPY --chown=agenthire:agenthire .github ./.github
 

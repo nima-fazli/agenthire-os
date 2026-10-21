@@ -13,7 +13,7 @@ from app.api.routes.health import router
 from app.core.readiness import StorageProbe, expected_migration_heads
 from app.services.runtime_health import ReadinessSnapshot, RuntimeReadiness
 
-HEADS = frozenset({"0017_access_sessions"})
+HEADS = frozenset({"0018_local_agents"})
 
 
 def sessions(heads=HEADS, failure=None):

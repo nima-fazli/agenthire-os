@@ -1,0 +1,197 @@
+{
+  "schema_version": 3,
+  "evaluation_incomplete": false,
+  "started_at": "2026-10-21T19:09:47.289932+00:00",
+  "mode": "replay",
+  "kind": "applicant",
+  "full_corpus": true,
+  "runtime_sha256": "e8a73576ad8a47c197614e65bdd583099bbede879844be50f52964b1e68861f4",
+  "runtime_changed": false,
+  "synthetic_corpus_sha256": "af9d020b670b4caadc8261308c9931ec2a73b32a578796c267a79eb6709e13dd",
+  "hardware": {
+    "logical_cpus": 9,
+    "cpu_quota": 8.0,
+    "memory_limit_bytes": 8589934592
+  },
+  "model": "replay-v1",
+  "model_digest": null,
+  "python": "3.12.14",
+  "platform": "Linux-6.18.55-x86_64-with-glibc2.39",
+  "settings": {
+    "threads": 4,
+    "step_limit": 16,
+    "token_limit": 24000,
+    "call_timeout_seconds": 120
+  },
+  "scope": "Synthetic text and selected agent kind only. Native database, PDF extraction, SMTP and access control are separate checks.",
+  "contract_passed": true,
+  "live_quality_accepted": false,
+  "accuracy": 1.0,
+  "fixed_retrieval_baseline_accuracy": null,
+  "thresholds": {
+    "completion": 1.0,
+    "quote_integrity": 1.0,
+    "accuracy": 0.9
+  },
+  "median_seconds": 0.004,
+  "observations": [
+    {
+      "case": "status",
+      "trial": 1,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 1,
+      "count": 1,
+      "actual": "status",
+      "expected": "status",
+      "baseline_correct": null,
+      "tool_steps": 2,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "tool_trace": [
+        {
+          "tool": "get_my_application",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "respond_to_applicant",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 0.007
+    },
+    {
+      "case": "status",
+      "trial": 2,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 1,
+      "count": 1,
+      "actual": "status",
+      "expected": "status",
+      "baseline_correct": null,
+      "tool_steps": 2,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "tool_trace": [
+        {
+          "tool": "get_my_application",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "respond_to_applicant",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 0.004
+    },
+    {
+      "case": "job",
+      "trial": 1,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 1,
+      "count": 1,
+      "actual": "job",
+      "expected": "job",
+      "baseline_correct": null,
+      "tool_steps": 2,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "tool_trace": [
+        {
+          "tool": "get_public_job",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "respond_to_applicant",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 0.005
+    },
+    {
+      "case": "job",
+      "trial": 2,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 1,
+      "count": 1,
+      "actual": "job",
+      "expected": "job",
+      "baseline_correct": null,
+      "tool_steps": 2,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "tool_trace": [
+        {
+          "tool": "get_public_job",
+          "ok": true,
+          "error": null
+        },
+        {
+          "tool": "respond_to_applicant",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 0.004
+    },
+    {
+      "case": "private_handoff",
+      "trial": 1,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 1,
+      "count": 1,
+      "actual": "handoff",
+      "expected": "handoff",
+      "baseline_correct": null,
+      "tool_steps": 1,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "tool_trace": [
+        {
+          "tool": "respond_to_applicant",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 0.002
+    },
+    {
+      "case": "private_handoff",
+      "trial": 2,
+      "completed": true,
+      "failure": null,
+      "grounded": true,
+      "correct": 1,
+      "count": 1,
+      "actual": "handoff",
+      "expected": "handoff",
+      "baseline_correct": null,
+      "tool_steps": 1,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "tool_trace": [
+        {
+          "tool": "respond_to_applicant",
+          "ok": true,
+          "error": null
+        }
+      ],
+      "elapsed_seconds": 0.002
+    }
+  ]
+}

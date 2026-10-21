@@ -1,0 +1,159 @@
+{
+  "mode": "recorded_replay",
+  "protocol": "evidence-map-v3",
+  "resume": "Backend engineer\nBuilt Python and FastAPI services for an inventory platform.\nImplemented PostgreSQL migrations, indexes and transaction handling.\nWrote pytest integration tests.\nSeeking experience with container operations.",
+  "events": [
+    {
+      "tool": "get_job",
+      "arguments": {},
+      "outcome": {
+        "ok": true,
+        "result": {
+          "title": "Backend Engineer — Local Agent Demo",
+          "criteria": [
+            {
+              "key": "python",
+              "label": "Python",
+              "query_text": "Python",
+              "importance": "required"
+            },
+            {
+              "key": "postgresql",
+              "label": "PostgreSQL",
+              "query_text": "PostgreSQL",
+              "importance": "required"
+            },
+            {
+              "key": "docker",
+              "label": "Docker",
+              "query_text": "Docker",
+              "importance": "preferred"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "tool": "search_resume",
+      "arguments": {
+        "query": "Python"
+      },
+      "outcome": {
+        "ok": true,
+        "result": [
+          {
+            "source_id": "synthetic:alex-resume",
+            "start": 17,
+            "end": 77,
+            "quote": "Built Python and FastAPI services for an inventory platform.",
+            "source_sha256": "a3dedb0a9830c07816a2a4f3e2e9a13e60792ecad3751010077ce14652b68f1e",
+            "negation_hint": false,
+            "evidence_id": "e1"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "search_resume",
+      "arguments": {
+        "query": "PostgreSQL"
+      },
+      "outcome": {
+        "ok": true,
+        "result": [
+          {
+            "source_id": "synthetic:alex-resume",
+            "start": 78,
+            "end": 146,
+            "quote": "Implemented PostgreSQL migrations, indexes and transaction handling.",
+            "source_sha256": "a3dedb0a9830c07816a2a4f3e2e9a13e60792ecad3751010077ce14652b68f1e",
+            "negation_hint": false,
+            "evidence_id": "e2"
+          }
+        ]
+      }
+    },
+    {
+      "tool": "search_resume",
+      "arguments": {
+        "query": "Docker"
+      },
+      "outcome": {
+        "ok": true,
+        "result": []
+      }
+    },
+    {
+      "tool": "submit_review",
+      "arguments": {
+        "findings": {
+          "python": {
+            "assessment": "supported",
+            "evidence_ids": [
+              "e1"
+            ]
+          },
+          "postgresql": {
+            "assessment": "supported",
+            "evidence_ids": [
+              "e2"
+            ]
+          },
+          "docker": {
+            "assessment": "unclear",
+            "evidence_ids": []
+          }
+        }
+      },
+      "outcome": {
+        "ok": true,
+        "result": {
+          "review": "validated",
+          "next": "human_approval"
+        }
+      }
+    }
+  ],
+  "report": {
+    "summary": "Source excerpts identified for 2 of 3 criteria. Criteria needing clarification: 1.",
+    "findings": [
+      {
+        "key": "python",
+        "label": "Python",
+        "assessment": "supported",
+        "citations": [
+          {
+            "source_id": "synthetic:alex-resume",
+            "start": 17,
+            "end": 77,
+            "quote": "Built Python and FastAPI services for an inventory platform."
+          }
+        ]
+      },
+      {
+        "key": "postgresql",
+        "label": "PostgreSQL",
+        "assessment": "supported",
+        "citations": [
+          {
+            "source_id": "synthetic:alex-resume",
+            "start": 78,
+            "end": 146,
+            "quote": "Implemented PostgreSQL migrations, indexes and transaction handling."
+          }
+        ]
+      },
+      {
+        "key": "docker",
+        "label": "Docker",
+        "assessment": "unclear",
+        "citations": []
+      }
+    ],
+    "question_keys": [
+      "docker"
+    ],
+    "question": "Please describe your practical experience with Docker. Include a project example and your responsibilities.",
+    "notice": "Quoted evidence supports human review; it does not verify skill or make a hiring decision."
+  }
+}

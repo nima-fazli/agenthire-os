@@ -40,3 +40,7 @@ dist/
 
 # Private candidate documents
 /storage/
+
+# Generated local evaluation reports and optional browser dependencies
+reports/
+node_modules/

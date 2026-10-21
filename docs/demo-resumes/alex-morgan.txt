@@ -1,0 +1,6 @@
+Alex Morgan
+Backend engineer
+Built Python and FastAPI services for an inventory platform.
+Implemented PostgreSQL migrations, indexes and transaction handling.
+Wrote pytest integration tests.
+Seeking experience with container operations.

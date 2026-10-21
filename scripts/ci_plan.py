@@ -11,7 +11,7 @@ UI_ASSETS = tuple(f"app/web/assets/{name}" for name in (
 ))
 
 CLIENT_TESTS = tuple(f"tests/{name}.test.mjs" for name in (
-    "recruiter_ui", "recruiter_notifications", "recruiter_api_errors", "recruiter_workflow", "recruiter_design",
+    "recruiter_ui", "recruiter_notifications", "recruiter_api_errors", "recruiter_workflow", "recruiter_design", "agents_ui",
 ))
 
 OPERATIONS_FILES = (

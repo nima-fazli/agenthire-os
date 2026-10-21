@@ -6,6 +6,9 @@ from fastapi.responses import FileResponse, JSONResponse
 router = APIRouter(prefix="/workspace", include_in_schema=False)
 ASSET_ROOT = Path(__file__).resolve().parent / "assets"
 ASSETS = {
+    **{name: "text/html" for name in ("agent-center.html", "portal.html", "demo.html")},
+    **{name: "text/javascript" for name in ("agent-ui.mjs", "agent-center.mjs", "portal.mjs", "demo.mjs")},
+    "agents.css": "text/css", "demo-run.json": "application/json",
     "index.html": "text/html",
     "styles.css": "text/css",
     **{f"{name}.mjs": "text/javascript" for name in (
@@ -71,3 +74,21 @@ async def workspace():
 @router.api_route("/assets/{filename}", methods=["GET", "HEAD"])
 async def asset(filename: str):
     return asset_response(filename)
+
+
+public_router = APIRouter(include_in_schema=False)
+
+@public_router.api_route("/agent-center/", methods=["GET", "HEAD"])
+@public_router.api_route("/agent-center", methods=["GET", "HEAD"])
+async def agent_center():
+    return asset_response("agent-center.html")
+
+@public_router.api_route("/portal/", methods=["GET", "HEAD"])
+@public_router.api_route("/portal", methods=["GET", "HEAD"])
+async def applicant_portal():
+    return asset_response("portal.html")
+
+@public_router.api_route("/demo/", methods=["GET", "HEAD"])
+@public_router.api_route("/demo", methods=["GET", "HEAD"])
+async def recorded_demo():
+    return asset_response("demo.html")

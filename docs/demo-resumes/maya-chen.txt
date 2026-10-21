@@ -1,0 +1,5 @@
+Maya Chen
+Backend developer
+Built Python APIs and automated tests with pytest.
+No production experience with PostgreSQL.
+Created Docker images and CI builds for internal tools.

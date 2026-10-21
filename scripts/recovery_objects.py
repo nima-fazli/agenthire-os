@@ -45,6 +45,8 @@ async def read_catalog():
                 SELECT (SELECT count(*) FROM document_extractions WHERE status IN ('queued', 'running'))
                      + (SELECT count(*) FROM document_embedding_jobs WHERE status IN ('queued', 'running'))
                      + (SELECT count(*) FROM candidate_documents WHERE status <> 'ready')
+                     + (SELECT count(*) FROM agent_runs WHERE status IN ('queued', 'running'))
+                     + (SELECT count(*) FROM agent_outbox WHERE status IN ('pending', 'sending'))
             """)
             if {row["version_num"] for row in heads} != expected_migration_heads() or not 180000 <= version < 190000 or pending:
                 raise ValueError("Recovery source is not settled on the expected schema.")

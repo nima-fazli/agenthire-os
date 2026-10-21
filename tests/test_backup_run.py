@@ -102,7 +102,7 @@ class Runner:
                 assert "--single-transaction" in command and "--exit-on-error" in command
                 assert "--clean" not in command and "--create" not in command
             elif "alembic" in command and "current" in command:
-                value = b"0017_access_sessions (head)"
+                value = b"0018_local_agents (head)"
             elif "scripts.recovery_fixture" in command:
                 value = b'{"status":"passed"}'
             elif "down" in command:

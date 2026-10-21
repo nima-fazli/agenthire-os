@@ -53,6 +53,23 @@ class Settings(BaseSettings):
     chunk_max_count: int = Field(default=1000, ge=1, le=5000)
     document_search_timeout_ms: int = Field(default=1500, ge=100, le=10000)
 
+    agents_enabled: bool = False
+    agent_model: str = Field(default="qwen3:4b", min_length=1, max_length=100)
+    agent_num_threads: int = Field(default=4, ge=1, le=16)
+    agent_max_steps: int = Field(default=16, ge=4, le=40)
+    agent_max_tokens: int = Field(default=24000, ge=2000, le=100000)
+    agent_max_elapsed_seconds: int = Field(default=600, ge=30, le=3600)
+    agent_timeout_seconds: int = Field(default=120, ge=5, le=180)
+    agent_lease_seconds: int = Field(default=240, ge=60, le=600)
+    agent_mail_host: Literal["127.0.0.1", "localhost", "mailpit"] = "127.0.0.1"
+    agent_mail_port: int = Field(default=1025, ge=1, le=65535)
+
+    @model_validator(mode="after")
+    def require_agent_lease_margin(self) -> Self:
+        if self.agent_lease_seconds < self.agent_timeout_seconds + 30:
+            raise ValueError("Agent lease must cover inference and model identity checks.")
+        return self
+
     explanations_enabled: bool = False
     chat_base_url: str = "http://127.0.0.1:11434"
     chat_timeout_seconds: int = Field(default=120, ge=5, le=180)

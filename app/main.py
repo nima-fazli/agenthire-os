@@ -11,6 +11,7 @@ from app.core.readiness import StorageProbe, expected_migration_heads
 from app.core.request_observability import RequestObservabilityMiddleware
 from app.db.session import async_session_factory, engine
 from app.services.runtime_health import RuntimeReadiness
+from app.web.router import public_router as agents_ui_router
 from app.web.router import router as recruiter_ui_router
 
 settings = get_settings()
@@ -45,3 +46,5 @@ app.add_middleware(RequestObservabilityMiddleware)
 register_exception_handlers(app)
 app.include_router(api_router)
 app.include_router(recruiter_ui_router)
+
+app.include_router(agents_ui_router)

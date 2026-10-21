@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AgentHire OS — Agent Center</title>
+    <link rel="stylesheet" href="/workspace/assets/agents.css" />
+    <script type="module" src="/workspace/assets/agent-center.mjs"></script>
+  </head>
+  <body>
+    <a class="agent-skip" href="#agent-main">Skip to main content</a>
+    <header class="agent-header">
+      <a class="agent-brand" href="/workspace/"><b>A</b>AgentHire OS</a>
+      <nav aria-label="Product">
+        <a href="/agent-center/" aria-current="page">Agent Center</a
+        ><a href="/portal/">Applicant Portal</a><a href="/demo/">Demo</a
+        ><a href="/workspace/">Recruiter workspace</a>
+      </nav>
+      <button
+        id="agent-logout"
+        class="agent-button secondary"
+        type="button"
+        hidden
+      >
+        Sign out
+      </button>
+    </header>
+    <main class="agent-main" id="agent-main">
+      <div class="agent-hero">
+        <p class="agent-eyebrow">LOCAL · INSPECTABLE · HUMAN REVIEWED</p>
+        <h1>Every review, with its evidence.</h1>
+        <p>
+          Follow bounded agent runs, inspect source evidence and approve the
+          next action.
+        </p>
+      </div>
+      <p
+        id="agent-message"
+        class="agent-message"
+        role="status"
+        aria-live="polite"
+      ></p>
+      <section class="agent-card agent-auth" id="agent-auth">
+        <h2 id="agent-auth-title">Sign in</h2>
+        <form id="agent-auth-form" class="agent-form">
+          <label
+            >Email<input
+              id="agent-email"
+              type="email"
+              autocomplete="username"
+              required
+              maxlength="320" /></label
+          ><label
+            >Password<input
+              id="agent-password"
+              type="password"
+              autocomplete="current-password"
+              required
+              minlength="1"
+              maxlength="128" /></label
+          ><button id="agent-login" class="agent-button" type="submit">
+            Sign in
+          </button>
+        </form>
+      </section>
+      <div id="agent-private" hidden>
+        <div class="agent-grid">
+          <aside class="agent-stack">
+            <section class="agent-card">
+              <h2>Workspace</h2>
+              <label class="agent-label"
+                >Company<select
+                  id="agent-organizations"
+                  class="agent-input"
+                ></select
+              ></label>
+              <p id="agent-role" class="agent-meta"></p>
+              <label class="agent-label"
+                >Execution mode<select
+                  id="agent-mode"
+                  class="agent-input agent-mode"
+                >
+                  <option value="replay">Replay demo — no model</option>
+                  <option value="live">Live local AI — Ollama</option>
+                </select></label
+              ><button
+                class="agent-button secondary"
+                id="agent-refresh"
+                type="button"
+              >
+                Refresh lists
+              </button>
+            </section>
+            <section class="agent-card">
+              <h2>Publish an opportunity</h2>
+              <form id="agent-publication-form" class="agent-form">
+                <label>Saved job<select id="agent-jobs"></select></label
+                ><label
+                  >Public description<textarea
+                    id="agent-public-description"
+                    required
+                    minlength="20"
+                    maxlength="12000"
+                  ></textarea></label
+                ><label class="agent-check"
+                  ><input type="checkbox" id="agent-published" />Published to
+                  applicants</label
+                ><button id="agent-publish" type="submit" class="agent-button">
+                  Save public job
+                </button>
+              </form>
+              <p class="agent-meta">
+                Only this description is public. Saved internal criteria stay
+                private.
+              </p>
+            </section>
+            <section class="agent-card">
+              <h2>Notifications</h2>
+              <div id="agent-notifications" class="agent-notices"></div>
+            </section>
+          </aside>
+          <div class="agent-stack">
+            <section class="agent-card">
+              <h2>Incoming applications</h2>
+              <div id="agent-submissions"></div>
+            </section>
+            <section class="agent-card">
+              <h2>Agent runs</h2>
+              <p class="agent-meta">
+                Inspect tool choices, source excerpts and proposed actions
+                before approval.
+              </p>
+              <div id="agent-runs"></div>
+            </section>
+            <section class="agent-card" id="agent-run-detail" tabindex="-1">
+              <h2>Inspect a run to see its evidence</h2>
+            </section>
+            <section class="agent-card">
+              <div class="agent-topline">
+                <h2>Local mail delivery</h2>
+                <button
+                  id="agent-mail-retry"
+                  class="agent-button secondary"
+                  type="button"
+                >
+                  Retry failed delivery
+                </button>
+              </div>
+              <p class="agent-meta">
+                Mailpit captures messages at localhost:8025. External email is
+                disabled.
+              </p>
+              <div id="agent-mail-status"></div>
+            </section>
+          </div>
+        </div>
+      </div>
+      <p class="agent-footer">
+        Local portfolio environment · Replay and live inference are labeled
+        separately · Final hiring decisions remain with the employer.
+      </p>
+    </main>
+  </body>
+</html>

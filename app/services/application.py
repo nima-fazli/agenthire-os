@@ -136,6 +136,13 @@ class ApplicationService:
                     application, status=requested_status.value
                 )
 
+            if requested_status != current_status:
+                from app.core.config import get_settings
+                settings = get_settings()
+                if settings.agents_enabled:
+                    from app.services.agent_workspace import queue_status_notice
+                    await queue_status_notice(self._session, application, settings)
+
             # A same-state retry performs no update; commit releases the row lock.
             await self._session.commit()
         except Exception:

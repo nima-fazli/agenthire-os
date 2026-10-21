@@ -70,3 +70,7 @@
 }
 #access-owner-fields,#account-fields,#invitation-accept-fields{max-width:800px}#access-owner>p,#account-panel>p{max-width:80ch}.job-description{max-width:80ch}
 .applications-layout{display:grid;grid-template-columns:minmax(0,1.18fr) minmax(0,.92fr);gap:20px;align-items:start}.applications-layout>.panel,.applications-layout .dossier{margin-bottom:0}.applications-layout .application-card{grid-template-columns:minmax(0,1fr) auto;gap:11px;padding:19px 0}.applications-layout .application-card>.button:nth-child(3){justify-self:start}.applications-layout .application-card>.field{grid-column:1 / -1}.applications-layout .application-card>.button:last-child{justify-self:start}.applications-layout .application-card>.small{grid-column:1 / -1}.applications-layout .application-list{max-height:600px;overflow:auto;scrollbar-width:thin}.applications-layout .record-search .field{flex-basis:150px}.applications-layout #application-create{font-size:10px}.applications-layout #application-refresh{font-size:10px}@media(max-width:760px){.applications-layout{grid-template-columns:1fr;gap:18px}.applications-layout .application-list{max-height:470px}}
+
+/* Entry points for the separate applicant and agent surfaces. */
+.topbar-tools > .agent-entry{font-size:.73rem;white-space:nowrap}
+@media(max-width:720px){.topbar-tools > .agent-entry-center{display:none}}
