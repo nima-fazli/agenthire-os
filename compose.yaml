@@ -76,7 +76,7 @@ services:
       - agenthire_document_data:/app/storage
 
     ports:
-      - "${AGENTHIRE_API_PORT:-8000}:8000"
+      - "127.0.0.1:${AGENTHIRE_API_PORT:-8000}:8000"
 
     depends_on:
       postgres:

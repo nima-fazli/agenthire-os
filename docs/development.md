@@ -37,8 +37,10 @@ docker compose run --rm migrate alembic current
 docker compose run --rm migrate alembic check
 ```
 
-The standard API is at `http://localhost:8000`. PostgreSQL is reached by services
-inside Compose. `.env.example`'s host port does not publish PostgreSQL by itself.
+The standard API is at `http://localhost:8000`. Its published port is bound to
+`127.0.0.1` for access from the local host; `AGENTHIRE_API_PORT` changes the host
+port. PostgreSQL is reached by services inside Compose.
+`.env.example`'s host port does not publish PostgreSQL by itself.
 Use the provided Docker smoke modules for integration acceptance.
 
 ## Independent full verification

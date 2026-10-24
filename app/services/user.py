@@ -12,6 +12,7 @@ from app.core.security import (
 from app.models.user import User
 from app.repositories.user import UserRepository
 from app.schemas.user import UserCreate
+from app.services.sessions import password_work
 
 
 class UserService:
@@ -37,7 +38,7 @@ class UserService:
                 data.email
             )
 
-        password_hash = await asyncio.to_thread(
+        password_hash = await password_work(
             hash_password,
             data.password.get_secret_value(),
         )

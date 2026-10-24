@@ -279,6 +279,34 @@ def test_cancelled_password_waiter_keeps_its_worker_slot(monkeypatch):
     asyncio.run(run())
 
 
+def test_registration_respects_shared_password_capacity_and_recovers(identity, monkeypatch):
+    import app.services.sessions as sessions_module
+    import app.services.user as user_module
+
+    slots = BoundedSemaphore(2)
+    hasher = MagicMock(return_value="synthetic-password-hash")
+    monkeypatch.setattr(sessions_module, "PASSWORD_SLOTS", slots)
+    monkeypatch.setattr(user_module, "hash_password", hasher)
+    monkeypatch.setitem(app.dependency_overrides, get_user_service, lambda: UserService(identity.db))
+    payload = {"email": "new-registration@example.com", "password": PASSWORD}
+
+    with TestClient(app) as client:
+        with slots, slots:
+            response = client.post("/users/register", json=payload)
+            assert response.status_code == 503
+            assert response.json()["error"]["code"] == "AUTH_BUSY"
+            hasher.assert_not_called()
+            assert identity.db.sync.scalar(select(User).where(User.email == payload["email"])) is None
+
+        response = client.post("/users/register", json=payload)
+
+    assert response.status_code == 201
+    hasher.assert_called_once_with(PASSWORD)
+    stored = identity.db.sync.scalar(select(User).where(User.email == payload["email"]))
+    assert stored is not None and stored.password_hash == "synthetic-password-hash"
+    assert "password" not in response.json() and "password_hash" not in response.json()
+
+
 def test_permission_locks_use_postgresql_nowait_and_busy_errors_are_safe():
     session = SimpleNamespace(execute=AsyncMock(side_effect=DBAPIError("PRIVATE_SQL", {}, SimpleNamespace(sqlstate="55P03"))))
     with pytest.raises(AppError) as error:
