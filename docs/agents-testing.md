@@ -1,8 +1,10 @@
 # Test the local agent workflow
 
-Start from the repository root. For an existing installation, follow the guarded
-update procedure in [the Persian guide](fa/INSTALL_AND_TEST_FA.md) first. A fresh
-checkout can use `python -m scripts.local_demo --start --seed`.
+Start from the repository root. Follow [Installation](INSTALLATION.md) for a
+fresh checkout or an existing stack; retain the existing Compose project,
+configuration and data volumes. A fresh demo can use
+`python -m scripts.local_demo --start --seed`. For the complete product workflow,
+including job setup, criteria and document search, read the [User Guide](USER_GUIDE.md).
 
 ## Replay walkthrough
 

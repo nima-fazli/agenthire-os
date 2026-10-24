@@ -20,7 +20,7 @@
   "sha256": {
     ".github/workflows/verify.yml": "23e9b9cb4f564e33890479776b4a846786c06423952dc6da4df2e15fe1cd2b2d",
     "Dockerfile": "a44a6be210b0053336c6e5fdb2085e1b9120262140213aa91ede3b0d32e56ac5",
-    "README.md": "c304286801f361dac4ee68311490d415e82a5a33ecaa8e333f22cbc42cec1b16",
+    "README.md": "68e0b62479c84118a42cbe017b891a3043e2722e568f95e2e0dd9255d26db10b",
     "docs/roadmap.md": "08647a195cf09c00dafa0e6d0ab571849211fe048bdffef3dfa28b3fa0f6e11c",
     "docs/release-acceptance.md": "0d2a5faa37d4e417461dc569bbcf93868dde1399d4b5b23319f755b8931ddb3f",
     "scripts/ci_plan.py": "570c26e76a8147c5ffccf9df6936c9afb3227b3b63765e8bd6a12347953fd535",

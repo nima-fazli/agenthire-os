@@ -11,6 +11,20 @@ No paid model API, cloud account, domain or external email provider is required.
 Initial dependency/model downloads need internet. Live inference uses your existing
 CPU/GPU and memory; the default model download is about 2.5 GB.
 
+## Documentation
+
+Start with [Installation](docs/INSTALLATION.md), then follow the
+[complete User Guide](docs/USER_GUIDE.md) for the workflow from company/job setup
+to applicant submission, agent review, human approval and hiring-stage changes.
+
+| Guide | Use it for |
+| --- | --- |
+| [Installation and local verification](docs/INSTALLATION.md) | Fresh checkouts, existing data, local models, feature flags and test commands |
+| [Complete User Guide](docs/USER_GUIDE.md) | Screens, roles, criteria, PDFs, search, agent runs, approvals, applicant replies and troubleshooting |
+| [Short agent walkthrough](docs/agents-testing.md) | A focused demo and agent integration checks |
+| [Agent architecture and tradeoffs](docs/local-agents.md) | Tool boundaries, source evidence, durable execution and approval contracts |
+| [Development](docs/development.md) | Native development and independent stack verification |
+
 ## Try it locally
 
 Requirements: Docker Desktop/Engine with Compose v2 and Python 3.12.
@@ -110,8 +124,8 @@ flowchart TD
   browser bearer tokens and no hosted tracing.
 
 Read [architecture and tradeoffs](docs/local-agents.md),
-[test walkthrough](docs/agents-testing.md), [verification scope](docs/agents-verification.md)
-and the [Persian installation guide](docs/fa/INSTALL_AND_TEST_FA.md).
+[test walkthrough](docs/agents-testing.md), [verification scope](docs/agents-verification.md),
+[Installation](docs/INSTALLATION.md) and the [User Guide](docs/USER_GUIDE.md).
 
 ## Verify
 

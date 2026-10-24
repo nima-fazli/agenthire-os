@@ -72,5 +72,6 @@ actual Docker stack. The supplied GitHub workflow starts an owned local stack,
 exercises the actual HTTP/workers/verification SMTP flow and runs `alembic check`.
 Supplying a workflow is not evidence that GitHub Actions has already run it.
 
-The [Persian guide](fa/INSTALL_AND_TEST_FA.md) documents installation, expected
-results, optional live-model setup and diagnostics without removing data volumes.
+The [installation guide](INSTALLATION.md) covers fresh checkouts, existing local
+stacks, optional models, verification and diagnostics while retaining data volumes.
+The [User Guide](USER_GUIDE.md) explains the current screens and recruiting workflow.
