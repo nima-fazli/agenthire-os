@@ -18,7 +18,7 @@
     "scripts/fixtures/release_stage6_manifest.json"
   ],
   "sha256": {
-    ".github/workflows/verify.yml": "cc5ea044cf02a8a9d9712d13e2a2593c6917af09f1d48f834e92edac0f485642",
+    ".github/workflows/verify.yml": "730b0cb7ef4d86f57aa7e2d0f2272570acb44538babd6e66ea2970e7b26ca786",
     "Dockerfile": "a44a6be210b0053336c6e5fdb2085e1b9120262140213aa91ede3b0d32e56ac5",
     "README.md": "68e0b62479c84118a42cbe017b891a3043e2722e568f95e2e0dd9255d26db10b",
     "docs/roadmap.md": "08647a195cf09c00dafa0e6d0ab571849211fe048bdffef3dfa28b3fa0f6e11c",
