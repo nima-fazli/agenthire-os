@@ -69,7 +69,9 @@ def private_directory(path, *, initialize=False, runner=subprocess.run):
     if not path.is_dir():
         raise ValueError("Backup directory unavailable.")
     if os.name == "nt":
-        environment = dict(os.environ, AGENTHIRE_PRIVATE_STORE=str(path),
+        # A Python child of pwsh inherits PS7 modules that powershell.exe cannot load.
+        environment = {key: value for key, value in os.environ.items() if key.upper() != "PSMODULEPATH"}
+        environment.update(AGENTHIRE_PRIVATE_STORE=str(path),
                            AGENTHIRE_PRIVATE_INIT="1" if initialize else "0")
         result = runner(("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", ACL),
                         env=environment, capture_output=True, text=True, timeout=30, check=False)

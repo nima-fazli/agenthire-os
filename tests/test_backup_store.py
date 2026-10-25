@@ -148,6 +148,21 @@ def test_windows_acl_is_fail_closed_and_never_prints_credentials(tmp_path, monke
         module.private_directory(tmp_path, runner=lambda *args, **kwargs: SimpleNamespace(returncode=1, stdout="private-secret"))
 
 
+@pytest.mark.parametrize("module_key", ["PSModulePath", "PSMODULEPATH", "psmodulepath"])
+def test_windows_acl_isolates_inherited_powershell_7_modules(tmp_path, monkeypatch, module_key):
+    inherited = {"KEEP": "present", module_key: r"C:\Program Files\PowerShell\7\Modules"}
+    monkeypatch.setattr(module, "os", SimpleNamespace(name="nt", path=os.path, environ=inherited))
+
+    def runner(command, **options):
+        assert all(key.upper() != "PSMODULEPATH" for key in options["env"])
+        assert options["env"]["KEEP"] == "present"
+        assert options["env"]["AGENTHIRE_PRIVATE_INIT"] == "1"
+        return SimpleNamespace(returncode=0, stdout="private")
+
+    assert module.private_directory(tmp_path, initialize=True, runner=runner) == tmp_path
+    assert inherited[module_key] == r"C:\Program Files\PowerShell\7\Modules"
+
+
 def test_ambiguous_json_is_rejected_before_any_store_operation(store):
     (store.root / "store.json").write_text('{"format":"wrong","format":"agenthire-private-backup-v1","store_id":"' + "a" * 32 + '"}')
     with pytest.raises(ValueError, match="Duplicate"):
