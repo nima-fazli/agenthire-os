@@ -299,6 +299,7 @@ async function run(options) {
     await evaluate("document.getElementById('organization-select').value='00000002-1111-4111-8111-111111111111';document.getElementById('organization-select').dispatchEvent(new Event('change'))", "organization-switch-submit");
     await wait("organization-switch", "document.getElementById('organization-heading').textContent==='Empty workspace'");
     await check("context-switch-clears-private-dossier", "!document.getElementById('candidate-heading').textContent.includes('Alex Morgan')");
+    await click("#account-toggle");
     await click("#logout");
     await check("sign-out-clears-private-shell", "document.getElementById('shell').hidden && !document.getElementById('account-email').textContent && !document.getElementById('auth-password').value");
     assert.deepEqual(connection.errors, [], "Uncaught browser exceptions");
