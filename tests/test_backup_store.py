@@ -1,6 +1,7 @@
 import io
 import json
 import os
+import subprocess
 from types import SimpleNamespace
 
 import pytest
@@ -161,6 +162,30 @@ def test_windows_acl_isolates_inherited_powershell_7_modules(tmp_path, monkeypat
 
     assert module.private_directory(tmp_path, initialize=True, runner=runner) == tmp_path
     assert inherited[module_key] == r"C:\Program Files\PowerShell\7\Modules"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="Requires native Windows ACLs.")
+@pytest.mark.parametrize("child_kind", ["receipts", "pending"])
+def test_windows_private_children_reject_explicit_administrator_access(store, child_kind):
+    directory = store.root / "receipts"
+    if child_kind == "pending":
+        _, directory = store.new(source_kind="synthetic", revision=BASELINE)
+    environment = {key: value for key, value in os.environ.items() if key.upper() != "PSMODULEPATH"}
+    environment["AGENTHIRE_ACL_TEST_DIRECTORY"] = str(directory)
+    script = r'''
+$ErrorActionPreference = 'Stop'
+$path = $env:AGENTHIRE_ACL_TEST_DIRECTORY
+$acl = Get-Acl -LiteralPath $path
+$administrators = [Security.Principal.SecurityIdentifier]::new('S-1-5-32-544')
+$rule = [Security.AccessControl.FileSystemAccessRule]::new(
+    $administrators, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow')
+$acl.AddAccessRule($rule)
+Set-Acl -LiteralPath $path -AclObject $acl
+'''
+    subprocess.run(("powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script),
+                   env=environment, capture_output=True, text=True, timeout=30, check=True)
+    with pytest.raises(ValueError, match="ACL"):
+        store.check()
 
 
 def test_ambiguous_json_is_rejected_before_any_store_operation(store):

@@ -141,7 +141,9 @@ class BackupStore:
         write_json(self.root / "store.json", {"format": FORMAT, "store_id": uuid4().hex})
         with open_private(self.root / "store.lock", "wb") as handle:
             handle.write(b"0")
-        (self.root / "receipts").mkdir(mode=0o700)
+        # Python 3.12.4+ gives mode 0o700 a separate Windows ACL including Administrators.
+        # Windows children inherit the private root ACL; POSIX children stay owner-only.
+        (self.root / "receipts").mkdir(mode=0o777 if os.name == "nt" else 0o700)
         return self.check()
 
     def check(self):
@@ -194,7 +196,7 @@ class BackupStore:
             raise ValueError("Insufficient backup free space.")
         identity = "backup-" + datetime.now(UTC).strftime("%Y%m%dT%H%M%S%fZ-") + uuid4().hex
         directory = self.root / (identity + ".partial")
-        directory.mkdir(mode=0o700)
+        directory.mkdir(mode=0o777 if os.name == "nt" else 0o700)
         write_json(directory / "state.json", {"store_id": self.check(), "backup_id": identity,
                                             "source_kind": source_kind, "revision": revision})
         return identity, directory
